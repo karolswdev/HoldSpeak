@@ -204,3 +204,8 @@ export function faceTimeWords(value: string): string {
   const words = wireDayClock(value);
   return words ? value.includes("T") ? words : words.split(",")[0] : value;
 }
+
+/** Opt-in prose presentation. Date tokens use the field formatter; paths and ids stay literal. */
+export function proseDateWords(text: string): string {
+  return text.replace(/(^|\s)(\d{4}-\d{2}-\d{2})(?=\s|$|[.,;])/g, (_, lead, day) => lead + faceTimeWords(day));
+}

@@ -13,7 +13,7 @@ vi.mock("../../../../pages/cores/connections/api", async () => ({
   ...(await vi.importActual<object>("../../../../pages/cores/connections/api")),
   fetchConnections: () => Promise.resolve({ tools: [] }),
 }));
-import { ProofCell, SendWell, SendWells, retryInline, resetSendStore } from "..";
+import { PreviewWell, ProofCell, SendWell, SendWells, retryInline, resetSendStore } from "..";
 
 let destinations = recorded.destinations;
 let preview: unknown = recorded.old_preview;
@@ -228,6 +228,7 @@ it("opens the selected stored receipt in the same window", async () => {
   fireEvent.click(within(history).getByTestId("history-row"));
   const facts = history.querySelector(".surface-inspector-facts");
   expect(facts).not.toBeNull();
+  expect(document.querySelector(".surface-inspector-object img")).not.toBeNull();
   expect(facts).toHaveTextContent("Saved");
   expect(screen.getByTestId("send-destination-word")).toHaveTextContent(recorded.old_send.send.destination_name);
   expect(within(facts as HTMLElement).getByTestId("proof")).toHaveTextContent(
@@ -402,12 +403,12 @@ it("distinguishes a new send, a failed send and an unknown result", async () => 
   }
 });
 
-it("keeps the saved title identical in the preview and frozen payload", async () => {
+it("formats dates in the displayed preview while keeping the frozen payload", async () => {
   preview = {...recorded.old_preview,title:"Report · 2026-11-12",preview:{...recorded.old_preview.preview,text:"# Report · 2026-11-12\n\nBody 2026-11-12"}};
   render(<SendWells doc={doc} />);
   const body = await screen.findByTestId("send-preview-body");
-  expect(within(body).getByRole("heading")).toHaveTextContent("Report · 2026-11-12");
-  expect(body).toHaveTextContent("Body 2026-11-12");
+  expect(within(body).getByRole("heading")).toHaveTextContent("Report · Nov 12");
+  expect(body).toHaveTextContent("Body Nov 12");
   expect((preview as typeof recorded.old_preview).preview.text).toContain("# Report · 2026-11-12");
 });
 
@@ -463,4 +464,30 @@ it("keeps Retry available when the last read is dispatching but its answer was l
   view.rerender(<SendWell doc={doc} sendsRead={{...read,data:[{...recorded.old_send.send,state:"dispatching"}]} as never} />);
   expect(screen.getByTestId("send-retry")).toHaveTextContent(/^Retry$/);
   expect(screen.getByTestId("send-retry")).toBeEnabled();
+});
+
+it("names the newest frozen document first and keeps its time in the row", async () => {
+  sends = [recorded.old_send.send, recorded.new_send.send];
+  render(<SendWells doc={doc} />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Sent"}));
+  const row = screen.getAllByTestId("history-row")[0];
+  expect(row).toHaveAttribute("data-object-id", recorded.new_send.send.id);
+  expect(row).toHaveTextContent(recorded.new_send.send.document_json.title);
+  expect(row).toHaveTextContent(/Oct|Nov/);
+  fireEvent.click(row);
+  expect(document.querySelector(".surface-inspector-object img")).not.toBeNull();
+});
+
+it("formats preview date words without changing code or source paths", async () => {
+  preview = {...recorded.old_preview, preview:{text:"# Report · 2026-11-12\n\n`2026-11-12` and /reports/2026-11-12.md"}};
+  render(<SendWells doc={doc} />);
+  const body = await screen.findByTestId("send-preview-body");
+  expect(within(body).getByRole("heading")).toHaveTextContent("Report · Nov 12");
+  expect(body.querySelector("code")).toHaveTextContent("2026-11-12");
+  expect(body).toHaveTextContent("/reports/2026-11-12.md");
+});
+
+it("uses the same date words in a plain-text channel preview", () => {
+  render(<PreviewWell preview={{fields:[],body_kind:"text",body:"Weekly report · 2026-11-12"}} testid="plain-preview" />);
+  expect(screen.getByTestId("send-preview-body")).toHaveTextContent("Weekly report · Nov 12");
 });

@@ -27,7 +27,7 @@ from holdspeak.intel_queue_conductor import _on_meeting_ready
 from holdspeak.kernel.runtime import _configure
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
 from .glass_infra import (
-    REPO, _api, _boot, _ensure_build, _normal_chair, _settle,
+    REPO, choose_toolbar, _api, _boot, _ensure_build, _normal_chair, _settle,
     engine_profile,
 )
 from .engine_stub_rig import _StubHandler
@@ -394,9 +394,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             models.get_by_role("button", name="Model library", exact=True).click()
             library = models.get_by_role("region", name=re.compile(r"^(Model library|Add engine)$"))
             library.get_by_role("button", name="Add an engine", exact=True).click()
-            # Betterment E4: Add an engine unfolds into the kinds; the LAN
+            # Betterment E4: Add an engine uses the kind pop-up; the LAN
             # fixture is "A server on my network", which asks for its address.
-            page.get_by_test_id("runson-kind-lan").click()
+            choose_toolbar(library, "Kind of engine", "lan")
             address = page.locator("[data-testid='concierge-add-engine-row'] input").first
             endpoint = fixture_endpoint
             address.fill(endpoint)

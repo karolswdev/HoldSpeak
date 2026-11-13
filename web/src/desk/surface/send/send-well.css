@@ -85,4 +85,6 @@
 /* Fit the Send form itself, including a narrow seat inside a wide host. */
 @container inspector-form (max-width: 520px) {
   .desk-next [data-send="face"] .surface-inspector-rows > .gadget-row:has([data-testid="send-add-destination"]) { grid-template-columns: minmax(0, 1fr); }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: wrap; }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) .surface-inspector-control > .gadget-cycle { flex: 1 0 100%; }
 }

@@ -1,7 +1,8 @@
 // The hub owns all chains. Choices write only on an owner press.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { PreferencePane, ListPane, PaneGroup, PaneInspector, InspectorForm, InspectorQuestion, GadgetRow, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { wireDayClock } from "../../../desk/surface/format";
 import { stateWord } from "../../../features/runson/stateWord";
 import { EngineLibrary } from "../../../features/runson/EngineLibrary";
 import { conciergeProbe } from "../../../features/concierge/api";
@@ -9,9 +10,14 @@ import { useRunsOn } from "../../../features/runson/useRunsOn";
 import { EVERYTHING_ELSE, WHAT_ROWS } from "../../../features/runson/whatRows";
 import type { RowEditor } from "../../../features/runson/api";
 
-export function EnginesSection({ onCount }: { onCount?: (count: number) => void } = {}) {
+export function EnginesSection({ onCount, onStatus, onBackChange, lastRead, onRead }: { onCount?: (count: number) => void; onStatus?: (words: string) => void; lastRead?: Date | null; onRead?: (at: Date) => void; onBackChange?: (back: (() => void) | null) => void } = {}) {
   const ctrl = useRunsOn();
   const [library, showLibrary] = useState(false);
+  const closeLibrary = useCallback(() => showLibrary(false), []);
+  useEffect(() => { if (ctrl.lastRead) onRead?.(ctrl.lastRead); }, [ctrl.lastRead, onRead]);
+  const readAt = ctrl.lastRead ?? lastRead;
+  const readStatus = ctrl.error ? `Engines not read · ${readAt ? `Last read ${wireDayClock(readAt)}` : "Not read yet"}` : "";
+  useEffect(() => { onStatus?.(readStatus); return () => onStatus?.(""); }, [readStatus, onStatus]);
   const [tab, setTab] = useState("jobs");
   const [picked, pick] = useState<string | null>(null);
   const [editing, edit] = useState<string | null>(null);
@@ -57,8 +63,8 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   return <PreferencePane label="Engines" testId="settings-engines">
     {ctrl.error ? <PaneActions><span role="alert">Engines not read</span><Button onClick={reload}>Retry</Button></PaneActions> : null}
     {ctrl.receipt ? <PaneActions><span role={ctrl.receipt.tone === "danger" ? "alert" : "status"} data-testid="settings-engines-receipt">{ctrl.receipt.text}</span>{ctrl.canUndo ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.undo()}>Undo</Button> : null}</PaneActions> : null}
-    {library ? <EngineLibrary ctrl={ctrl} onClose={() => showLibrary(false)} /> : <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
-    <ListPane label="Engine inspector" list={<>
+    <SegmentedTabs label="Engines" value={tab} onChange={next => { setTab(next); showLibrary(false); ctrl.add.close(); }} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
+    {library ? <EngineLibrary ctrl={ctrl} onClose={closeLibrary} onBackChange={onBackChange} /> : <ListPane label="Engine inspector" list={<>
 
       <div className="surface-tab-panel" hidden={tab !== "jobs"} data-testid="settings-jobs">
       <PaneGroup label="Each job runs on">
@@ -103,7 +109,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
         {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions></GadgetRow>
       {ctrl.results[`what:${job.id}`] ? <GadgetRow label="Result"><output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output></GadgetRow> : null}</InspectorForm>
     </PaneInspector> : null}
-    </ListPane>
-    </SegmentedTabs>}
+    </ListPane>}
+    </SegmentedTabs>
   </PreferencePane>;
 }
