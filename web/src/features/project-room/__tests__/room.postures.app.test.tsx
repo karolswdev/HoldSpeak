@@ -66,7 +66,7 @@ describe("Update seats", () => {
     function Produced() {
       const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
       useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
-      return <UpdatePosture ctrl={ctrl} />;
+      return <UpdatePosture ctrl={ctrl} sourceItems={CLAIMS.real.gets["/api/projects/proj-15e2a940d235/items?limit=200"].items.map(item => ({id: item.id, kind: item.item_type}))} />;
     }
     render(<Produced />);
     expect(document.querySelector(".object-list-toolbar .surface-pane-actions")).toBeNull();
@@ -83,7 +83,7 @@ describe("Update seats", () => {
     function Produced() {
       const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
       useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
-      return <UpdatePosture ctrl={ctrl} />;
+      return <UpdatePosture ctrl={ctrl} sourceItems={CLAIMS.real.gets["/api/projects/proj-15e2a940d235/items?limit=200"].items.map(item => ({id: item.id, kind: item.item_type}))} />;
     }
     render(<Produced />); choose("View", "sources");
     const source = screen.getByRole("grid", {name:"Updates"}).querySelector(".object-list-row")!;
@@ -96,7 +96,7 @@ describe("Update seats", () => {
     function Produced() {
       const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
       useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
-      return <UpdatePosture ctrl={ctrl} />;
+      return <UpdatePosture ctrl={ctrl} sourceItems={CLAIMS.real.gets["/api/projects/proj-15e2a940d235/items?limit=200"].items.map(item => ({id: item.id, kind: item.item_type}))} />;
     }
     render(<Produced />);
     choose("View", "claims");

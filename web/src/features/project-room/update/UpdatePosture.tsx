@@ -19,7 +19,7 @@ import { refusedWord } from "../../channels/channels";
 import { updateDoc } from "../../channels/SendWell";
 import { SendWells } from "../../../desk/surface/send";
 import { PaneViewContext } from "../../../desk/surface/patterns/PaneViews";
-import { RoomList, roomReadingText, roomClaimWords, type RoomEntry } from "../RoomList";
+import { RoomList, roomReadingText, roomClaimWords, roomWord, type RoomEntry } from "../RoomList";
 import type { UpdateController } from "./useUpdateController";
 import {
   generatorLabel,
@@ -58,6 +58,7 @@ export function updateName(row: ProjectUpdate): string {
 export function UpdatePosture({
   ctrl,
   projectActions = [],
+  sourceItems = [],
   field,
   sendUpdateId,
   linkFailure,
@@ -65,6 +66,7 @@ export function UpdatePosture({
 }: {
   ctrl: UpdateController;
   projectActions?: ListVerb[];
+  sourceItems?: readonly Pick<RoomEntry, "id" | "kind">[];
   field?: ReactNode;
   sendUpdateId?: string | null;
   linkFailure?: { retry(): void };
@@ -116,7 +118,8 @@ export function UpdatePosture({
         ? [...new Set(current.claims.flatMap((row) => row.refs))].map(
             (ref) => {
               const claims = current.claims.filter((claim) => claim.refs.includes(ref));
-              const kind = claimSourceKind(ref, claims[0]?.text || "");
+              const item = sourceItems.find(item => ref === `item:${item.id}`);
+              const kind = item ? roomWord(item.kind) : claimSourceKind(ref, claims[0]?.text || "");
               const checkedAt = claims.find((claim) => claim.supportRecord?.checkedAt)?.supportRecord?.checkedAt;
               const revision = claims[0]?.supportRecord?.sourceVersion.match(/@r?(\d+)$/)?.[1];
               return {

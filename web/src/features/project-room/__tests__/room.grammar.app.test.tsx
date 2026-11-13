@@ -9,6 +9,7 @@ import { clearEngineCache } from "../../../desk/hooks/useEngine";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import TAPE from "./room-wires/grammar10.json";
 import POLISH from "./room-wires/polish14.json";
+import RETIRE from "./room-wires/binding-retire.json";
 import { runAsk, parseAskResult } from "../../../desk/ask";
 import ASK from "../../../test/wire/ask.thread.wire.json";
 import { ApiError } from "../../../lib/api";
@@ -83,6 +84,19 @@ describe("Room selection grammar", () => {
     expect(screen.getByRole("region", {name:"Remove Jira account?"})).not.toHaveTextContent("team@example.com");
     press("Cancel");
     expect(writes().some(([url]) => url.endsWith("/retire"))).toBe(false);
+  });
+  it("keeps the partial-write fact when one source watch was removed", async () => {
+    wire(POLISH.room); mount();
+    fireEvent.click(await screen.findByRole("tab", {name:"Sources"}));
+    fireEvent.click(await row(/Jira account/));
+    const source = POLISH.room.sources.items.find(source => source.provider === "jira")!;
+    expect(source.watchIds.length).toBeGreaterThan(1);
+    routes[`POST /api/watches/${source.watchIds[0]}/retire`] = {};
+    routes[`POST /api/watches/${source.watchIds[1]}/retire`] = () => { throw new ApiError(409, RETIRE.stale.message, RETIRE.stale); };
+    press("Remove");
+    fireEvent.click(within(screen.getByRole("region", {name:"Remove Jira account?"})).getByRole("button", {name:"Remove"}));
+    expect(await screen.findByText(/Other changes stay/)).toBeVisible();
+    expect(screen.getByRole("button", {name:"Read again"})).toBeEnabled();
   });
   it("gives a history subject the name seat and puts its action on the second line", async () => {
     wire(POLISH.room); mount();
