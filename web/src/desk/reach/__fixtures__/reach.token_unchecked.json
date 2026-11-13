@@ -20,13 +20,18 @@
       },
       "destination": "Telegram · owner chat",
       "health": {
-        "since": "2026-11-13T15:30:10.702251+00:00",
+        "since": "2026-11-13T16:34:15.577649+00:00",
         "state": "not_checked",
         "words": "Telegram has not checked this token yet. The desk checks it at the next poll."
       },
       "keystore": "open",
       "last_test": null,
       "on": true,
+      "outbox": {
+        "last_error_words": null,
+        "oldest_since": null,
+        "waiting": 0
+      },
       "paired": null,
       "pairing": null,
       "token": "keystore"
