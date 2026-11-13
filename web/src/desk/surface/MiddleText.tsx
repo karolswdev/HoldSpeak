@@ -20,5 +20,5 @@ export function MiddleText({value, title = value, className, testId, keepFileNam
     watch?.observe(node); let live=true; void document.fonts?.ready.then(()=>{if(live)fit();});
     return ()=>{live=false;watch?.disconnect();};
   },[value,keepFileName,cut,lines]);
-  return <span ref={ref} className={className} title={title} aria-label={cut === "end" ? undefined : value} data-testid={testId} data-feedback-redact="true">{shown}</span>;
+  return <span ref={ref} className={className} title={title} aria-label={cut === "end" && lines === 1 ? undefined : value} data-testid={testId} data-feedback-redact="true">{shown}</span>;
 }

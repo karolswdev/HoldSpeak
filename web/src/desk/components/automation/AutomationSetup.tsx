@@ -173,6 +173,6 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
     ]} />});
     primary = () => void update({output_target:target});
   }
-  return <InspectorForm testId="automation-setup" rows={rows} notice={error || readError || (part === "put" && destinations.failed) ? <SurfaceState error={error || readError || "Destinations not loaded"} onRetry={readError ? () => void readOptions() : part === "put" && destinations.failed ? destinations.reload : undefined} /> : undefined}
+  return <InspectorForm wholeRows={part === "do"} testId="automation-setup" rows={rows} notice={error || readError || (part === "put" && destinations.failed) ? <SurfaceState error={error || readError || "Destinations not loaded"} onRetry={readError ? () => void readOptions() : part === "put" && destinations.failed ? destinations.reload : undefined} /> : undefined}
     completion={immediate ? {done:onDone} : {cancel:onDone,cancelDisabled:busy,primary:{label:part === "about" ? "Add folder" : "Save",run:primary,disabled,busy,testId:"automation-setup-save"}}} />;
 }

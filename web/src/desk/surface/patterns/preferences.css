@@ -604,3 +604,6 @@
 .surface-pane-actions.surface-verb-row > .surface-input-well { flex: 1 1 200px; width: 0; min-width: 0; }
 
 .surface-verb-row { container: verb-row / inline-size; width: 100%; }
+
+/* Object names use the shared measured fitter; facts keep the complete value. */
+.surface-inspector-facts .gadget-row-gadget { overflow-wrap: anywhere; }
