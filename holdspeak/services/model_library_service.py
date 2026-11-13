@@ -228,6 +228,35 @@ class ModelLibraryApplicationService:
         )
         return self._receipt(before, self.assignment_heads(principal), result)
 
+    def resolve_hosted_arguments(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        return self._resolved_provider_arguments(principal, args, hosted=True)
+
+    def resolve_endpoint_arguments(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        return self._resolved_provider_arguments(principal, args)
+
+    def resolve_paired_arguments(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        return self._resolved_provider_arguments(principal, args, paired=True)
+
+    def _resolved_provider_arguments(self, principal: Principal, args: dict[str, Any], *,
+                                     hosted: bool = False, paired: bool = False) -> dict[str, Any]:
+        self.require_owner(principal)
+        raw = dict(args.get("draft") or {})
+        parsed = self._provider_draft(raw, hosted=hosted, paired=paired)
+        # Keep the public DTO closed: internal hashes and the locator never
+        # grow a second argument bag. Only the accepted fields are carried.
+        return {**args, "draft": {key: parsed.get(key, value) for key, value in raw.items()}}
+
+    def resolve_cli_arguments(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        self.require_owner(principal)
+        raw = dict(args.get("draft") or {})
+        parsed = self._cli_draft(raw)
+        values = parsed["hash_material"]
+        # Keep a supplied sub-cent amount as input: the writer uses the same
+        # two-decimal parser, and a rounded zero is not a valid new input.
+        values = {**values, "spend_limit_usd": raw.get("spend_limit_usd")}
+        return {**args, "draft": {**raw, **{key: values[key] for key in
+            ("label", "model", "spend_limit_usd", "egress_host") if key in values}}}
+
     def connect_hosted_model(
         self, principal: Principal, draft: dict[str, Any], secret: dict[str, Any] | None = None,
     ) -> dict[str, Any]:

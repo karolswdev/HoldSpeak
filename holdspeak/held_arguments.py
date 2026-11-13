@@ -21,7 +21,11 @@ it; reviewing as owner must not turn an agent's send into an owner's reply.
 Derived private values use owner_only facts; the caller gets their hidden kind,
 and both readers keep the revision over the owner's facts. A frozen derived
 value is a checked precondition, never a client assertion to trust.
-Bodies use word_count, never text. A hidden parent suppresses every child.
+Existing allowlisted aliases can declare x-held-delegate: the owning handler
+resolver selects the existing inner tool and argument root. Its declaration,
+canonical preparation and the one projector are reused, never copied.
+Bodies use word_count, never text. File contents use utf8_bytes, never text.
+Read list paths may use $ for the root; a match can add a fixed id prefix. A hidden parent suppresses every child.
 Every shown scalar is bounded by HELD_FACT_VALUE_LIMIT in the one projector.
 """
 from __future__ import annotations
@@ -75,6 +79,14 @@ def resolve_target(schema: dict[str, Any], args: dict[str, Any], principal: Any,
     from copy import deepcopy
     declaration = schema.get("x-held-target")
     args = normalize_arguments(schema, args)
+    if schema.get("x-held-delegate"):
+        from holdspeak.mcp.tools import _tool_schema
+        module, function = schema["x-held-delegate"]["resolver"].split(":")
+        from importlib import import_module
+        name, payload = getattr(import_module(module), function)(args)
+        if name is not None:
+            inner = _tool_schema(name)
+            args[schema["x-held-delegate"]["arguments"]] = resolve_target(inner, payload, principal, caller=caller)
     if not declaration:
         return deepcopy(args)
     if declaration.get("factory"):
@@ -112,7 +124,7 @@ def hidden(key: str, label: str, kind: str = "secret") -> dict[str, Any]:
 
 
 def named(key: str | list[str], label: str, tool: str, arguments: dict[str, Any],
-          value: str, *, rows: str | list[str] | None = None, match: dict[str, str] | None = None,
+          value: str, *, rows: str | list[str] | None = None, match: dict[str, Any] | None = None,
           through: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"key": key, "label": label, "kind": "text", "read": {
         "tool": tool, "arguments": arguments, "value": value,
@@ -131,11 +143,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "activity.records.delete",
     "activity.refresh",
     "activity.rule.delete",
-    "agent.answer",
-    "agent.hand.cancel_queued",
-    "agent.launch.seen",
-    "agent.prompt",
-    "agent.start_helper",
     "ask.resolve_grounding",
     "ask.run",
     "automation.cancel",
@@ -146,7 +153,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "automation.lesson.forget",
     "automation.make_one",
     "automation.result.open",
-    "automation.run",
     "automation.template.instantiate",
     "automation.update",
     "cadence.apply_closeout",
@@ -154,7 +160,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "cadence.run_now",
     "cadence.set_status",
     "cadence.snooze",
-    "calls.hangup",
     "concierge.detect",
     "concierge.retry",
     "connection.recheck",
@@ -163,19 +168,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "decision_record.create_from_meeting",
     "delivery.actuator.github.propose",
     "delivery.actuator.webhook.propose",
-    "desk.mark",
-    "desk.projection.present",
-    "desk.request.replay",
-    "desk.say",
-    "desk.scroll",
-    "desk.verb",
-    "desk_window.move",
-    "desk_window.resize",
-    "desk_window.seat",
-    "desk_window.send_back",
-    "desk_window.set_geometry",
-    "desk_window.stage_shelf",
-    "desk_window.zoom",
     "dictation.blocks.create",
     "dictation.blocks.delete",
     "dictation.blocks.update",
@@ -242,18 +234,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "recipe.delete",
     "recipe.run",
     "recipe.update",
-    "recordings.park",
-    "recordings.retry",
-    "recordings.unshare",
-    "repository.checkout",
-    "repository.commit",
-    "repository.register",
-    "repository.stage",
-    "repository.write_file",
-    "scheduled_recording.cancel_armed",
-    "scheduled_recording.create",
-    "scheduled_recording.delete",
-    "scheduled_recording.update",
     "thought.accept_review",
     "thought.adopt_note",
     "thought.answer_and_continue",
@@ -286,8 +266,5 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "thread.update",
     "walk.answer",
     "walk.create",
-    "workbench.add_item",
-    "workbench.delete_item",
-    "workbench.update_item",
     "zone.unfile",
 })

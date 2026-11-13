@@ -169,6 +169,21 @@ class ScheduledRecordingService:
         # HS-147-01: injectable clock for deterministic arm-from-event tests.
         self._clock = clock or (lambda: datetime.now(tz=timezone.utc))
 
+    @staticmethod
+    def command_arguments(args: dict[str, Any], *, create: bool) -> dict[str, Any]:
+        result = dict(args)
+        if create and args.get("calendar_event_id"):
+            for key in ("title", "cron_expr", "tz", "one_shot", "duration_minutes", "enabled"):
+                result.pop(key, None)
+            return result
+        defaults = {"title": "", "cron_expr": "", "tz": "UTC", "one_shot": False,
+                    "duration_minutes": 60, "enabled": False}
+        for key, default in defaults.items():
+            if key in args or create:
+                value = args.get(key, default)
+                result[key] = bool(value) if key in {"one_shot", "enabled"} else int(value) if key == "duration_minutes" else str(value)
+        return result
+
     def list_schedules(self, principal: Principal) -> list[dict[str, Any]]:
         """List all scheduled recordings.
 

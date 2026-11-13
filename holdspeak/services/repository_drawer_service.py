@@ -31,6 +31,7 @@ from .repository_workspace import (
     repository_status,
     repository_tree,
     resolve_worktree,
+    run_git,
     safe_path,
     sha256_bytes,
     stage_paths,
@@ -151,8 +152,42 @@ class RepositoryDrawerService:
             log.error("repository list failed: %s", exc)
             raise RepositoryRefused(500, "repository list failed") from exc
 
+    @staticmethod
+    def registration_arguments(args: dict[str, Any]) -> dict[str, Any]:
+        result = dict(args)
+        if args.get("source_id"):
+            result.pop("path", None)
+            result.pop("label", None)
+        return result
+
+    @staticmethod
+    def checkout_arguments(args: dict[str, Any]) -> dict[str, Any]:
+        return {**args, **({"branch": args["branch"].strip()} if isinstance(args.get("branch"), str) else {})}
+
+    def resolve_workspace_arguments(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        _source, _root, identity = _workspace(lambda: resolve_worktree(self._read_registry(),
+            str(args.get("repository_id") or ""), _scope(args.get("query_worktree_id"), args.get("worktree_id")),
+            with_identity=True))
+        return {**args, "worktree_id": identity}
+
+    def resolve_commit_arguments(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        import hashlib
+        resolved = self.resolve_workspace_arguments(principal, args)
+        root = self._root(resolved["repository_id"], resolved["worktree_id"])
+        raw = run_git(root, "diff", "--cached", "--raw", "-z", "--no-ext-diff", "--no-textconv")
+        names = run_git(root, "diff", "--cached", "--name-only", "-z", "--no-ext-diff", "--no-textconv")
+        if raw.returncode or names.returncode:
+            raise RepositoryRefused(409, "The staged files cannot be read.")
+        revision = hashlib.sha256(raw.stdout.encode()).hexdigest()
+        if args.get("expected_index") is not None and args["expected_index"] != revision:
+            raise RepositoryRefused(409, "The staged files changed. Read again.")
+        return {**resolved, "message": args["message"].strip() if isinstance(args.get("message"), str) else args.get("message"),
+                "file_count": len([name for name in names.stdout.split("\0") if name]), "expected_index": revision}
+
     def register(self, principal: Any, source_id: Optional[str] = None, path: Optional[str] = None,
                  label: Optional[str] = None) -> dict[str, Any]:
+        prepared = self.registration_arguments({"source_id": source_id, "path": path, "label": label})
+        source_id, path, label = prepared.get("source_id"), prepared.get("path"), prepared.get("label")
         del principal
         try:
             # Registry writes are serialized. Each production write starts
@@ -277,10 +312,13 @@ class RepositoryDrawerService:
         return {"staged": _workspace(lambda: stage_paths(root, relative))}
 
     def commit(self, principal: Any, repository_id: str, message: Any = None, worktree_id: Optional[str] = None,
-               query_worktree_id: Optional[str] = None) -> dict[str, Any]:
-        del principal
+               query_worktree_id: Optional[str] = None, expected_index: Optional[str] = None) -> dict[str, Any]:
         if not isinstance(message, str):
             raise RepositoryRefused(422, "message required")
+        if expected_index is not None:
+            resolved = self.resolve_commit_arguments(principal, {"repository_id": repository_id, "message": message,
+                "worktree_id": worktree_id, "query_worktree_id": query_worktree_id, "expected_index": expected_index})
+            worktree_id = resolved["worktree_id"]
         root = self._root(repository_id, _scope(query_worktree_id, worktree_id))
         words = message.strip()
         if not words:

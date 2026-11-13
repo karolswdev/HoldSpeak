@@ -737,6 +737,18 @@ class CallsService:
 
     # ── the verbs ─────────────────────────────────────────────────────
 
+    @staticmethod
+    def resolve_call_arguments(principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        target = str(args.get("to") or "").strip()
+        if not target:
+            cfg = _settings()
+            target = cfg.allowed_numbers[0] if cfg.allowed_numbers else ""
+        if not target:
+            from ..services.errors import ServiceError
+            raise ServiceError("calls_no_number", "Set your number in Settings ▸ Calls first.",
+                               context={"status": 409, "reason": "no_number"})
+        return {**args, "to": target}
+
     async def place(
         self, to: str = "", *, greeting: Optional[str] = None, context: str = "", reason: str = "",
         on_end: Optional[Callable[[CallRecord], None]] = None, about: str = "",
@@ -752,7 +764,7 @@ class CallsService:
         from ..services.errors import ServiceError
 
         cfg = _settings()
-        target = str(to or "").strip() or (cfg.allowed_numbers[0] if cfg.allowed_numbers else "")
+        target = self.resolve_call_arguments(None, {"to": to})["to"]
         if not target:
             raise ServiceError("calls_no_number", "Set your number in Settings ▸ Calls first.",
                                context={"status": 409, "reason": "no_number"})
@@ -796,7 +808,7 @@ class CallsService:
         from ..services.errors import ServiceError
 
         cfg = _settings()
-        target = str(to or "").strip() or (cfg.allowed_numbers[0] if cfg.allowed_numbers else "")
+        target = self.resolve_call_arguments(None, {"to": to})["to"]
         if not target:
             raise ServiceError("calls_no_number", "Set your number or SIP address in Settings ▸ Calls first.",
                                context={"status": 409, "reason": "no_number"})

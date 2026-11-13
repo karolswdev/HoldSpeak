@@ -97,7 +97,7 @@ def test_p1_every_declaration_is_short_and_hidden_parents_suppress_children(hub,
     from holdspeak.held_arguments import hidden
     declared = [tool for tool in tools.TOOLS if "x-held-arguments" in tool["inputSchema"]]
     for tool in declared:
-        schema = {key: value for key, value in tool["inputSchema"].items() if key not in {"x-held-target", "x-held-normalize"}}
+        schema = {key: value for key, value in tool["inputSchema"].items() if key not in {"x-held-target", "x-held-normalize", "x-held-delegate"}}
         monkeypatch.setitem(tool, "inputSchema", schema)
         args = {}
         for fact in schema["x-held-arguments"]:
@@ -252,7 +252,7 @@ def test_program_shape_uses_its_read_target_when_a_new_match_appears(tmp_path, m
 
 @pytest.mark.parametrize("tool", [t for t in tools.TOOLS if "x-held-arguments" in t["inputSchema"]],
                          ids=lambda t: t["name"])
-def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(hub, tmp_path, monkeypatch, tool):
+def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(hub, tmp_path, monkeypatch, tool, fact_rig):
     """Conformance at the dispatch port for every declaration, including new ones.
 
     Domain selector behavior is proved separately with the real Program and
@@ -281,6 +281,7 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
                                (*PROGRAM_OPERATIONS, operations.MEETING_READ, *CHANNEL_OPERATIONS,
                                 operations.PROJECT_RESOURCE_ADD, operations.PROJECT_RESOURCE_REMOVE, operations.NOTE_OUTCOME_EDIT))
     monkeypatch.setattr(tools, "runtime_registry", lambda *a: registry)
+    registry.operations.update(fact_rig.bound.operations)
     args = {}
     for key, prop in tool["inputSchema"].get("properties", {}).items():
         if key not in tool["inputSchema"].get("required", []) and key not in {"program_id", "meeting_id"}:
@@ -309,6 +310,9 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
         with hub.db._connection() as conn:
             conn.execute("INSERT INTO note_outcomes (id,note_id,ordinal,kind,text,state,found_at) VALUES ('B',?,0,'task','Private row','proposed','2026-11-12T00:00:00Z')", (note["id"],))
         args = {"note_id": note["id"], "row_id": "B"}
+    if tool['name'].startswith(('repository.', 'provider.', 'model_library.', 'calls.')) or tool['name'] == 'desk.verb':
+        from tests.integration.test_held_tool_facts_round5 import valid_arguments
+        args = valid_arguments(tool, fact_rig)
     held = handle(tool["name"], args)
     details = held_call_details(held, OWNER)
     approved = deepcopy(held.args)
@@ -499,3 +503,6 @@ def test_a_bound_stop_refuses_a_controller_that_cannot_take_the_identity(hub):
         service.stop_capture(OWNER, "B")
     assert refused.value.code == "capture_binding_unavailable"
     assert stopped == []
+
+# Valid owning-service operands for the extensible declaration conformance property.
+from tests.integration.test_held_tool_facts_round5 import fact_rig  # noqa: F401,E402

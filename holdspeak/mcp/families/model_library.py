@@ -6,6 +6,8 @@ write-only field and are passed only to ``ModelLibraryApplicationService``.
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, target
+
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
 import base64
@@ -29,11 +31,11 @@ MAX_MODEL_FILE_BASE64_CHARS = ((MAX_MODEL_FILE_BYTES + 2) // 3) * 4
 
 def _schema(
     name: str, properties: dict[str, Any], required: list[str], *, description: str
-) -> dict[str, Any]:
+, facts: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "name": name,
         "description": description,
-        "inputSchema": {
+        "inputSchema": {**dict(facts or {}),
             "$id": f"holdspeak://mcp/{name}@1",
             "type": "object",
             "properties": properties,
@@ -137,25 +139,48 @@ TOOLS: list[dict[str, Any]] = [
         },
         ["request_id", "catalog_id", "catalog_revision"],
         description="Start one catalog-pinned Model Library download. Assignments stay unchanged.",
-    ),
+     facts=held_arguments('Download a model',
+                named('catalog_id', 'Model', 'model_library.get', {}, 'label', rows='rows', match={'id': {'path': 'catalog_id', 'prefix': 'catalog:'}}),
+                hidden('request_id', 'Request', 'token'),
+                hidden('catalog_revision', 'Catalogue revision', 'token'))),
     _schema(
         "model_library.add_to_library",
         {"request_id": _REQUEST_ID, "detected_artifact_id": {"type": "string", "minLength": 1, "maxLength": 160}},
         ["request_id", "detected_artifact_id"],
         description="Add one server-detected artifact to the Model Library. Assignments stay unchanged.",
-    ),
+     facts=held_arguments('Add a local model',
+                named('detected_artifact_id', 'Model', 'model_library.get', {}, 'label', rows='rows', match={'id': {'path': 'detected_artifact_id', 'prefix': 'detected:'}}),
+                hidden('request_id', 'Request', 'token'))),
     _schema(
         "model_library.connect_hosted_model",
         _PROVIDER_INPUT,
         ["draft", "secret"],
         description="Connect a hosted provider. secret is write-only and is never returned, logged, or receipted.",
-    ),
+     facts={**target('model_library.connect_hosted_model', 'resolve_hosted_arguments', factory='holdspeak.mcp.families.model_library:_service'), **held_arguments('Connect a hosted model',
+                text('draft.label', 'Engine'),
+                text('draft.model', 'Model'),
+                hidden('draft.profile_id', 'Profile', 'secret'),
+                hidden('draft.request_id', 'Request', 'token'),
+                hidden('draft.expected_profile_revision', 'Saved revision', 'token'),
+                text('draft.provider_family', 'Provider'),
+                hidden('secret', 'Credential', 'credential'),
+                hidden('draft.requires_key', 'Key required', 'secret'))}),
     _schema(
         "model_library.define_endpoint",
         {"draft": _ENDPOINT_DRAFT, "secret": _SECRET},
         ["draft", "secret"],
         description="Define a provider endpoint. secret is write-only and is never returned, logged, or receipted.",
-    ),
+     facts={**target('model_library.define_endpoint', 'resolve_endpoint_arguments', factory='holdspeak.mcp.families.model_library:_service'), **held_arguments('Define an engine endpoint',
+                text('draft.label', 'Engine'),
+                text('draft.model', 'Model'),
+                hidden('draft.profile_id', 'Profile', 'secret'),
+                hidden('draft.request_id', 'Request', 'token'),
+                hidden('draft.expected_profile_revision', 'Saved revision', 'token'),
+                text('draft.provider_family', 'Provider'),
+                hidden('secret', 'Credential', 'credential'),
+                hidden('draft.requires_key', 'Key required', 'secret'),
+                hidden('draft.endpoint', 'Endpoint', 'credential'),
+                text('draft.context_tokens', 'Context tokens'))}),
     _schema(
         "model_library.connect_cli_engine",
         {"draft": _CLI_DRAFT},
@@ -165,7 +190,15 @@ TOOLS: list[dict[str, Any]] = [
             "The CLI uses its own sign-in. model 'default' keeps the CLI's model. spend_limit_usd "
             "is optional; only claude enforces one. egress_host: pi only. Assignments stay unchanged."
         ),
-    ),
+     facts={**target('model_library.connect_cli_engine', 'resolve_cli_arguments', factory='holdspeak.mcp.families.model_library:_service'), **held_arguments('Connect an agent engine',
+                text('draft.label', 'Engine'),
+                text('draft.model', 'Model'),
+                hidden('draft.profile_id', 'Profile', 'secret'),
+                hidden('draft.request_id', 'Request', 'token'),
+                hidden('draft.expected_profile_revision', 'Saved revision', 'token'),
+                text('draft.preset', 'Agent'),
+                {**text('draft.spend_limit_usd', 'US dollars per run'), 'format': 'spend_limit'},
+                {**text('draft.egress_host', 'Host', owner_only=True), 'format': 'host'})}),
     _schema(
         "model_library.set_spend_limit",
         {
@@ -178,13 +211,23 @@ TOOLS: list[dict[str, Any]] = [
             "Change an agent engine's spend limit per run (US dollars); null is no limit. "
             "codex cannot enforce one. Assignments stay unchanged."
         ),
-    ),
+     facts=held_arguments('Change an engine spend limit',
+                named('profile_id', 'Engine', 'model_library.get', {}, 'label', rows='rows', match={'id': {'path': 'profile_id', 'prefix': 'profile:'}}),
+                hidden('request_id', 'Request', 'token'),
+                {**text('spend_limit_usd', 'US dollars per run'), 'format': 'spend_limit'})),
     _schema(
         "model_library.connect_paired_device",
         {"draft": _PAIRED_DRAFT},
         ["draft"],
         description="Connect one already-paired device to the Model Library.",
-    ),
+     facts={**target('model_library.connect_paired_device', 'resolve_paired_arguments', factory='holdspeak.mcp.families.model_library:_service'), **held_arguments('Connect a paired device',
+                text('draft.label', 'Engine'),
+                text('draft.model', 'Model'),
+                hidden('draft.profile_id', 'Profile', 'secret'),
+                hidden('draft.request_id', 'Request', 'token'),
+                hidden('draft.expected_profile_revision', 'Saved revision', 'token'),
+                text('draft.provider_family', 'Provider'),
+                hidden('draft.paired_target_id', 'Paired device', 'secret'))}),
     _schema(
         "model_library.use_model_file",
         {
@@ -197,7 +240,10 @@ TOOLS: list[dict[str, Any]] = [
             "Add one model file from base64 bytes (maximum 16 MiB decoded). The hub stages and "
             "deletes the file; client paths and extra fields are refused."
         ),
-    ),
+     facts=held_arguments('Add a model file',
+                text('filename', 'File'),
+                hidden('bytes_base64', 'File data', 'file bytes'),
+                hidden('request_id', 'Request', 'token'))),
 ]
 
 
