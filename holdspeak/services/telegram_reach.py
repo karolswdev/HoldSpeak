@@ -227,6 +227,14 @@ def cadence_config(section: Any) -> Any:
 
 # ── the transport ────────────────────────────────────────────────────
 
+# The long poll. Telegram holds ``getUpdates`` open for LONG_POLL_SECONDS; the
+# client must wait longer than that, or every quiet poll ends as a client
+# timeout (an ``indeterminate`` egress record) and the loop polls again at
+# once. The client timeout is derived from the long poll so the two cannot
+# drift apart.
+LONG_POLL_SECONDS = 25
+LONG_POLL_CLIENT_TIMEOUT = LONG_POLL_SECONDS + 10
+
 
 def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: float = 10.0,
                data_class: str = "reach_package") -> dict[str, Any]:
@@ -342,6 +350,7 @@ class TelegramReach:
         self.db = db
         self.store = BriefingStore(db)
         self._call = caller or call_reach
+        self.last_poll_ok = True
         self._briefing = briefing
         self._reach = reach
         self._programs = programs
@@ -386,7 +395,8 @@ class TelegramReach:
         base = page_base()
         return f"{base}{path}" if base else None
 
-    def _api(self, method: str, params: Mapping[str, Any], *, data_class: str = "reach_package") -> dict[str, Any]:
+    def _api(self, method: str, params: Mapping[str, Any], *, data_class: str = "reach_package",
+             timeout: Optional[float] = None) -> dict[str, Any]:
         if method in ("sendMessage", "editMessageText") and isinstance(params.get("text"), str):
             from .reach_redact import reach_line
 
@@ -395,7 +405,8 @@ class TelegramReach:
         if not token or not telegram_on():
             return {"ok": False, "description": "telegram is off"}
         if self._call is call_reach:
-            result = call_reach(token, method, params, data_class=data_class)
+            more = {"timeout": timeout} if timeout is not None else {}
+            result = call_reach(token, method, params, data_class=data_class, **more)
         else:
             result = self._call(token, method, dict(params))
         if not result.get("ok", True):
@@ -609,11 +620,16 @@ class TelegramReach:
     # ── updates ──────────────────────────────────────────────────────
 
     def poll_once(self, offset: Optional[int]) -> Optional[int]:
-        """One getUpdates round (long poll, 25 s); the next offset."""
-        params: dict[str, Any] = {"timeout": 25}
+        """One getUpdates round (long poll); the next offset.
+
+        ``last_poll_ok`` says if Telegram answered: the reach loop waits
+        before the next poll after one that failed or timed out."""
+        params: dict[str, Any] = {"timeout": LONG_POLL_SECONDS}
         if offset is not None:
             params["offset"] = offset
-        result = self._api("getUpdates", params, data_class="reach_update_cursor")
+        result = self._api("getUpdates", params, data_class="reach_update_cursor",
+                           timeout=LONG_POLL_CLIENT_TIMEOUT)
+        self.last_poll_ok = bool(result.get("ok", True))
         next_offset = offset
         for update in result.get("result", []) or []:
             try:
