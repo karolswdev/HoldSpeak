@@ -101,6 +101,7 @@ def test_live_seats(desk,pw_browser,width):
 
 def capture_state(page,win,app,state,width):
  mapping={
+  ('people','brief-last'):['5'],
   ('agents','permission-held'):['23','19'],('agents','remove-question'):['23'],
   ('today','agenda-failed'):['19'],('today','prepared-suggestion'):['10'],('today','empty-day'):['12'],
   ('calls','call-failed'):['19'],('calls','live'):['B'],

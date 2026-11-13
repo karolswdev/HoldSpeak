@@ -321,6 +321,9 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
                     assert abs(picker.bounding_box()["x"]-facts_left) <= 1
                 assert win.locator('[role=row][data-object-id] button').count() == 0
                 page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
+                if state == "brief-last":
+                    from .test_kit_polish_wave14_r2_glass import capture_state
+                    capture_state(page, win, "people", state, width)
                 assert win.locator('h1:not(.reading-heading), .people-folds, .people-section').count() == 0, win.locator('h1:not(.reading-heading), .people-folds, .people-section').evaluate_all("els=>els.map(el=>el.outerHTML.slice(0,1500))")
                 page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
 
