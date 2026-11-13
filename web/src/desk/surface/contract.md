@@ -2263,3 +2263,9 @@ Speak declares its ordinary verbs to ToolbarFold; its separate strip fitter
 is parked. The Talk control keeps its existing hold and key handling. Raw
 `surface-pane-actions` class compositions of facts, single-action notices,
 choice rosters or whole panes remain compositions, not verb-row adapters.
+
+- `PaneInspector` fits its object name with the shared `MiddleText` name
+  fitter in up to three whole lines. Long path and identifier names end in
+  an ellipsis inside the heading's seat. The full identity remains in the
+  section's accessible name and the name's hover title. Other `MiddleText`
+  consumers retain their one-line default.

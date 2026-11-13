@@ -21,13 +21,14 @@ import { refusedWord } from "../../channels/channels";
 import { updateDoc } from "../../channels/SendWell";
 import { SendWells } from "../../../desk/surface/send";
 import { PaneViewContext } from "../../../desk/surface/patterns/PaneViews";
-import { RoomList, roomReadingText, type RoomEntry } from "../RoomList";
+import { RoomList, roomReadingText, roomClaimWords, type RoomEntry } from "../RoomList";
 import type { UpdateController } from "./useUpdateController";
 import {
   generatorLabel,
   lifecycleLabel,
   claimSends,
   refChipLabel,
+  refIdentityLabel,
   type ProjectUpdate,
 } from "./model";
 
@@ -86,7 +87,7 @@ export function UpdatePosture({
     seat === "claims" && current
       ? current.claims.map((row) => ({
           id: row.spanId,
-          name: row.text,
+          ...roomClaimWords(row.text),
           kind: row.kind,
           kindWord: row.kind.replaceAll("_", " "),
           cells: {
@@ -103,7 +104,7 @@ export function UpdatePosture({
             { label: "Support", value: row.support.replaceAll("_", " ") },
             { label: "Acceptance", value: row.acceptance },
             { label: "Send", value: claimSends(row) ? "Included" : "Omitted" },
-            { label: "Sources", value: row.refs.join(" · ") },
+            { label: "Sources", value: row.refs.map(refIdentityLabel).join(" · ") },
             ...row.unknowns.map((unknown, i) => ({
               key: String(i),
               label: "Not known",
@@ -116,9 +117,7 @@ export function UpdatePosture({
         ? [...new Set(current.claims.flatMap((row) => row.refs))].map(
             (ref) => ({
               id: ref,
-              name:
-                current.claims.find((claim) => claim.refs.includes(ref))
-                  ?.text || refChipLabel(ref),
+              ...roomClaimWords(current.claims.find((claim) => claim.refs.includes(ref))?.text || refChipLabel(ref)),
               kind: "artifact",
               kindWord: ref.split(":")[0],
               open: refOpener(ref) ?? undefined,
@@ -341,7 +340,7 @@ export function UpdatePosture({
               {
                 label: "Text",
                 control: (
-                  <div data-feedback-redact="true"><PadGadget
+                  <div className="surface-inspector-control" data-feedback-redact="true"><PadGadget
                     label="Update body"
                     value={ctrl.editBody}
                     onChange={ctrl.handleEditBody}

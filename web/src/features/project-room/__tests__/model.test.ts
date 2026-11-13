@@ -479,6 +479,14 @@ describe("decodeRoomSnapshot", () => {
 
 
 describe("Room item change identity", () => {
+  it("keeps every changed field for the list to fit", () => {
+    const row = decodeChangeRow({ change_kind: "project.updated", summary_json: { name: "Payments", purpose: "Read", outcome_text: "Ready", posture: "on_track", lifecycle: "active" } });
+    expect(row.label).toBe("Updated · name, purpose, outcome, posture, lifecycle");
+  });
+  it("names the created project rather than the name field", () => {
+    const row = decodeChangeRow({ change_kind: "project.created", summary_json: { name: "Payments Platform Rewrite" } });
+    expect(row.label).toBe("Created · Payments Platform Rewrite");
+  });
   it("keeps the stored title and item identity in an added milestone", () => {
     const row = decodeChangeRow({ id: "change-1", change_kind: "project.updated", target_ref: "project:p1",
       summary_json: JSON.stringify({ action: "item.created", item_id: "milestone-1", item_type: "milestone", title: "Production cutover" }) });
