@@ -38,7 +38,7 @@ class FakeService:
     def __init__(self, eligible: set[str], private: set[str]) -> None:
         self.eligible, self.private = eligible, private
 
-    def _project_update_meeting_ids(self, principal: Any, project_id: str):
+    def project_update_meeting_ids(self, principal: Any, project_id: str):
         return set(self.private), set(self.eligible)
 
 
@@ -225,7 +225,7 @@ def test_the_service_names_delegate_to_the_policy(monkeypatch) -> None:
         monkeypatch.setattr(policy, name, lambda *args, _n=name: calls.append(_n) or args)
     service = ProjectUpdateService.__new__(ProjectUpdateService)
     service._db, service._project_service, service._people_names = "db", "projects", None
-    assert service._project_update_meeting_ids("me", "p1") == ("db", "projects", None, "me", "p1")
+    assert service.project_update_meeting_ids("me", "p1") == ("db", "projects", None, "me", "p1")
     service.project_update_excluded_refs("me", "p1")
     service.project_update_grounding_refs("me", "p1")
     assert calls == ["meeting_ids", "excluded_refs", "grounding_refs"]

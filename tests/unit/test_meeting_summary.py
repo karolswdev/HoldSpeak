@@ -24,8 +24,8 @@ from holdspeak.services.concierge_service import (
     assign_summary,
     detect,
     propose,
-    summary_assignment_projection,
 )
+from holdspeak.services.engine_door import summary_assignment as summary_assignment_projection
 from holdspeak.services.inference_acquisition_service import (
     InferenceAcquisitionApplicationService,
 )

@@ -145,7 +145,7 @@ class DoorService:
         # Thought lane. People are visible to it (Conductor R7).
         if not launch:
             projected_board["active"] = self._active_thoughts(principal)
-        upcoming = self._upcoming(now_utc)
+        upcoming = self.upcoming(now_utc)
         has_calendar = self._calendar_configured()
         counts: dict[str, int] = {
             "overdue": len(projected_board["overdue"]),
@@ -330,7 +330,7 @@ class DoorService:
             ],
         }
 
-    def _upcoming(self, now: datetime) -> list[dict[str, Any]]:
+    def upcoming(self, now: datetime) -> list[dict[str, Any]]:
         upcoming: list[dict[str, Any]] = []
         enabled_recordings = self._scheduled_recordings.list_enabled()
         now_iso = self._utc_iso(now)

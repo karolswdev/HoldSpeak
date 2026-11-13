@@ -1007,17 +1007,15 @@ class AskService:
         this Ask's ``ask_text`` frames.  A pass that calls a tool starts the
         words again: the answer is the last pass's text. Returns the detach:
         after it, no frame goes to this Ask (HS-S34)."""
-        original = getattr(service, "_broadcast", None)
-        if original is None:
+        tap_events = getattr(service, "tap_events", None)
+        if tap_events is None:
             return lambda: None
-        attached = [True]
         parts: list[str] = []
         frames = _TextFrames(lambda text: self.send_text(invocation_id, text))
 
         def tap(kind: str, data: Any = None, *args: Any, **kwargs: Any) -> Any:
-            out = original(kind, data, *args, **kwargs)
             try:
-                if attached[0] and isinstance(data, dict) and data.get("thread_id") == thread_id:
+                if isinstance(data, dict) and data.get("thread_id") == thread_id:
                     if kind == "thread_delta" and data.get("kind") == "text" and data.get("text"):
                         parts.append(str(data["text"]))
                         frames.feed("".join(parts))
@@ -1027,16 +1025,8 @@ class AskService:
                         frames.finish("".join(parts))
             except Exception:  # a text frame is never a gate
                 pass
-            return out
 
-        service._broadcast = tap
-
-        def untap() -> None:
-            attached[0] = False
-            if getattr(service, "_broadcast", None) is tap:
-                service._broadcast = original
-
-        return untap
+        return tap_events(tap)
 
     def engine_tools(self) -> dict[str, str]:
         """Betterment Q7: whether the Answers engine can use the desk's tools

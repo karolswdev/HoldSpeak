@@ -107,7 +107,7 @@ def prepare_project_update_call(
     folded_excluded = {str(ref).casefold() for ref in excluded}
     if name == "meeting.get":
         meeting_id = str(args.get("meeting_id") or "").strip().casefold()
-        _private_ids, eligible_ids = _service._project_update_meeting_ids(principal, project_id)
+        _private_ids, eligible_ids = _service.project_update_meeting_ids(principal, project_id)
         if meeting_id not in {value.casefold() for value in eligible_ids}:
             return args, excluded, "meeting is outside project update sources"
     if name in {"project.get", "project.get_delta", "project.get_room", "project.list_updates",
@@ -263,7 +263,7 @@ def filter_response(response: Any, excluded: set[str], name: str, *, project_id:
             continue
         if name == "meeting.list" and project_id and isinstance(payload, dict):
             service, _excluded = update_source_service(principal, project_id)
-            _private, eligible = service._project_update_meeting_ids(principal, project_id)
+            _private, eligible = service.project_update_meeting_ids(principal, project_id)
             payload["meetings"] = [
                 row for row in payload.get("meetings", [])
                 if isinstance(row, dict) and str(row.get("id") or "") in eligible

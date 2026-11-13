@@ -775,7 +775,7 @@ class RefinementContextService:
                 return {"thought": self._thought_dto(conn, thought),
                         "receipt": self._receipt(conn, dict(prior), thought)}
             from .refinement_thought_service import RefinementThoughtService
-            RefinementThoughtService(self._db)._validate_workspace_cursor_in_transaction(
+            RefinementThoughtService(self._db).validate_workspace_cursor_in_transaction(
                 conn, thought, workspace_cursor
             )
             if thought["state"] != "working" or (int(thought["aggregate_revision"]), int(thought["working_revision"]), int(thought["attachment_revision"])) != (expected_aggregate, expected_working, expected_attachment):
@@ -816,7 +816,7 @@ class RefinementContextService:
                 conn.execute("UPDATE refinement_invocations SET state='superseded',terminal_code='owner_context_changed',updated_at=?,terminal_at=? WHERE thought_id=? AND state IN ('reserved','in_flight','awaiting_projection','review_ready')",
                              (now, now, thought_id))
                 thought = updated
-                RefinementThoughtService._bump_continuity(conn, thought_id)
+                RefinementThoughtService.bump_continuity(conn, thought_id)
                 thought = dict(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
             action_id = f"rctx_{uuid.uuid4().hex[:12]}"
             post_attachments = self.project_in_transaction(conn, thought)
@@ -831,7 +831,7 @@ class RefinementContextService:
                        "attachment_sha256": post_hash}
             if workspace_cursor is not None:
                 receipt["committed_post_cursor"] = {
-                           "hub_id": RefinementThoughtService._workspace_hub_id(conn),
+                           "hub_id": RefinementThoughtService.workspace_hub_id(conn),
                            "thought_id": thought_id,
                            "aggregate_revision": int(thought["aggregate_revision"]),
                            "continuity_revision": int(thought["continuity_revision"]),
@@ -1362,7 +1362,7 @@ class RefinementContextService:
 
     def _thought_dto(self, conn: Any, thought: dict[str, Any]) -> dict[str, Any]:
         from .refinement_thought_service import RefinementThoughtService
-        return RefinementThoughtService(self._db)._dto_in_transaction(conn, dict(thought))
+        return RefinementThoughtService(self._db).dto_in_transaction(conn, dict(thought))
 
     @staticmethod
     def _encode_cursor(title: str, note_id: str) -> str:

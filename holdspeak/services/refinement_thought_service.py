@@ -137,7 +137,7 @@ class RefinementThoughtService:
                 receipt = RefinementContextService(self._db).default_application_receipt_in_transaction(
                     conn, thought_id=record["id"], create_request_id=request_id
                 )
-                return self._dto_in_transaction(conn, record), receipt
+                return self.dto_in_transaction(conn, record), receipt
             if conn.execute("SELECT 1 FROM directories WHERE id=? AND deleted=0", (INBOX_DIRECTORY_ID,)).fetchone() is None:
                 raise ValidationError("Inbox is unavailable", code="inbox_unavailable")
             thought_id = str(thought_id or _id("thought")).strip()
@@ -168,7 +168,7 @@ class RefinementThoughtService:
                 conn, thought=record, create_request_id=request_id,
                 working_sha256=working_hash, occurred_at=now,
             )
-            return self._dto_in_transaction(conn, record), receipt
+            return self.dto_in_transaction(conn, record), receipt
 
     def for_note(self, principal: Principal, note_id: str) -> dict[str, Any]:
         """Return a narrow owner-only ownership/precondition projection for one Note."""
@@ -179,7 +179,7 @@ class RefinementThoughtService:
                 raise NotFound("note", str(note_id))
             owned = conn.execute("SELECT * FROM refinement_thoughts WHERE working_note_id=?", (str(note_id),)).fetchone()
             if owned is not None:
-                return {"ownership": "thought", "thought": self._dto_in_transaction(conn, self._record(owned))}
+                return {"ownership": "thought", "thought": self.dto_in_transaction(conn, self._record(owned))}
             item = self._note(note)
             assert item is not None
             return {
@@ -230,7 +230,7 @@ class RefinementThoughtService:
                 receipt = RefinementContextService(self._db).default_application_receipt_in_transaction(
                     conn, thought_id=record["id"], create_request_id=request_id
                 )
-                return self._dto_in_transaction(conn, record), receipt
+                return self.dto_in_transaction(conn, record), receipt
             note = conn.execute("SELECT * FROM notes WHERE id=?", (note_id,)).fetchone()
             if note is None:
                 raise NotFound("note", note_id)
@@ -239,7 +239,7 @@ class RefinementThoughtService:
             claimed = conn.execute("SELECT * FROM refinement_thoughts WHERE working_note_id=?", (note_id,)).fetchone()
             if claimed is not None:
                 raise ConflictError("note is already a thought", code="note_already_a_thought",
-                                    context={"thought": self._dto_in_transaction(conn, self._record(claimed))})
+                                    context={"thought": self.dto_in_transaction(conn, self._record(claimed))})
             tags = json.loads(note["tags_json"])
             actual = RefinementThoughtRepository.content_hash(str(note["title"]), str(note["body_markdown"]), tags)
             if actual != content_digest or str(note["last_modified"] or "") != modified:
@@ -279,7 +279,7 @@ class RefinementThoughtService:
             conn, thought=record, create_request_id=request_id,
             working_sha256=working_hash, occurred_at=now,
         )
-        return self._dto_in_transaction(conn, record), receipt
+        return self.dto_in_transaction(conn, record), receipt
 
     def open_note(self, principal: Principal, note_id: str) -> dict[str, Any]:
         """Betterment Q8 (one note): the thought that opens any note in the
@@ -310,7 +310,7 @@ class RefinementThoughtService:
                 return thought
             record = self._record(owned)
             if record["state"] != "completed":
-                return self._dto_in_transaction(conn, record)
+                return self.dto_in_transaction(conn, record)
         return self.resume(principal, record["id"], expected_aggregate_revision=record["aggregate_revision"],
                            expected_lifecycle_revision=record["lifecycle_revision"])
 
@@ -357,7 +357,7 @@ class RefinementThoughtService:
             row = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
             if row is None: raise NotFound("thought", thought_id)
             record = self._record(row)
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor, relaxed=True)
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor, relaxed=True)
             if workspace_cursor is not None:
                 live_cursor_inv = conn.execute(
                     "SELECT id FROM refinement_invocations WHERE thought_id=? AND state IN ('reserved','in_flight','awaiting_projection','review_ready') ORDER BY created_at DESC,rowid DESC LIMIT 1",
@@ -373,20 +373,20 @@ class RefinementThoughtService:
                 RefinementThoughtRepository.terminalize_in_transaction(conn, thought_id)
                 self._supersede_invocations(conn, thought_id, "thought_tombstoned")
                 fresh = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
-                return self._dto_in_transaction(conn, fresh)
+                return self.dto_in_transaction(conn, fresh)
             if record["state"] != "working":
                 self._supersede_invocations(conn, record["id"], "thought_tombstoned" if record["state"] == "tombstoned" else "thought_completed")
-                return self._dto_in_transaction(conn, record)
+                return self.dto_in_transaction(conn, record)
             inv = conn.execute("SELECT * FROM refinement_invocations WHERE thought_id=?" + (" AND id=?" if invocation_id else "") + " ORDER BY created_at DESC,rowid DESC LIMIT 1", (thought_id, invocation_id) if invocation_id else (thought_id,)).fetchone()
             if inv is None:
-                return self._dto_in_transaction(conn, record)
+                return self.dto_in_transaction(conn, record)
             before = (str(inv["state"]), str(inv["terminal_code"] or ""), str(inv["review_result_id"] or ""))
             self._reconcile_invocation_in_transaction(conn, dict(inv), record)
             after = conn.execute("SELECT state,terminal_code,review_result_id FROM refinement_invocations WHERE id=?", (inv["id"],)).fetchone()
             if after and before != (str(after["state"]), str(after["terminal_code"] or ""), str(after["review_result_id"] or "")):
-                self._bump_continuity(conn, thought_id)
+                self.bump_continuity(conn, thought_id)
             fresh = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
-            return self._dto_in_transaction(conn, fresh)
+            return self.dto_in_transaction(conn, fresh)
 
     def reserve_refinement(self, principal: Principal, thought_id: str, *, request_id: str,
                            expected_aggregate_revision: int, expected_working_revision: int,
@@ -431,7 +431,7 @@ class RefinementThoughtService:
             thought = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
             if thought is None: raise NotFound("thought", thought_id)
             record = self._record(thought)
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
             if record["state"] != "working": raise ConflictError("thought is not available for refinement", code="thought_" + str(record["state"]))
             if (record["aggregate_revision"], record["working_revision"], record["attachment_revision"]) != (expected_aggregate_revision, expected_working_revision, expected_attachment_revision):
                 raise self._conflict(conn, record, expected_aggregate_revision, expected_working_revision)
@@ -452,7 +452,7 @@ class RefinementThoughtService:
             attachment_hash = str(record.get("attachment_sha256") or RefinementThoughtRepository.empty_attachment_hash(thought_id))
             conn.execute("INSERT INTO refinement_invocations(id,request_id,request_sha256,thought_id,frozen_aggregate_revision,frozen_working_revision,frozen_attachment_revision,frozen_attachment_sha256,admission_json,admission_sha256,state,dispatch_host_id,dispatch_lease_epoch,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,'reserved',?,?,?,?)", (iid,request_id,digest,thought_id,expected_aggregate_revision,expected_working_revision,expected_attachment_revision,attachment_hash,admission_json,admission_sha,dispatch_host_id,dispatch_lease_epoch,now,now))
             conn.execute("INSERT INTO refinement_invocation_attempts(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) VALUES(?,1,?,'reserved',?)", (iid,ask,now))
-            self._bump_continuity(conn, thought_id)
+            self.bump_continuity(conn, thought_id)
             return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (iid,)).fetchone())), True
 
     def claim_refinement_host(self, host_id: str, host_kind: str, *, lease_seconds: float) -> int:
@@ -538,8 +538,8 @@ class RefinementThoughtService:
                     raise ConflictError("answer-and-continue proof is invalid", code="answer_continue_integrity")
                 receipt = {"id":command_id,"kind":"answer_and_continue","effect":effect,
                            "child_invocation_id":str(prior["child_invocation_id"])}
-                return self._dto_in_transaction(conn, record), receipt, self._invocation_dto(conn, dict(invocation)), False
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor, required=True)
+                return self.dto_in_transaction(conn, record), receipt, self._invocation_dto(conn, dict(invocation)), False
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor, required=True)
             if (record["state"] != "working"
                     or (int(record["aggregate_revision"]),int(record["working_revision"]),int(record["attachment_revision"]))
                     != (expected_aggregate_revision,expected_working_revision,expected_attachment_revision)):
@@ -605,8 +605,8 @@ class RefinementThoughtService:
                           attachment_hash,admission_json,admission_sha,dispatch_host_id,dispatch_lease_epoch,now,now))
             conn.execute("INSERT INTO refinement_invocation_attempts(invocation_id,attempt_ordinal,ask_invocation_id,state,created_at) VALUES(?,1,?,'reserved',?)",
                          (child_id,ask_id,now))
-            continuity = self._bump_continuity(conn, thought_id)
-            post_cursor = {"hub_id":self._workspace_hub_id(conn),"thought_id":thought_id,
+            continuity = self.bump_continuity(conn, thought_id)
+            post_cursor = {"hub_id":self.workspace_hub_id(conn),"thought_id":thought_id,
                            "aggregate_revision":next_agg,"continuity_revision":continuity}
             start = len(prior_body.encode("utf-8")); append_bytes = appended.encode("utf-8")
             effect = {"kind":"clarification_appended","thought_id":thought_id,"working_revision":next_work,
@@ -626,16 +626,16 @@ class RefinementThoughtService:
             current = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
             receipt = {"id":command_id,"kind":"answer_and_continue","effect":effect,"child_invocation_id":child_id}
             invocation = self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (child_id,)).fetchone()))
-            return self._dto_in_transaction(conn, current), receipt, invocation, True
+            return self.dto_in_transaction(conn, current), receipt, invocation, True
 
-    def _validate_workspace_cursor_in_transaction(self, conn: Any, record: dict[str, Any],
+    def validate_workspace_cursor_in_transaction(self, conn: Any, record: dict[str, Any],
                                                   cursor: dict[str, Any] | None,
                                                   *, required: bool = False,
                                                   relaxed: bool = False) -> None:
         if cursor is None and not required: return
         keys = {"hub_id","thought_id","aggregate_revision","continuity_revision"}
         if (not isinstance(cursor, dict) or set(cursor) != keys
-                or cursor.get("hub_id") != self._workspace_hub_id(conn)
+                or cursor.get("hub_id") != self.workspace_hub_id(conn)
                 or cursor.get("thought_id") != record["id"]
                 or not isinstance(cursor.get("aggregate_revision"), int)
                 or not isinstance(cursor.get("continuity_revision"), int)
@@ -703,7 +703,7 @@ class RefinementThoughtService:
                 "AND cancel_requested_at IS NOT NULL AND cancel_observed_at IS NULL",
                 (_now(), disposition, invocation_id, host_id, lease_epoch),
             )
-            if cur.rowcount and inv: self._bump_continuity(conn, str(inv["thought_id"]))
+            if cur.rowcount and inv: self.bump_continuity(conn, str(inv["thought_id"]))
 
     def terminalize_reserved(self, principal: Principal, invocation_id: str, *, code: str) -> dict[str, Any]:
         """Coordinator-only named pre-admission terminalization; no kernel row."""
@@ -717,7 +717,7 @@ class RefinementThoughtService:
             now = _now()
             conn.execute("UPDATE refinement_invocation_attempts SET state='refused',terminal_code=?,terminal_at=? WHERE invocation_id=? AND attempt_ordinal=1 AND state='reserved'", (code, now, invocation_id))
             conn.execute("UPDATE refinement_invocations SET state='refused',terminal_code=?,updated_at=?,terminal_at=? WHERE id=? AND state='reserved'", (code, now, now, invocation_id))
-            self._bump_continuity(conn, str(inv["thought_id"]))
+            self.bump_continuity(conn, str(inv["thought_id"]))
             return self._invocation_dto(conn, dict(conn.execute("SELECT * FROM refinement_invocations WHERE id=?", (invocation_id,)).fetchone()))
 
     def recover_refinements_on_startup(
@@ -828,7 +828,7 @@ class RefinementThoughtService:
                 for row in conn.execute("SELECT thought_id FROM refinement_invocations WHERE id=?", (invocation_id,)).fetchall()
             }
             for recovered_thought_id in recovered_thoughts:
-                self._bump_continuity(conn, recovered_thought_id)
+                self.bump_continuity(conn, recovered_thought_id)
         return recovered
 
     def settle_coordinator_failure(
@@ -883,9 +883,9 @@ class RefinementThoughtService:
                     "terminal_code=?,updated_at=?,terminal_at=? WHERE id=?",
                     (code, now, now, invocation_id),
                 )
-                self._bump_continuity(conn, thought_id)
+                self.bump_continuity(conn, thought_id)
                 current = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
-                return self._dto_in_transaction(conn, current)
+                return self.dto_in_transaction(conn, current)
         return result
 
     def stop_refinement(self, principal: Principal, thought_id: str, *, invocation_id: str, expected_aggregate_revision: int) -> tuple[dict[str, Any], str | None]:
@@ -905,7 +905,7 @@ class RefinementThoughtService:
             inv = conn.execute("SELECT * FROM refinement_invocations WHERE id=? AND thought_id=?", (invocation_id, thought_id)).fetchone()
             if thought is None: raise NotFound("thought", thought_id)
             record = self._record(thought)
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor, relaxed=True)
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor, relaxed=True)
             if int(record["aggregate_revision"]) != expected_aggregate_revision: raise self._conflict(conn, record, expected_aggregate_revision, None)
             if inv is None: raise NotFound("refinement invocation", invocation_id)
             ask = conn.execute("SELECT ask_invocation_id FROM refinement_invocation_attempts WHERE invocation_id=? ORDER BY attempt_ordinal DESC LIMIT 1", (invocation_id,)).fetchone()
@@ -914,7 +914,7 @@ class RefinementThoughtService:
                 now, code = _now(), "owner_stopped" if str(inv["state"]) == "reserved" else "owner_stopped_after_dispatch"
                 conn.execute("UPDATE refinement_invocation_attempts SET state='cancelled',terminal_code=?,terminal_at=? WHERE invocation_id=? AND state IN ('reserved','in_flight')", (code, now, invocation_id))
                 conn.execute("UPDATE refinement_invocations SET state='cancelled',terminal_code=?,cancel_requested_at=COALESCE(cancel_requested_at,?),updated_at=?,terminal_at=? WHERE id=? AND state IN ('reserved','in_flight','awaiting_projection','review_ready')", (code, now, now, now, invocation_id))
-                self._bump_continuity(conn, thought_id)
+                self.bump_continuity(conn, thought_id)
             host = conn.execute(
                 "SELECT lease_epoch,expires_at FROM refinement_hosts WHERE host_id=?",
                 (inv["dispatch_host_id"],),
@@ -928,7 +928,7 @@ class RefinementThoughtService:
                 "dispatch_lease_epoch": int(inv["dispatch_lease_epoch"] or 0),
                 "host_live": live,
             }
-            return self._dto_in_transaction(conn, record), target
+            return self.dto_in_transaction(conn, record), target
 
     def review(self, principal: Principal, thought_id: str, review_result_id: str) -> dict[str, Any]:
         self._require_owner(principal)
@@ -972,15 +972,15 @@ class RefinementThoughtService:
                         receipt["committed_post_cursor"] = {"hub_id":str(prior["committed_hub_id"]),"thought_id":thought_id,
                             "aggregate_revision":int(prior["post_aggregate_revision"]),
                             "continuity_revision":int(prior["post_continuity_revision"])}
-                    return self._dto_in_transaction(conn, record), receipt
-                raise ConflictError("review action was superseded", code="refinement_review_action_superseded", context={"current":self._dto_in_transaction(conn,record)})
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
+                    return self.dto_in_transaction(conn, record), receipt
+                raise ConflictError("review action was superseded", code="refinement_review_action_superseded", context={"current":self.dto_in_transaction(conn,record)})
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
             reviewrow = conn.execute("SELECT rr.*,ri.state,ri.frozen_attachment_sha256,ar.payload_json FROM refinement_review_results rr JOIN refinement_invocations ri ON ri.id=rr.invocation_id JOIN ask_results ar ON ar.projection_stage_id=rr.ask_result_stage_id WHERE rr.id=? AND ri.thought_id=?", (review_result_id, thought_id)).fetchone()
             if reviewrow is None or str(reviewrow["state"]) != "review_ready": raise ConflictError("review is no longer current", code="refinement_review_superseded")
             review = self._review_card(str(reviewrow["payload_json"]))
             if (int(record["aggregate_revision"]),int(record["working_revision"]),int(record["attachment_revision"])) != (expected_aggregate_revision,expected_working_revision,expected_attachment_revision): raise self._conflict(conn,record,expected_aggregate_revision,expected_working_revision)
             if (int(reviewrow["frozen_aggregate_revision"]), int(reviewrow["frozen_working_revision"]), int(reviewrow["frozen_attachment_revision"])) != (expected_aggregate_revision, expected_working_revision, expected_attachment_revision):
-                raise ConflictError("review was based on an older working note", code="refinement_review_superseded", context={"current": self._dto_in_transaction(conn, record)})
+                raise ConflictError("review was based on an older working note", code="refinement_review_superseded", context={"current": self.dto_in_transaction(conn, record)})
             if action == "answer" and review["kind"] != "question": raise ValidationError("review is not a question", code="refinement_review_kind_invalid")
             if action == "accept" and review["kind"] != "synthesis": raise ValidationError("review is not a synthesis", code="refinement_review_kind_invalid")
             if action in {"answer", "accept"}:
@@ -1005,7 +1005,7 @@ class RefinementThoughtService:
                 conn.execute("UPDATE refinement_thoughts SET aggregate_revision=?,working_revision=?,updated_at=? WHERE id=?", (expected_aggregate_revision+1,expected_working_revision+1,now,thought_id))
                 self._db.notes._upsert_in_transaction(conn,note_id=record["working_note_id"],title=title,body_markdown=body,tags=tags,now=now)
                 wh=self._insert_revision(conn,thought_id,expected_working_revision+1,title,body,tags,now); updated=self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone()); RefinementThoughtRepository.insert_command(conn,updated,command_kind="replace_working",prior_working_revision=expected_working_revision,prior_lifecycle_revision=record["lifecycle_revision"],prior_attachment_revision=record["attachment_revision"],working_sha256=wh,lifecycle_sha256=None,accepted_at=now)
-            post_continuity = self._bump_continuity(conn, thought_id)
+            post_continuity = self.bump_continuity(conn, thought_id)
             if action == "answer":
                 append_bytes = appended.encode("utf-8")
                 effect = {"kind":"clarification_appended","thought_id":thought_id,
@@ -1015,12 +1015,12 @@ class RefinementThoughtService:
                           "append_utf8_start":len(prior_body.encode("utf-8")),
                           "append_utf8_end":len(prior_body.encode("utf-8"))+len(append_bytes),
                           "append_sha256":hashlib.sha256(append_bytes).hexdigest(),
-                          "committed_post_cursor":{"hub_id":self._workspace_hub_id(conn),"thought_id":thought_id,
+                          "committed_post_cursor":{"hub_id":self.workspace_hub_id(conn),"thought_id":thought_id,
                                                    "aggregate_revision":int(updated["aggregate_revision"]),
                                                    "continuity_revision":post_continuity}}
             effect_json = canonical_json(effect).decode() if effect is not None else ""
             effect_sha = hashlib.sha256(effect_json.encode()).hexdigest() if effect_json else ""
-            committed_hub = self._workspace_hub_id(conn) if action == "answer" or workspace_cursor is not None else ""
+            committed_hub = self.workspace_hub_id(conn) if action == "answer" or workspace_cursor is not None else ""
             conn.execute("INSERT INTO refinement_review_actions(action_id,request_id,request_sha256,thought_id,review_result_id,action_kind,aggregate_revision,working_revision,lifecycle_revision,attachment_revision,post_aggregate_revision,post_working_revision,post_lifecycle_revision,post_continuity_revision,committed_hub_id,append_effect_json,append_effect_sha256,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (aid,request_id,digest,thought_id,review_result_id,action,expected_aggregate_revision,expected_working_revision,record["lifecycle_revision"],expected_attachment_revision,updated["aggregate_revision"],updated["working_revision"],updated["lifecycle_revision"],post_continuity,committed_hub,effect_json,effect_sha,now))
             current = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
             receipt = {"id":aid,"kind":action}
@@ -1029,7 +1029,7 @@ class RefinementThoughtService:
             if workspace_cursor is not None:
                 receipt["committed_post_cursor"] = {"hub_id":committed_hub,"thought_id":thought_id,
                     "aggregate_revision":int(updated["aggregate_revision"]),"continuity_revision":post_continuity}
-            return self._dto_in_transaction(conn,current), receipt
+            return self.dto_in_transaction(conn,current), receipt
 
     def _validated_append_effect(self, conn: Any, action: Any) -> dict[str, Any]:
         raw = str(action["append_effect_json"] or "")
@@ -1081,7 +1081,7 @@ class RefinementThoughtService:
             row = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
             if row is None: raise NotFound("thought", thought_id)
             record = self._record(row)
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
             note = conn.execute("SELECT * FROM notes WHERE id=?", (record["working_note_id"],)).fetchone()
             if note is None or note["deleted"]:
                 RefinementThoughtRepository.terminalize_in_transaction(conn, thought_id)
@@ -1105,9 +1105,9 @@ class RefinementThoughtService:
                 RefinementThoughtRepository.insert_command(conn,updated,command_kind="replace_working",prior_working_revision=expected_working_revision,
                     prior_lifecycle_revision=record["lifecycle_revision"],prior_attachment_revision=record["attachment_revision"],working_sha256=working_hash,lifecycle_sha256=None,accepted_at=now)
                 self._supersede_invocations(conn, thought_id, "owner_edited")
-                self._bump_continuity(conn, thought_id)
+                self.bump_continuity(conn, thought_id)
                 current = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
-                return self._dto_in_transaction(conn, current)
+                return self.dto_in_transaction(conn, current)
         if custody_lost:
             fresh = self._db.refinement_thoughts.get(thought_id)
             with self._db._connection() as conn:
@@ -1150,17 +1150,17 @@ class RefinementThoughtService:
                     raise ConflictError("completion request was already used for different thought state", code="completion_request_payload_mismatch")
                 if (record["state"] == "completed" and int(record["aggregate_revision"]) == int(prior["aggregate_revision"])
                         and int(record["lifecycle_revision"]) == int(prior["lifecycle_revision"])):
-                    return self._dto_in_transaction(conn, record), self._completion_receipt(
+                    return self.dto_in_transaction(conn, record), self._completion_receipt(
                         prior, str(prior["committed_hub_id"] or "") if workspace_cursor is not None else None
                     )
                 raise ConflictError("completion request was superseded by later work", code="completion_request_superseded",
-                    context={"current": self._dto_in_transaction(conn, record)})
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
+                    context={"current": self.dto_in_transaction(conn, record)})
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
             if record["state"] == "completed":
                 # A remote completion has no local receipt: never manufacture
                 # one from the synchronized command ledger.
                 raise ConflictError("thought is already completed", code="thought_already_completed",
-                    context={"current": self._dto_in_transaction(conn, record)})
+                    context={"current": self.dto_in_transaction(conn, record)})
             if record["state"] != "working" or record["aggregate_revision"] != expected_aggregate_revision or record["lifecycle_revision"] != expected_lifecycle_revision:
                 raise self._conflict(conn, record, expected_aggregate_revision, None, code="thought_revision_conflict")
             now, next_life, next_agg = _now(), expected_lifecycle_revision + 1, expected_aggregate_revision + 1
@@ -1178,15 +1178,15 @@ class RefinementThoughtService:
                 prior_lifecycle_revision=expected_lifecycle_revision, prior_attachment_revision=record["attachment_revision"],
                 working_sha256=str(work["content_sha256"]), lifecycle_sha256=life_hash, accepted_at=now)
             receipt_id = _id("rcomp")
-            post_continuity = self._bump_continuity(conn, thought_id)
-            committed_hub = self._workspace_hub_id(conn) if workspace_cursor is not None else ""
+            post_continuity = self.bump_continuity(conn, thought_id)
+            committed_hub = self.workspace_hub_id(conn) if workspace_cursor is not None else ""
             conn.execute("INSERT INTO refinement_completion_receipts(receipt_id,thought_id,request_id,request_sha256,aggregate_revision,lifecycle_revision,continuity_revision,committed_hub_id,working_note_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
                 (receipt_id, thought_id, request_id, digest, next_agg, next_life, post_continuity, committed_hub, record["working_note_id"], now))
             receipt = {"receipt_id": receipt_id, "thought_id": thought_id, "aggregate_revision": next_agg,
                 "lifecycle_revision": next_life, "continuity_revision": post_continuity, "committed_hub_id":committed_hub,
                 "working_note_id": record["working_note_id"], "created_at": now}
             current = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone())
-            return self._dto_in_transaction(conn, current), self._completion_receipt(
+            return self.dto_in_transaction(conn, current), self._completion_receipt(
                 receipt, committed_hub if workspace_cursor is not None else None
             )
 
@@ -1219,7 +1219,7 @@ class RefinementThoughtService:
             row=conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone()
             if row is None: raise NotFound("thought",thought_id)
             record=self._record(row)
-            self._validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
+            self.validate_workspace_cursor_in_transaction(conn, record, workspace_cursor)
             allowed=(command=="complete" and record["state"]=="working") or (command=="resume" and record["state"]=="completed")
             if not allowed or record["aggregate_revision"]!=expected_aggregate_revision or record["lifecycle_revision"]!=expected_lifecycle_revision:
                 raise self._conflict(conn,record,expected_aggregate_revision,None,code="thought_revision_conflict")
@@ -1232,9 +1232,9 @@ class RefinementThoughtService:
             life_hash=RefinementThoughtRepository.insert_lifecycle(conn,thought_id=thought_id,lifecycle_revision=next_life,aggregate_revision=next_agg,prior_state=record["state"],state=state,command=command,occurred_at=now)
             work=conn.execute("SELECT content_sha256 FROM refinement_working_revisions WHERE thought_id=? AND revision=?",(thought_id,record["working_revision"])).fetchone()
             RefinementThoughtRepository.insert_command(conn,updated,command_kind=command,prior_working_revision=record["working_revision"],prior_lifecycle_revision=expected_lifecycle_revision,prior_attachment_revision=record["attachment_revision"],working_sha256=str(work["content_sha256"]),lifecycle_sha256=life_hash,accepted_at=now)
-            self._bump_continuity(conn, thought_id)
+            self.bump_continuity(conn, thought_id)
             current=self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(thought_id,)).fetchone())
-            return self._dto_in_transaction(conn,current)
+            return self.dto_in_transaction(conn,current)
 
     def tombstone_note(self, principal: Principal, note_id: str, *, expected_aggregate_revision: int | None,
                        expected_lifecycle_revision: int | None) -> dict[str, Any]:
@@ -1246,11 +1246,11 @@ class RefinementThoughtService:
             row=conn.execute("SELECT * FROM refinement_thoughts WHERE working_note_id=?",(note_id,)).fetchone()
             if row is None: raise NotFound("thought note",note_id)
             record=self._record(row)
-            if record["state"]=="tombstoned": return self._dto_in_transaction(conn, record)
+            if record["state"]=="tombstoned": return self.dto_in_transaction(conn, record)
             if not RefinementThoughtRepository.terminalize_in_transaction(conn,record["id"],expected_aggregate_revision=expected_aggregate_revision,expected_lifecycle_revision=expected_lifecycle_revision):
                 raise self._conflict(conn,self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?",(record["id"],)).fetchone()),expected_aggregate_revision,None)
             updated = self._record(conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (record["id"],)).fetchone())
-            return self._dto_in_transaction(conn, updated)
+            return self.dto_in_transaction(conn, updated)
 
     def install_sync_bundle(self, principal: Principal, *, value: dict[str, Any], raw_utf8: bytes) -> None:
         """Install a validated full aggregate ledger on a peer that has no row."""
@@ -1410,7 +1410,7 @@ class RefinementThoughtService:
                     return
                 conn.execute("UPDATE refinement_invocation_attempts SET kernel_operation_id=?,state='in_flight',bound_at=? WHERE invocation_id=? AND attempt_ordinal=?", (operation_id,now,invocation_id,attempt_ordinal))
                 conn.execute("UPDATE refinement_invocations SET state='in_flight',updated_at=? WHERE id=?", (now,invocation_id))
-                self._bump_continuity(conn, str(inv["thought_id"]))
+                self.bump_continuity(conn, str(inv["thought_id"]))
         return hook
 
     def before_compatibility_retry(self, invocation_id: str):
@@ -1431,7 +1431,7 @@ class RefinementThoughtService:
                 if not existing: conn.execute("INSERT INTO refinement_retry_plans(invocation_id,parent_attempt_ordinal,child_attempt_ordinal,child_ask_invocation_id,reason,created_at) VALUES(?,?,?,?,?,?)", (invocation_id,1,2,child_ask_id,reason,_now()))
                 if not existing:
                     owner = conn.execute("SELECT thought_id FROM refinement_invocations WHERE id=?", (invocation_id,)).fetchone()
-                    if owner: self._bump_continuity(conn, str(owner["thought_id"]))
+                    if owner: self.bump_continuity(conn, str(owner["thought_id"]))
         return plan
 
     def get_workbench(self, principal: Principal, thought_id: str, *, inference_available: bool,
@@ -1461,7 +1461,7 @@ class RefinementThoughtService:
             row = conn.execute("SELECT * FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
             if row is None: raise NotFound("thought", thought_id)
             record = self._record(row); current = int(record.get("continuity_revision") or 0)
-            same = (cursor["hub_id"] == self._workspace_hub_id(conn)
+            same = (cursor["hub_id"] == self.workspace_hub_id(conn)
                     and cursor["thought_id"] == thought_id
                     and cursor["aggregate_revision"] == int(record["aggregate_revision"]))
             if relaxed:
@@ -1477,14 +1477,14 @@ class RefinementThoughtService:
                                     context={"current": self._workbench_in_transaction(conn, record, inference_available=True)})
 
     @staticmethod
-    def _workspace_hub_id(conn: Any) -> str:
+    def workspace_hub_id(conn: Any) -> str:
         row = conn.execute("SELECT hub_id FROM refinement_workspace_identity WHERE id=1").fetchone()
         if row is None or not str(row["hub_id"] or "").startswith("hub_"):
             raise ConflictError("workspace identity is unavailable", code="workspace_identity_unavailable")
         return str(row["hub_id"])
 
     @staticmethod
-    def _bump_continuity(conn: Any, thought_id: str) -> int:
+    def bump_continuity(conn: Any, thought_id: str) -> int:
         conn.execute("UPDATE refinement_thoughts SET continuity_revision=continuity_revision+1 WHERE id=?", (thought_id,))
         row = conn.execute("SELECT continuity_revision FROM refinement_thoughts WHERE id=?", (thought_id,)).fetchone()
         return int(row["continuity_revision"])
@@ -1577,7 +1577,7 @@ class RefinementThoughtService:
     def _workbench_in_transaction(self, conn: Any, record: dict[str, Any], *,
                                   inference_available: bool,
                                   intended_placement: dict[str, Any] | None = None) -> dict[str, Any]:
-        thought = self._dto_in_transaction(conn, record); hub_id = self._workspace_hub_id(conn)
+        thought = self.dto_in_transaction(conn, record); hub_id = self.workspace_hub_id(conn)
         cursor = {"hub_id":hub_id,"thought_id":record["id"],
                   "aggregate_revision":int(record["aggregate_revision"]),
                   "continuity_revision":int(record.get("continuity_revision") or 0)}
@@ -1770,7 +1770,7 @@ class RefinementThoughtService:
                 state = "unknown" if str(last["state"]) == "orphaned_before_dispatch_binding" else str(last["state"])
                 conn.execute("UPDATE refinement_invocations SET state=?,terminal_code=?,updated_at=?,terminal_at=? WHERE id=?", (state,_closed_terminal_code(str(last["terminal_code"] or state)),_now(),_now(),inv["id"]))
     def _dto(self,record:dict[str,Any],*,include_raw:bool=False,remote:bool=False)->dict[str,Any]:
-        with self._db._connection() as conn: return self._dto_in_transaction(conn,record,include_raw=include_raw,remote=remote)
+        with self._db._connection() as conn: return self.dto_in_transaction(conn,record,include_raw=include_raw,remote=remote)
     @staticmethod
     def _review_card(payload_json: str) -> dict[str, Any]:
         """The only model-shaped datum that may become an owner review card."""
@@ -1808,7 +1808,7 @@ class RefinementThoughtService:
             for key in ("scope", "host"):
                 if isinstance(raw_egress.get(key), str): egress[key] = str(raw_egress[key])[:500]
         return {"actual_placement": placement, "egress": egress}
-    def _dto_in_transaction(self,conn:Any,record:dict[str,Any],*,include_raw:bool=False,remote:bool=False)->dict[str,Any]:
+    def dto_in_transaction(self,conn:Any,record:dict[str,Any],*,include_raw:bool=False,remote:bool=False)->dict[str,Any]:
         note=conn.execute("SELECT * FROM notes WHERE id=?",(record["working_note_id"],)).fetchone(); member=conn.execute("SELECT * FROM directory_memberships WHERE primitive_id=?",(f"note:{record['working_note_id']}",)).fetchone()
         attachment_hash=str(record.get("attachment_sha256") or RefinementThoughtRepository.empty_attachment_hash(record["id"]))
         from .refinement_context_service import RefinementContextService
@@ -1851,4 +1851,4 @@ class RefinementThoughtService:
     def _insert_revision(conn:Any,thought_id:str,revision:int,title:str,body:str,tags:list[str],now:str)->str:
         digest=RefinementThoughtRepository.content_hash(title,body,tags); conn.execute("INSERT INTO refinement_working_revisions (thought_id,revision,title,body_markdown,tags_json,content_sha256,accepted_at) VALUES (?,?,?,?,?,?,?)",(thought_id,revision,title,body,json.dumps(tags,separators=(",",":")),digest,now)); return digest
     def _conflict(self,conn:Any,record:dict[str,Any],expected_aggregate:int|None,expected_working:int|None,*,code:str="thought_revision_conflict")->ConflictError:
-        return ConflictError("working thought changed elsewhere",code=code,context={"thought_id":record["id"],"expected_aggregate_revision":expected_aggregate,"actual_aggregate_revision":record["aggregate_revision"],"actual_lifecycle_revision":record["lifecycle_revision"],"expected_working_revision":expected_working,"actual_working_revision":record["working_revision"],"current":self._dto_in_transaction(conn,record)})
+        return ConflictError("working thought changed elsewhere",code=code,context={"thought_id":record["id"],"expected_aggregate_revision":expected_aggregate,"actual_aggregate_revision":record["aggregate_revision"],"actual_lifecycle_revision":record["lifecycle_revision"],"expected_working_revision":expected_working,"actual_working_revision":record["working_revision"],"current":self.dto_in_transaction(conn,record)})
