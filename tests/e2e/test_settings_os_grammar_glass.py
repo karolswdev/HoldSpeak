@@ -76,6 +76,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     for index in range(50 - len(detection["engines"])):
                         detection["engines"].append({**template, "id": f"polish-{index}", "profileId": f"polish-{index}", "name": long_name if index % 2 == 0 else "model_" + "unbroken_identifier_" * 9 + str(index)})
                     page.route("**/api/concierge/detect", lambda route: route.fulfill(json=detection))
+                    page.route("**/api/concierge/detect?*", lambda route: route.fulfill(json=detection))
                 engine_step = [chain["steps"][0]]
                 held_editors: list[tuple[Any, str]] = []
                 holding_engines = [bool(only)]
@@ -161,6 +162,12 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             page.screenshot(path=str(polish / f"{state}-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
                         _bounded(window)
                         if os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after":
+                            if state == "engines-library-engines":
+                                fit = section.get_by_role("grid", name="Model library", exact=True).evaluate("""grid => {
+                                    const well=grid.querySelector('.object-list-rows'), rows=[...well.querySelectorAll('[data-object-id]')];
+                                    return {height:well.clientHeight, floor:Math.min(4,rows.length)*(rows[0]?.getBoundingClientRect().height || 0)};
+                                }""")
+                                assert fit["height"] >= fit["floor"] - 1, fit
                             if state == "engines-library-speech":
                                 expect(section.get_by_role("grid", name="Phone speech", exact=True).locator("[data-object-id]").first).to_be_in_viewport(ratio=1)
                             if state == "engines-library-search":
@@ -370,6 +377,12 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 for kind in ("agent", "service", "lan", "local", "mesh"):
                                     library.get_by_test_id(f"runson-kind-{kind}").click()
                                     shot(f"engines-add-{kind}")
+                                    if kind == "local":
+                                        library.get_by_role("button", name="Inspect", exact=True).click()
+                                        expect(library.locator(".surface-inspector-facts")).to_contain_text(detection["engines"][-1]["name"])
+                                        shot("engines-library-inspect-local")
+                                        section.locator(".surface-pane-inspector").get_by_role("button", name="Done", exact=True).click()
+                                        library.get_by_role("button", name="Add an engine", exact=True).click()
                                 section.get_by_role("region", name="Add engine", exact=True).get_by_role("button", name="Done", exact=True).click()
                             section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
                             if only:

@@ -2047,8 +2047,8 @@ Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
 Settings' model library takes the engine pane while it is open. Done restores
-its installed list and tab. Inspect keeps the full engine name in redacted facts.
-Nested Add rosters use ListPane's row floor. A server form has Cancel then
+its installed list and tab. Its primary roster uses ListPane outside the form.
+Inspect keeps the full engine name in redacted facts. Nested Add rosters use ListPane's row floor. A server form has Cancel then
 Check in its completion seat; the destination stays in the fixed notice above it.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.

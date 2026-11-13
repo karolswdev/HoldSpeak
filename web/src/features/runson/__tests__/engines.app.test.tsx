@@ -140,6 +140,7 @@ it("gives the library its pane instead of keeping a second engine list above it"
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   expect(screen.getByRole("region", {name:"Model library"})).toBeVisible();
   expect(screen.queryByRole("grid", {name:"Engines on this desk"})).toBeNull();
+  expect(screen.getByRole("grid", {name:"Model library"}).closest(".surface-inspector-form")).toBeNull();
   fireEvent.click(within(screen.getByRole("region", {name:"Model library"})).getByRole("button", {name:"Done"}));
   expect(screen.getByRole("grid", {name:"Engines on this desk"})).toBeVisible();
 });
@@ -194,4 +195,20 @@ it("keeps Cancel then Check in the server completion seat", async () => {
   const actions = check.closest<HTMLElement>(".surface-inspector-actions")!;
   expect(within(actions).getAllByRole("button").map(button => button.textContent)).toEqual(["Cancel", "Check"]);
   expect(screen.getByRole("textbox", {name:"Server address"})).toBeVisible();
+});
+
+
+it("opens a model's facts when Inspect is used from Add on this Mac", async () => {
+  chainHub();
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
+  fireEvent.click(screen.getByTestId("runson-kind-local"));
+  const models = screen.getByRole("grid", {name:"Model library"});
+  fireEvent.click(within(models).getByText("Codex", {exact:true}));
+  fireEvent.click(within(models).getByRole("button", {name:"Inspect"}));
+  expect(screen.queryByRole("region", {name:"Add engine"})).toBeNull();
+  const facts = screen.getByTestId("settings-engines-library").querySelector<HTMLElement>(".surface-inspector-facts")!;
+  expect(within(facts).getByText("Name", {exact:true}).closest(".gadget-row")).toHaveTextContent("Codex");
 });

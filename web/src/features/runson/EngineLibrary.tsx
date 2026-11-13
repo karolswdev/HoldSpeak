@@ -2,12 +2,11 @@
 import { useState, type ReactNode } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { Button } from "../../components/signal/Signal";
-import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, ListPane, GadgetGroup, type ListVerb } from "../../desk/surface";
+import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, ListPane, ListView, PreferencePane, InspectorActions, type ListVerb } from "../../desk/surface";
 import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { Token } from "../../desk/surface/Token";
 import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
 import { MeaningSearchRow } from "../concierge/MeaningSearchRow";
-import { ListView } from "../../desk/surface/objects/ListView";
 import { speechStateWord, licenceWords, useSpeechModels } from "./PhoneSpeech";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { agentChip, costTokens, enginePlace, hostLabel, checkedWords, limitNoticeWords, type BoardEngine } from "./model";
@@ -309,7 +308,7 @@ export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClo
   const checkHost = checking ? endpointHostPort(ctrl.add.url) : "";
   const verbs: ListVerb[] = [
     { enabled: () => true, id: "add", label: "Add an engine", symbol: "+", run: () => ctrl.add.openRow() },
-    { id: "open", label: "Inspect", key: "Enter", enabled: (row) => Boolean(row), run: () => inspect(true) },
+    { id: "open", label: "Inspect", key: "Enter", enabled: (row) => Boolean(row), run: () => { if (ctrl.add.open) ctrl.add.close(); inspect(true); } },
     { id: "use", label: "Add", enabled: (row) => !ctrl.busy && Boolean(engines.find((engine) => engine.key === row?.id)?.found), run: (row) => { if (row) void ctrl.useFound(row.id); } },
     { id: "download", label: "Download", enabled: (row) => !ctrl.busy && engines.find((engine) => engine.key === row?.id)?.kind === "preset", run: (row) => { if (row) void ctrl.download(row.id); } },
   ];
@@ -318,36 +317,43 @@ export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClo
     state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
   }))} columns={[{ key: "name", word: "Engine", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
     selectedId={picked} onSelect={setPicked} defaultVerb="open" verbs={verbs} rowProps={(row) => ({ "data-testid": `settings-engine-${row.id}` })} />;
-  return <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : "Model library"}
-    onClose={() => { if (ctrl.add.open) ctrl.add.close(); else if (inspecting) inspect(false); else onClose?.(); }}>
-    <InspectorForm testId="settings-engines-library" completion={checking ? {
+  const close = () => { if (ctrl.add.open) ctrl.add.close(); else if (inspecting) inspect(false); else onClose?.(); };
+  const category = <CycleGadget label="Model library category" value={tab} onChange={next => { inspect(false); setTab(next); }} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} />;
+  const normal = !ctrl.add.open && tab === "engines";
+  const checkFailure = ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null;
+  const details = inspecting && selected ? <InspectorForm key={selected.key} facts={{
+    name: "Engine details", rows: [{ label: "Name", value: selected.name }], "data-feedback-redact": true,
+  }}>
+    <GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
+    {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
+    {selected.limitNotice ? <GadgetRow label="Usage">{limitNoticeWords(selected.limitNotice)}</GadgetRow> : null}
+    {selected.agentPreset && !selected.found ? <GadgetRow label="Spend limit"><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
+      {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</GadgetRow> : null}
+    {ctrl.failedDownloads[selected.key] ? <GadgetRow label="Download"><span role="alert">{ctrl.failedDownloads[selected.key]}</span></GadgetRow> : null}
+  </InspectorForm> : null;
+  return <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : "Model library"} onClose={normal ? undefined : close}>
+    <PreferencePane label="Model library" testId="settings-engines-library">
+    {normal ? <>
+      <GadgetRow label="Library">{category}</GadgetRow>
+      <ListPane label="Engine inspector" list={<>{checkFailure}{list}</>}>{details}</ListPane>
+      <InspectorActions completion={{done: close}} />
+    </> : <InspectorForm completion={checking ? {
       cancel: ctrl.add.close,
       primary: { label: "Check", testId: "concierge-add-check", busy: ctrl.add.state === "CHECKING", disabled: !ctrl.add.url.trim(), run: () => void ctrl.add.check() },
-    } : undefined} facts={inspecting && selected && !ctrl.add.open ? {
-      name: "Engine details", rows: [{ label: "Name", value: selected.name }], "data-feedback-redact": true,
     } : undefined} notice={<>
       {checkHost ? <PaneActions><span data-testid="concierge-add-egress"><EgressChip label={checkHost} scope={isLanAddress(ctrl.add.url) ? "local" : "cloud"} /></span></PaneActions> : null}
-      {ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null}
+      {checkFailure}
     </>}>
-      {!ctrl.add.open ? <GadgetRow label="Library"><CycleGadget label="Model library category" value={tab} onChange={setTab} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} /></GadgetRow> : null}
-      {tab === "engines" ? <>
-        {!ctrl.add.open ? <GadgetRow label="Engines"><GadgetGroup><ListPane label="Library models" list={list} /></GadgetGroup></GadgetRow> : null}
-        {ctrl.add.open ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
-          : inspecting && selected ? <>
-            <GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
-            {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
-            {selected.limitNotice ? <GadgetRow label="Usage">{limitNoticeWords(selected.limitNotice)}</GadgetRow> : null}
-            {selected.agentPreset && !selected.found ? <GadgetRow label="Spend limit"><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
-              {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</GadgetRow> : null}
-            {ctrl.failedDownloads[selected.key] ? <GadgetRow label="Download"><span role="alert">{ctrl.failedDownloads[selected.key]}</span></GadgetRow> : null}
-          </> : null}
-      </> : tab === "speech" ? <>
+      {!ctrl.add.open ? <GadgetRow label="Library">{category}</GadgetRow> : null}
+      {tab === "engines" ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
+      : tab === "speech" ? <>
         <GadgetRow label="Speech to text"><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></GadgetRow>
         <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
           cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
         }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "licence", word: "Licence", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
           selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}</GadgetRow>
       </> : <GadgetRow label="Search"><MeaningSearchRow form /></GadgetRow>}
-    </InspectorForm>
+    </InspectorForm>}
+    </PreferencePane>
   </PaneInspector>;
 }
