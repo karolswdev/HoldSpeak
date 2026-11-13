@@ -356,7 +356,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             _open_page(page, base)
                             expect(rail).to_be_visible()
                             window.get_by_test_id("settings-index-notices").click()
-                            choose_tab("When")
+                            choose_tab("What it sends")
+                            section.get_by_role("grid", name="Send choices").get_by_role("row").filter(
+                                has_text="When to reach you").first.click()
                             timing = section.get_by_role("region", name="When to reach you", exact=True)
                             label = timing.get_by_text("Urgent calls", exact=True)
                             if urgent:
@@ -367,13 +369,14 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             else:
                                 expect(label).to_have_count(0)
                             reach_shot("reach-when-urgent-" + str(urgent).lower())
-                        choose_tab("Brief")
-                        choices = section.get_by_role("grid", name="Brief choices")
+                        choose_tab("Telegram")
+                        choose_tab("What it sends")
+                        choices = section.get_by_role("grid", name="Send choices")
                         expect(choices.get_by_role("row").first).to_have_attribute("aria-selected", "true")
-                        expect(section.get_by_role("combobox", name="Digest", exact=True)).to_be_visible()
+                        expect(section.get_by_role("region", name="To Telegram", exact=True)).to_be_visible()
                         assert choices.get_by_role("columnheader").count() == 0
                         assert section.get_by_role("button", name="Open choice", exact=True).count() == 0
-                        for label in ("Digest and Later", "Notices", "Morning brief", "Sweep and loops"):
+                        for label in ("To Telegram", "When to reach you", "Digest and Later", "Notices", "Morning brief", "Sweep and loops"):
                             row = choices.get_by_role("row").filter(has_text=label).first
                             row.click()
                             if label != "Sweep and loops":

@@ -5,10 +5,12 @@
  *
  * Telegram has its own tab: the setup pane of `TelegramSetup.tsx` (2026-11-13;
  * the old Channels row with its unlabelled token field is parked beside this
- * file). Then the Phone app, when to reach you (Telegram's rung and the
- * ladder), quiet hours (the one store, shared with the Phone), the Reach you
- * rows of Calls, the digest and Later means, and the Cadence and morning
- * brief groups folded under Brief. The egress fact sits in the Telegram
+ * file). `What it sends` is one tab (2026-11-13; the `When` and `Brief` tabs
+ * are parked beside this file): a short list picks what the pane shows: the
+ * kinds that go to Telegram, when to reach you (the ladder and quiet hours,
+ * the one store, shared with the Phone), the digest and Later means, and the
+ * Cadence and morning brief groups. Calls keeps the Phone app and the Reach
+ * you rows. The egress fact sits in the Telegram
  * pane, where the choice is made (UX-CANON A.9). No modal. */
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
@@ -37,9 +39,13 @@ export type ReachStatus = {
     telegram_words?: string;
     order: string[];
     kinds: Record<string, unknown>;
+    /** What Telegram sends, kind by kind (the hub's words and modes). */
+    sends?: SendKind[];
+    cap_words?: string;
+    people_words?: string;
   };
   quiet_hours: { start: number; end: number; now: boolean };
-  digest: { at: string | number; hour: number };
+  digest: { at: string | number; hour: number; brief?: string; brief_words?: string };
   later_means: string;
   later_means_words?: string;
   open_packages: unknown[];
@@ -47,6 +53,23 @@ export type ReachStatus = {
 };
 
 export type Pairing = TelegramPairing;
+
+/** One kind that can travel to Telegram: his word, the words it takes, and
+ *  how it goes now under Telegram's rung. */
+export type SendKind = {
+  kind: string;
+  label: string;
+  mode: string;
+  modes: { value: string; label: string }[];
+  now: string;
+  now_words: string;
+  fact?: string;
+};
+
+export const BRIEF_MODES = [
+  { value: "on", label: "On" },
+  { value: "off", label: "Off" },
+];
 
 export const TELEGRAM_RUNG = [
   { value: "at_once", label: "At once" },
@@ -113,10 +136,13 @@ export function ReachSettingsPane({
     form?: boolean;
   }[];
 }) {
+  // A deep link names a row of What it sends: the ladder and quiet hours
+  // (When to reach you), the digest and Later, or a Cadence entry.
   const briefTarget = highlight === "reach.digest" || highlight === "reach.later" ? "digest"
+    : highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "when"
     : highlight?.startsWith("cadence.brief") ? "brief" : highlight?.startsWith("cadence.") || highlight?.startsWith("cadence_telegram.") ? "cadence" : null;
-  const [tab, setTab] = useState(briefTarget ? "digest" : highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "timing" : "telegram");
-  const [briefPick, pickBrief] = useState(briefTarget ?? "digest");
+  const [tab, setTab] = useState(briefTarget ? "sends" : "telegram");
+  const [briefPick, pickBrief] = useState(briefTarget ?? "kinds");
   const briefRef = useRef<HTMLDivElement>(null);
   const [focusRequest, requestFocus] = useState(0);
   useLayoutEffect(() => {
@@ -125,8 +151,7 @@ export function ReachSettingsPane({
     )?.focus();
   }, [focusRequest]);
   useEffect(() => {
-    if (briefTarget) {setTab("digest"); pickBrief(briefTarget);}
-    else if (highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder")) setTab("timing");
+    if (briefTarget) {setTab("sends"); pickBrief(briefTarget);}
   }, [highlight, briefTarget]);
   const reach = useResource<ReachStatus | null>("/api/reach", null);
   // A hub without the Reach routes (or any other answer) draws the rows empty.
@@ -288,13 +313,12 @@ export function ReachSettingsPane({
         value={tab}
         onChange={(id) => {
           setTab(id);
-          if (id === "digest" && tab !== "digest") pickBrief("digest");
+          if (id === "sends" && tab !== "sends") pickBrief("kinds");
         }}
         tabs={[
           { id: "telegram", label: "Telegram" },
-          { id: "timing", label: "When" },
+          { id: "sends", label: "What it sends" },
           { id: "calls", label: "Calls" },
-          { id: "digest", label: "Brief" },
         ]}
       >
         {reach.error && !status ? <SurfaceState error={`Not read · ${reach.error}`} onRetry={() => void reach.reload()} /> : null}
@@ -316,14 +340,97 @@ export function ReachSettingsPane({
               refusal={telegramRefusal}
               sends={TELEGRAM_RUNG.find((rung) => rung.value === status?.ladder.telegram)?.label}
               quiet={status ? `${String(status.quiet_hours.start).padStart(2, "0")}:00 to ${String(status.quiet_hours.end).padStart(2, "0")}:00` : undefined}
-              acts={{ saveToken, pair, disconnect, remove: removeBot, useHere, sendTest }}
+              acts={{ saveToken, pair, disconnect, remove: removeBot, useHere, sendTest, readAgain: () => void reach.reload() }}
             />
           </PreferenceWell>
         ) : null}
-        {tab === "timing" ? (
-          <PreferenceWell>
-            {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
-            {tab === "timing" ? (
+        {tab === "calls" && status ? (
+          <>
+            <GadgetGroup label="Phone and calls">
+              <GadgetRow label="Phone app" controlWidth="full">
+                <span className="surface-pane-actions">
+                  <DotWord tone={status.channels.phone_app.paired ? "ok" : "idle"} data-testid="reach-phone-state">
+                    {status.channels.phone_app.paired ? "Paired" : (status.channels.phone_app.words ?? "No phone is paired")}
+                  </DotWord>
+                  <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "calls")} data-testid="reach-phone-open">
+                    Open Calls settings
+                  </Button>
+                </span>
+              </GadgetRow>
+              <GadgetRow label="Line" controlWidth="full">
+                <DotWord tone={status.channels.calls.ready ? "ok" : "idle"} data-testid="reach-calls-state">
+                  {status.channels.calls.words ?? "Not set in Settings ▸ Calls"}
+                </DotWord>
+              </GadgetRow>
+            </GadgetGroup>
+            <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} />
+          </>
+        ) : null}
+        {tab === "sends" ? (
+          <div ref={briefRef} className="surface-tab-panel">
+          <ListPane
+            label="What it sends details"
+            list={
+              <PaneGroup label="What it sends">
+                <ListView
+                  label="Send choices"
+                  rows={[
+                    { id: "kinds", kind: "preference", name: "To Telegram" },
+                    { id: "when", kind: "preference", name: "When to reach you" },
+                    { id: "digest", kind: "preference", name: "Digest and Later" },
+                    ...(cadenceTabs ?? [{ id: "cadence", label: "Notices", content: cadence }]).map((entry) => ({
+                      id: entry.id,
+                      kind: "preference",
+                      name: entry.label,
+                    })),
+                  ]}
+                  headerless
+                  ordered
+                  columns={[{ key: "name", word: "Name" }]}
+                  selectedId={briefPick}
+                  onSelect={pickBrief}
+                  onOpen={(id) => { pickBrief(id); requestFocus((value) => value + 1); }}
+                />
+              </PaneGroup>
+            }
+          >
+            {briefPick === "kinds" ? (
+              <GadgetGroup label="To Telegram">
+                {/* Each kind that can travel, as the hub names it: its word,
+                    the words it takes, and how it goes now under Telegram's
+                    rung (When to reach you). The face types none of them. */}
+                {(status?.ladder.sends ?? []).map((row) => (
+                  <GadgetRow
+                    key={row.kind}
+                    label={row.label}
+                    controlWidth="standard"
+                    fact={row.now !== row.mode
+                      ? <DotWord tone="idle" data-testid={`reach-send-now-${row.kind}`}>Now: {row.now_words}</DotWord>
+                      : row.fact ? <span data-testid={`reach-send-fact-${row.kind}`}>{row.fact}</span> : undefined}
+                  >
+                    <CycleGadget
+                      label={row.label}
+                      value={row.mode}
+                      options={row.modes}
+                      disabled={busy === "put" || status?.ladder.telegram === "off"}
+                      onChange={(next) => put({ kinds: { [row.kind]: next } })}
+                    />
+                  </GadgetRow>
+                ))}
+                {status?.ladder.cap_words ? (
+                  <GadgetRow label="Limit" controlWidth="full">
+                    <span data-testid="reach-send-cap">{status.ladder.cap_words}</span>
+                  </GadgetRow>
+                ) : null}
+                {status?.ladder.people_words ? (
+                  <GadgetRow label="People" controlWidth="full">
+                    <span data-testid="reach-send-people">{status.ladder.people_words}</span>
+                  </GadgetRow>
+                ) : null}
+              </GadgetGroup>
+            ) : null}
+            {briefPick === "when" ? (
+              <>
               <GadgetGroup label="When to reach you">
                 <div className="reach-ladder" data-testid="reach-ladder">
                   {(status?.ladder.order ?? LADDER).map((rung) => {
@@ -387,65 +494,20 @@ export function ReachSettingsPane({
                   })}
                 </div>
               </GadgetGroup>
+                {quiet}
+              </>
             ) : null}
-
-            {tab === "timing" ? quiet : null}
-          </PreferenceWell>
-        ) : null}
-        {tab === "calls" && status ? (
-          <>
-            <GadgetGroup label="Phone and calls">
-              <GadgetRow label="Phone app" controlWidth="full">
-                <span className="surface-pane-actions">
-                  <DotWord tone={status.channels.phone_app.paired ? "ok" : "idle"} data-testid="reach-phone-state">
-                    {status.channels.phone_app.paired ? "Paired" : (status.channels.phone_app.words ?? "No phone is paired")}
-                  </DotWord>
-                  <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "calls")} data-testid="reach-phone-open">
-                    Open Calls settings
-                  </Button>
-                </span>
-              </GadgetRow>
-              <GadgetRow label="Line" controlWidth="full">
-                <DotWord tone={status.channels.calls.ready ? "ok" : "idle"} data-testid="reach-calls-state">
-                  {status.channels.calls.words ?? "Not set in Settings ▸ Calls"}
-                </DotWord>
-              </GadgetRow>
-            </GadgetGroup>
-            <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} />
-          </>
-        ) : null}
-        {tab === "digest" ? (
-          <div ref={briefRef} className="surface-tab-panel">
-          <ListPane
-            label="Brief details"
-            list={
-              <PaneGroup label="Brief and notices">
-                <ListView
-                  label="Brief choices"
-                  rows={[
-                    {
-                      id: "digest",
-                      kind: "preference",
-                      name: "Digest and Later",
-                    },
-                    ...(cadenceTabs ?? [{ id: "cadence", label: "Notices", content: cadence }]).map((entry) => ({
-                      id: entry.id,
-                      kind: "preference",
-                      name: entry.label,
-                    })),
-                  ]}
-                  headerless
-                  ordered
-                  columns={[{ key: "name", word: "Name" }]}
-                  selectedId={briefPick}
-                  onSelect={pickBrief}
-                  onOpen={(id) => { pickBrief(id); requestFocus((value) => value + 1); }}
-                />
-              </PaneGroup>
-            }
-          >
             {briefPick === "digest" ? (
               <GadgetGroup label="Digest and Later">
+                  <GadgetRow label="Daily brief" controlWidth="standard">
+                    <CycleGadget
+                      label="Daily brief"
+                      value={status?.digest.brief ?? "on"}
+                      options={BRIEF_MODES}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) => put({ brief: next })}
+                    />
+                  </GadgetRow>
                   <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
                     <CycleGadget
                       label="Digest"
@@ -460,7 +522,7 @@ export function ReachSettingsPane({
                     />
                   </GadgetRow>
                   <GadgetRow
-                    label="Send the digest now"
+                    label="By hand"
                     controlWidth="standard"
                     fact={
                       digest ? (

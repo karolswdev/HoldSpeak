@@ -118,9 +118,28 @@ def test_settings_reach_reads_and_saves_its_rows(desk) -> None:
     assert paired["channels"]["telegram"]["token"] == "keystore"
     _record("reach.paired.json", paired, desk)
 
+    # What it sends: one kind's word, the daily brief, and Telegram's rung over
+    # every kind, each through the one save.
+    rows = {row["kind"]: row for row in paired["ladder"]["sends"]}
+    assert list(rows) == ["question", "tool_call", "send", "failed", "due"]
+    assert rows["send"]["mode"] == "at_once" and paired["digest"]["brief"] == "on"
+    kind = client.put("/api/reach", json={"kinds": {"send": "digest"}})
+    assert kind.status_code == 200, kind.text
+    assert {row["kind"]: row["mode"] for row in kind.json()["ladder"]["sends"]}["send"] == "digest"
+    _record("reach.kind_send_digest.json", kind.json(), desk)
+    assert client.put("/api/reach", json={"kinds": {"send": "never"}}).json()["code"] == "kind_mode_invalid"
+    brief_off = client.put("/api/reach", json={"kinds": {"send": "at_once"}, "brief": "off"})
+    assert brief_off.json()["digest"]["brief"] == "off"
+    _record("reach.brief_off.json", brief_off.json(), desk)
+    rung_off = client.put("/api/reach", json={"brief": "on", "telegram": "off"})
+    assert {row["now"] for row in rung_off.json()["ladder"]["sends"]} == {"off"}
+    assert {row["mode"] for row in rung_off.json()["ladder"]["sends"]} == {"at_once", "digest"}
+    _record("reach.rung_off.json", rung_off.json(), desk)
+
     saved = client.put("/api/reach", json={"telegram": "after_10", "later_means": "end_of_quiet", "digest": 7})
     assert saved.status_code == 200, saved.text
-    assert saved.json()["ladder"]["telegram"] == "after_10" and saved.json()["digest"] == {"at": 7, "hour": 7}
+    assert saved.json()["ladder"]["telegram"] == "after_10"
+    assert saved.json()["digest"] == {"at": 7, "hour": 7, "brief": "on", "brief_words": "On"}
     _record("reach.saved.json", saved.json(), desk)
     assert client.put("/api/reach", json={"telegram": "loud"}).json()["code"] == "telegram_invalid"
     # DIR7: the ladder's Phone rung (the Phone app channel) as its own picker.

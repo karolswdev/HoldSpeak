@@ -836,7 +836,8 @@ describe("W6-A: the save lamp says only this window's writes (atlas pass 3, defe
   it("at open, with the settings file written just now by another writer, the bar says no Saved; a write here says Saved just now", async () => {
     hub.state.hub.writtenAt = Date.now() / 1000;
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "When" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "What it sends" }));
+    fireEvent.click(screen.getByText("When to reach you", { exact: true }));
     await screen.findByRole("spinbutton", { name: "Quiet from" });
     await waitFor(() => expect(hub.state.calls.some((c) => c.path === "/api/settings/hub")).toBe(true));
     expect(document.querySelector(".pref-status-bar")?.textContent ?? "").not.toMatch(/Saved/);
@@ -864,7 +865,8 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
   it.each([true, false])("shows urgent calls only when Do Not Disturb bypass is true (%s), without writing", async (urgent) => {
     hub.state.settings.calls = {...hub.state.settings.calls, phone_urgent_dnd: urgent};
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", {name: "When"}));
+    fireEvent.click(await screen.findByRole("tab", { name: "What it sends" }));
+    fireEvent.click(screen.getByText("When to reach you", { exact: true }));
     await screen.findByRole("spinbutton", {name: "Quiet from"});
     const timing = screen.getByRole("region", {name: "When to reach you"});
     if (urgent) {
@@ -884,7 +886,8 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read
     expect(heartbeatWire.quiet_hours).toEqual({ start: 22, end: 8 });
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "When" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "What it sends" }));
+    fireEvent.click(screen.getByText("When to reach you", { exact: true }));
     const from = (await screen.findByRole("spinbutton", {
       name: "Quiet from",
     })) as HTMLInputElement;
@@ -936,9 +939,9 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
 
   it("reads the sweep only after its tab opens", async () => {
     render(<SettingsCore scope="rhythm" />);
-    await screen.findByRole("tab", { name: "Brief" });
+    await screen.findByRole("tab", { name: "What it sends" });
     expect(hub.state.calls.some((c) => c.path.startsWith("/api/cadence/"))).toBe(false);
-    fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
+    fireEvent.click(screen.getByRole("tab", { name: "What it sends" }));
     fireEvent.click(screen.getByText("Sweep and loops", {exact: true}));
     await screen.findByTestId("rhythm-sweep-row");
     expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
@@ -1197,7 +1200,8 @@ describe("Settings category face", () => {
     expect(screen.queryByRole("combobox", { name: "Language" })).toBeNull();
 
     fireEvent.click(screen.getByTestId("settings-index-notices"));
-    fireEvent.click(screen.getByRole("tab", {name:"When"}));
+    fireEvent.click(screen.getByRole("tab", {name:"What it sends"}));
+    fireEvent.click(screen.getByText("When to reach you", {exact: true}));
     expect(screen.getByText("Quiet from")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("settings-index-this-mac"));

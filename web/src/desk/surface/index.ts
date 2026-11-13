@@ -222,6 +222,7 @@ export { reasonWords, reasonVerb, isRunFailureReason, type RunFailureReason } fr
 export * from "./objects";
 
 export type { InspectorFact, InspectorRow, InspectorVerb, InspectorCompletion } from "./patterns/PreferencePane";
+export { StepHeading, type StepState } from "./patterns/StepHeading";
 export { InspectorBody, PaneNotice, PreferencePane, PreferenceWell, PaneGroup, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, InspectorActions, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
 export { VerbToolbar, listVerbEntries, type ListScope, type ListVerb } from "./objects/ObjectList";
 

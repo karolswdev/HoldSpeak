@@ -29,6 +29,10 @@ TOOLS: list[dict[str, Any]] = [
                 },
                 "max_tokens": {"type": "integer", "minimum": 1},
                 "temperature": {"type": "number", "minimum": 0, "maximum": 2},
+                "tools": {
+                    "type": "string", "enum": ["none"],
+                    "description": "'none': the engine gets no tools in this run (an agent CLI gets no desk tools), and the result carries 'provenance' (the refs the answer was given). It only takes tools away.",
+                },
             },
             "required": ["question"],
             "additionalProperties": False,
@@ -54,7 +58,7 @@ def _build_service() -> AskService:
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
     if name == "ask.run":
-        allowed = {"question", "lens", "context", "grounding", "max_tokens", "temperature"}
+        allowed = {"question", "lens", "context", "grounding", "max_tokens", "temperature", "tools"}
         if set(arguments) - allowed:
             raise ValueError("ask.run has an invalid request shape")
         question = arguments.get("question")
@@ -72,6 +76,10 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             kwargs["max_tokens"] = arguments["max_tokens"]
         if "temperature" in arguments:
             kwargs["temperature"] = arguments["temperature"]
+        if "tools" in arguments:
+            if arguments["tools"] != "none":
+                raise ValueError("tools can only be 'none'")
+            kwargs["no_tools"] = True
         return _run(svc.ask(principal, **kwargs))
 
     raise LookupError(name)
