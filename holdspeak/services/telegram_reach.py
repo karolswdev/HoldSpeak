@@ -263,6 +263,8 @@ TOKEN_UNKNOWN_WORDS = "Telegram does not know this token. Nothing was saved. Cop
 NOT_CONNECTED_WORDS = "No chat is connected. Connect your chat, then send the test."
 TEST_FAILED_WORDS = "The test was not sent."
 BOT_CHANGED_WORDS = "This is not the bot that is saved here. Nothing was removed. Read again."
+PAIR_NOT_SAVED_WORDS = "Pairing did not work: the desk could not save it. Make a new code in Settings ▸ Reach."
+WAITS_FOR_OWNER = "telegram waits for the owner"
 
 
 def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: float = 10.0,
@@ -387,6 +389,7 @@ class TelegramReach:
         self._link = link
         self._cadence = cadence
         self._pair_code: Optional[str] = None   # the open code, for the owner's link; never stored
+        self._void_codes: set[str] = set()      # hashes of codes voided here when the store could not be written
         self.last_answer_at: Optional[str] = None  # when Telegram last answered a call (this process)
         self._second: dict[tuple[str, str], float] = {}
         self._shapes: dict[str, dict[str, Any]] = {}
@@ -436,6 +439,11 @@ class TelegramReach:
         token = bot_token()
         if not token or not telegram_on():
             return {"ok": False, "description": "telegram is off"}
+        if self.halted():
+            # The token is revoked or another desk reads the bot: nothing is
+            # sent and nothing polls until the owner acts (a new token,
+            # ``use_here``, remove). No call, so no operation is recorded.
+            return {"ok": False, "description": WAITS_FOR_OWNER, "halted": True}
         return self._raw(token, method, params, data_class=data_class, timeout=timeout)
 
     def _raw(self, token: str, method: str, params: Mapping[str, Any], *, data_class: str = "reach_package",
@@ -458,9 +466,9 @@ class TelegramReach:
     def _setup(self) -> dict[str, Any]:
         return self._policy(SETUP_POLICY)
 
-    def _save_setup(self, **changes: Any) -> None:
+    def _save_setup(self, **changes: Any) -> bool:
         state = {**self._setup(), **changes}
-        self._save_policy(SETUP_POLICY, {key: value for key, value in state.items() if value is not None})
+        return self._save_policy(SETUP_POLICY, {key: value for key, value in state.items() if value is not None})
 
     def _stamp(self) -> str:
         return self.now().astimezone(timezone.utc).isoformat()
@@ -487,6 +495,12 @@ class TelegramReach:
         elif code is None:
             state = "unreachable"
         else:
+            return
+        if before in HALTED and state not in HALTED:
+            # Review T1: a halt (the token is revoked, another desk reads the
+            # bot) is cleared by an owner act only: a new token saved and
+            # checked, ``use_here``, remove. An answer or a timeout that comes
+            # in while halted changes nothing.
             return
         if state != before:
             self._save_setup(health={"state": state, "since": self._stamp()})
@@ -556,15 +570,20 @@ class TelegramReach:
 
     # ── state ────────────────────────────────────────────────────────
 
+    def halted(self) -> bool:
+        """The token is revoked or another desk reads the bot (``HALTED``):
+        no poll and no automatic send until the owner acts."""
+        return str((self._setup().get("health") or {}).get("state") or "") in HALTED
+
     def live(self) -> bool:
-        """Sends may go: Telegram on, a token, a paired chat."""
-        return telegram_on() and bool(bot_token()) and paired_chat() is not None
+        """Sends may go: Telegram on, a token, a paired chat, not halted."""
+        return telegram_on() and bool(bot_token()) and paired_chat() is not None and not self.halted()
 
     def _pairing_state(self, setup: Optional[Mapping[str, Any]] = None) -> Optional[dict[str, Any]]:
         """The open pairing code's ``{hash, expires_at, wrong}`` from the
         store (it survives a restart), or None when none is open."""
         pairing = (self._setup() if setup is None else setup).get("pairing")
-        if not isinstance(pairing, dict):
+        if not isinstance(pairing, dict) or str(pairing.get("hash") or "") in self._void_codes:
             return None
         ends = _epoch(pairing.get("expires_at"))
         return dict(pairing) if ends is not None and ends > self.now().timestamp() else None
@@ -583,13 +602,32 @@ class TelegramReach:
         while the poll waits for the owner (``HALTED``)."""
         if not (telegram_on() and bool(bot_token())):
             return False
-        if str((self._setup().get("health") or {}).get("state") or "") in HALTED:
+        if self.halted():
             return False
         return paired_chat() is not None or self.pairing_open()
 
+    def summary(self) -> dict[str, Any]:
+        """The view that ANY forwarder may pass on (``ReachService.summary``,
+        which ``phone.status`` returns to an agent over MCP): state words
+        only. Never the pairing link or its code (review T1: an agent that
+        read the link could pair its own chat), never the bot's username (it
+        is where a stranger would send guesses), never a chat id or a token,
+        never the test's message. A forwarder calls this and nothing else."""
+        chat = paired_chat()
+        setup = self._setup()
+        health = self.health(setup)
+        return {"on": telegram_on(), "token": token_where(),
+                "paired": {"name": str(chat.get("name") or ""), "at": chat.get("at")} if chat else None,
+                "pairing": {"expires_at": self._pairing_state(setup)["expires_at"]}
+                if self._pairing_state(setup) else None,
+                "destination": DESTINATION_WORDS,
+                "health": {"state": health["state"], "since": health["since"], "words": health["words"]}}
+
     def status(self) -> dict[str, Any]:
-        """Owner only (``reach.status``). Never the token, the chat id or the
-        code alone; the link holds the code and is for his own faces."""
+        """THE OWNER'S VIEW, for ``ReachService.status`` only (``reach.status``,
+        ``GET /api/reach``: ``_require_owner`` there, ``owner_only`` on the
+        row). Never the token, the chat id or the code alone; the link holds
+        the code and is for his own faces. Any other reader gets ``summary``."""
         chat = paired_chat()
         setup = self._setup()  # one read of the stored state for the whole answer
         pairing = None
@@ -658,8 +696,11 @@ class TelegramReach:
         with _lock:
             # The hash and the expiry are stored (a restart keeps the code
             # good); the code itself stays in this process, for his link.
-            self._save_setup(pairing={"hash": hashlib.sha256(code.encode()).hexdigest(),
-                                      "expires_at": expires_at, "wrong": 0})
+            if not self._save_setup(pairing={"hash": hashlib.sha256(code.encode()).hexdigest(),
+                                             "expires_at": expires_at, "wrong": 0}):
+                # A code whose hash and try count are not stored is not handed out.
+                raise TelegramRefused("pairing_not_saved", "The desk could not save a pairing code. "
+                                      "Try again.", status=503)
             self._pair_code = code
         try:
             self.reach().wake()
@@ -681,10 +722,17 @@ class TelegramReach:
         self._changed("telegram", "unpaired")
         return {"paired": None}
 
-    def _drop_pairing(self) -> None:
+    def _drop_pairing(self) -> bool:
+        """The open code is no longer good. True when that is written; the
+        code is voided in this process in every case."""
         self._pair_code = None
-        if self._setup().get("pairing") is not None:
-            self._save_policy(SETUP_POLICY, {key: value for key, value in self._setup().items() if key != "pairing"})
+        setup = self._setup()
+        pairing = setup.get("pairing")
+        if pairing is None:
+            return True
+        if isinstance(pairing, dict) and pairing.get("hash"):
+            self._void_codes.add(str(pairing["hash"]))
+        return self._save_policy(SETUP_POLICY, {key: value for key, value in setup.items() if key != "pairing"})
 
     def send_test(self, principal: Any) -> dict[str, Any]:
         """``reach.telegram.test``: one message with one button to the paired
@@ -876,7 +924,7 @@ class TelegramReach:
         An update id that was read before (a replay after a restart) is
         passed over: the read ids are kept in the cadence policy row
         ``UPDATES_POLICY``."""
-        if not self._ensure_bot():
+        if self.halted() or not self._ensure_bot():
             self.last_poll_ok = False
             return offset
         params: dict[str, Any] = {"timeout": LONG_POLL_SECONDS}
@@ -915,13 +963,17 @@ class TelegramReach:
         except Exception:
             return {}
 
-    def _save_policy(self, name: str, state: Mapping[str, Any]) -> None:
+    def _save_policy(self, name: str, state: Mapping[str, Any]) -> bool:
+        """True when the state was written. A caller that guards something
+        (the pairing code's wrong count, its invalidation) must look."""
         try:
             from ..cadence.models import CadencePolicy
 
             self.db.cadence.upsert_policy(CadencePolicy(name=name, config=dict(state)))
+            return True
         except Exception as exc:
             log.warning(f"telegram: the state {name} was not saved ({type(exc).__name__})")
+            return False
 
     def _updates_state(self) -> dict[str, Any]:
         return self._policy(UPDATES_POLICY)
@@ -1010,20 +1062,32 @@ class TelegramReach:
                 if pairing:
                     # Astra post-merge 2026-11-01: 5 wrong codes and the code
                     # is void; a new one is needed. The count is stored.
+                    # Review T1: the try counts only when it was WRITTEN. A
+                    # store that fails voids the code (in this process too),
+                    # so that a guess can never be made again and again
+                    # against a count that does not move.
                     pairing["wrong"] = int(pairing.get("wrong") or 0) + 1
                     if pairing["wrong"] >= PAIR_WRONG_MAX:
                         self._drop_pairing()
                         self._changed("telegram", "pairing_void")
-                    else:
-                        self._save_setup(pairing=pairing)
+                    elif not self._save_setup(pairing=pairing):
+                        self._void_codes.add(str(pairing["hash"]))
+                        self._pair_code = None
+                        self._changed("telegram", "pairing_void")
                 self._send(chat_id, "Wrong or old code. Make a new one in Settings ▸ Reach.",
                            data_class="reach_refusal")
                 return {"action": "pair", "ok": False}
+            # The right code. It is used up BEFORE the chat is connected: if
+            # the desk cannot write that, nothing is paired and the code is
+            # void (a code that stays good after a pairing could pair again).
+            if not self._drop_pairing():
+                self._send(chat_id, PAIR_NOT_SAVED_WORDS, data_class="reach_refusal")
+                self._changed("telegram", "pairing_void")
+                return {"action": "pair", "ok": False, "refused": "not_saved"}
             sender = dict(message.get("from") or {})
             name = str(sender.get("first_name") or (message.get("chat") or {}).get("first_name") or "")
             _write(CHAT_SLOT, json.dumps({"id": chat_id, "name": name,
                                           "at": self.now().astimezone(timezone.utc).isoformat()}))
-            self._drop_pairing()
         self._send(chat_id, "Paired. HoldSpeak sends what waits on you here.", data_class="reach_refusal")
         self._changed("telegram", "paired")
         return {"action": "pair", "ok": True}
