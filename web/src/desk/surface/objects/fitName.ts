@@ -151,3 +151,9 @@ export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
   if (measure && (!document.fonts || document.fonts.status === "loaded")) measures.set(font, measure);
   return measure;
 }
+
+/** A path or code-led name wears the file object, never human initials. */
+export function nameIsFile(name: string): boolean {
+  const first = name.trim().split(/\s/, 1)[0];
+  return first.startsWith("`") || /[/\\]|[a-z0-9]_[a-z0-9]|[a-z0-9]\.[a-z]/i.test(first);
+}

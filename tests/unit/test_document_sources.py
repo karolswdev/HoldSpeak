@@ -423,3 +423,11 @@ def test_a_decision_record_names_its_sources_as_a_person_recognizes_them(db, tmp
     meeting = db.meetings.get_meeting(refs["meeting_summary"].split(":", 1)[1])
     assert "## Sources" in body
     assert f"{meeting.title}, {meeting.started_at:%-d %b %Y}" in body, body
+
+
+def test_meeting_summary_date_uses_the_shared_document_day_words(db) -> None:
+    db.meetings.save_meeting(MeetingState(id="day-words", title="Platform review", started_at=datetime(2026, 11, 13, 10),
+        intel=IntelSnapshot(timestamp=1.0, summary="Keep the selected draft.", action_items=[])))
+    document = render_document(db, "meeting_summary:day-words")
+    assert "Date: 13 Nov 2026" in document.body_md
+    assert "Date: 2026-11-13" not in document.body_md

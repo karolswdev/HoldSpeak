@@ -32,7 +32,7 @@ import { VerbGlyph } from "./window/VerbGlyph";
 /** HS-148-01: selector that finds ALL menu-item roles (menuitem,
  * menuitemcheckbox, menuitemradio) for keyboard navigation. */
 const MENUITEM_SELECTOR =
-  "[role='menuitem'],[role='menuitemcheckbox'],[role='menuitemradio']";
+  "[role='menuitem']:not(:disabled),[role='menuitemcheckbox']:not(:disabled),[role='menuitemradio']:not(:disabled)";
 
 /** Type-ahead + roving-arrow keyboard grammar shared by every panel. */
 function menuKeyDown(
@@ -453,6 +453,7 @@ export function WorkMenu({
   returnFocus,
   autoFocus,
   menuContext,
+  clearChrome = false,
 }: {
   label: string;
   x: number;
@@ -467,6 +468,8 @@ export function WorkMenu({
   autoFocus?: boolean;
   /** HS-148-01: panel-level context declaration (mechanism — default "verb"). */
   menuContext?: string;
+  /** A window menu opens below its tabs and list verb row. */
+  clearChrome?: boolean;
 }) {
   const owner = opener?.closest<HTMLElement>('[data-layer="window"][data-guide-running]') ?? null;
   const ownerBox = owner?.getBoundingClientRect();
@@ -512,14 +515,16 @@ export function WorkMenu({
       // A selection menu belongs beside its row, never over its words.
       if (el === panelRef.current && opener && anchor !== "above") {
         const edge = (opener.closest('[role="row"], .kit-toolbar, .surface-pane-actions') ?? opener).getBoundingClientRect();
+        const chrome = clearChrome ? [...(opener.closest('[data-layer="window"]') ?? opener.closest('.surface-preference-pane') ?? opener).querySelectorAll<HTMLElement>('[role="tablist"], .object-list-head, .object-list-inner-toolbar')].filter(node => node.getBoundingClientRect().height > 0) : [];
+        const floor = Math.max(edge.bottom, ...chrome.map(node => node.getBoundingClientRect().bottom));
         const height = el.getBoundingClientRect().height;
-        const below = window.innerHeight - margin - edge.bottom;
+        const below = window.innerHeight - margin - floor;
         const above = edge.top - margin;
-        const under = below >= height || below >= above;
+        const under = clearChrome || below >= height || below >= above;
         const room = Math.max(0, under ? below : above);
         el.style.maxHeight = `${room}px`;
         el.style.overflowY = "auto";
-        el.style.top = `${(under ? edge.bottom : edge.top - Math.min(height, room)) - (ownerBox?.top ?? 0)}px`;
+        el.style.top = `${(under ? floor : edge.top - Math.min(height, room)) - (ownerBox?.top ?? 0)}px`;
       }
       const r = el.getBoundingClientRect();
       if (ownerBox) {

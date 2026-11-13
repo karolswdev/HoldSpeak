@@ -117,7 +117,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const receive = (next: Receipt) => { if (feedbackFocus.current.epoch === epoch) setReceipt(next); };
   useEffect(() => { setReceipt(null); }, [focus]);
   const data = useMeetingData(meeting, receive, revision);
-  useWindowMast({ line: meeting ? ["Meeting", wireDayClock(data.startedAt)].filter(Boolean).join(" · ") : undefined, figures: [{ value: data.ftProposals.filter(row => row.state === "proposed").length, label: "to confirm", tone: "ask" }, { value: data.ftProposals.filter(row => row.state === "confirmed").length, label: "confirmed" }] });
+  useWindowMast({ line: meeting ? ["Meeting", wireDayClock(data.startedAt)].filter(Boolean).join(" · ") : undefined, figures: [{ value: data.ftProposals.filter(row => row.state === "proposed").length, label: "items to confirm", tone: "ask" }, { value: data.ftProposals.filter(row => row.state === "confirmed").length, label: "confirmed" }] });
   const current = data.detail?.id === meetingId ? { ...meeting, ...data.detail } : meeting;
   const route = readPlannedRoute(current), intel = readMeetingIntel(current);
   const summary = useSummaryRun(() => route, refresh);
@@ -297,7 +297,7 @@ function MeetingObjectMenu({ windowId, entries, anchor, onBack }: { windowId: st
   return <Toolbar label="Meeting actions" data-testid="meeting-toolbar">
     {onBack && !compact ? <Button dense data-testid="meeting-pane-back" onClick={onBack}>Back</Button> : null}
     <Button dense ref={anchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>
-    {open && anchor.current ? <WorkMenu label="Meeting actions" x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom} entries={entries} autoFocus opener={anchor.current} onClose={() => setOpen(false)} returnFocus={() => anchor.current?.focus()} /> : null}
+    {open && anchor.current ? <WorkMenu label="Meeting actions" clearChrome x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom} entries={entries} autoFocus opener={anchor.current} onClose={() => setOpen(false)} returnFocus={() => anchor.current?.focus()} /> : null}
   </Toolbar>;
 }
 

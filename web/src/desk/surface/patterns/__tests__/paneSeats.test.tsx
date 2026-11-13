@@ -2,7 +2,7 @@ import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { GadgetRow } from "../../gadgets";
-import { PaneInspector } from "../PreferencePane";
+import { InspectorFacts, PaneInspector } from "../PreferencePane";
 import { InspectorFigures } from "../../live/InspectorFigures";
 import { Mast, MastSlotContext, type MastDeclaration } from "../Mast";
 import { SurfaceWell, ListView, StatusBar } from "../../index";
@@ -82,4 +82,17 @@ it("fits a path-led inspector name in whole lines and keeps its full identity", 
   expect(title.textContent).toMatch(/…$/);
   expect(title.querySelector("[title]")).toHaveAttribute("title", name);
   expect(screen.getByRole("region", {name})).toBeTruthy();
+});
+
+
+it.each(["web/src/pages/cores/history/MeetingRecord.tsx: Keep the saved selection after a failed read", "meeting_followthrough_revision_0123456789abcdef [0]", "`proposal.binding` keeps the selected revision"])("a technical name uses the file object: %s", name => {
+  const {container} = render(<InspectorFacts name={name} rows={[]} />);
+  expect(container.querySelector(".surface-inspector-object img")).toHaveAttribute("src", expect.stringContaining("artifact"));
+});
+
+it("a wrapping inspector exposes all of a long decision without a hover", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(160);
+  const name = "web/src/desk/pullouts/views/today/reconcile_owner_commitments_49.tsx::KeepTheSelectedRevisionBoundToItsSource keeps the saved answer when the next read completes";
+  const {container} = render(<InspectorFacts name={name} nameMode="wrap" rows={[{label:"State",value:"To confirm"}]} />);
+  expect(container.querySelector(".surface-inspector-heading > strong")).toHaveTextContent(name);
 });

@@ -2269,3 +2269,12 @@ choice rosters or whole panes remain compositions, not verb-row adapters.
   an ellipsis inside the heading's seat. The full identity remains in the
   section's accessible name and the name's hover title. Other `MiddleText`
   consumers retain their one-line default.
+
+- `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
+  is the text the owner must read. It keeps the complete text in the heading;
+  the default remains the three-line name fitter. Meeting outcomes use wrap.
+- `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
+  inspectors use the shared file object for them, rather than human initials.
+- `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
+  header and list verb row. Its remaining viewport seat scrolls to the last
+  entry; it does not lift the menu back over those controls.

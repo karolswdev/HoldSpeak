@@ -77,7 +77,7 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
   const list = <PreferencePane label={kind === "decision" ? "Decision proposals" : "Tasks to confirm"} testId="meeting-task-well">
     {readFailed ? <SurfaceState error="Tasks not read" onRetry={() => setAttempt(value => value + 1)} /> : <>
 <ListView externalToolbar={reader} label="Tasks to confirm" selectedId={selected} onSelect={setSelected} ordered defaultVerb="edit" verbs={verbs}
-      columns={[{ key: "name", word: "Task", priority: 100, track: "minmax(0, 1fr)" }, { key: "owner", word: "Owner", priority: 30, track: "140px" }, { key: "due", word: "Due", priority: 20, track: "120px" }]}
+      columns={[{ key: "name", word: "Task", priority: 100, track: "minmax(0, 1fr)" }, ...(rows.some(row => (row.owner ?? row.owner_hint)?.trim()) ? [{ key: "owner", word: "Owner", priority: 30, track: "140px" }] : []), ...(rows.some(row => (row.due ?? row.due_hint)?.trim()) ? [{ key: "due", word: "Due", priority: 20, track: "120px" }] : [])]}
       rows={rows.map((row) => ({ id: row.id, kind: row.kind, name: row.text, cells: { owner: row.owner ?? row.owner_hint ?? "", due: row.due ?? row.due_hint ?? "" } }))}
       rowProps={(row) => ({ "data-testid": `meeting-task-${row.id}` })} />
     {reading ? <SurfaceState loading /> : !rows.length ? <PaneNotice>No tasks to confirm</PaneNotice> : null}
