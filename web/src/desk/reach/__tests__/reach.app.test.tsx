@@ -14,6 +14,9 @@ import paired from "../__fixtures__/reach.paired.json";
 import pairing from "../__fixtures__/reach.pairing.json";
 import pairingOpen from "../__fixtures__/reach.pairing_open.json";
 import saved from "../__fixtures__/reach.saved.json";
+import kindSendDigest from "../__fixtures__/reach.kind_send_digest.json";
+import briefOff from "../__fixtures__/reach.brief_off.json";
+import rungOff from "../__fixtures__/reach.rung_off.json";
 import unpaired from "../__fixtures__/reach.unpaired.json";
 import phoneOff from "../__fixtures__/reach.phone_off.json";
 import anotherDesk from "../__fixtures__/reach.another_desk.json";
@@ -50,6 +53,11 @@ import { TELEGRAM_LEAVES } from "../TelegramSetup";
 import { laterWords, pageWords, type LaterMark, type OpenPage } from "../../reach";
 
 let calls: string[];
+/** Open one row of the `What it sends` tab (the old When and Brief tabs). */
+function sendsRow(name: string) {
+  fireEvent.click(screen.getByRole("tab", { name: "What it sends" }));
+  fireEvent.click(within(screen.getByRole("row", { name })).getByText(name, { exact: true }));
+}
 const clone = <T,>(value: T): T => structuredClone(value);
 function hub(table: Record<string, Answer>) {
   mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
@@ -86,7 +94,8 @@ describe("Settings ▸ Reach", () => {
     pane();
     await screen.findByTestId("reach-telegram");
     expect(telegramState()).toBe("not_set_up");
-    for (const step of ["1 · Make a bot in Telegram", "2 · Paste its token", "3 · Connect your chat"]) expect(screen.getByText(step)).toBeInTheDocument();
+    for (const step of ["Step 1: Make a bot in Telegram", "Step 2: Paste its token", "Step 3, later: Connect your chat"]) expect(screen.getByRole("heading", {name: step})).toBeInTheDocument();
+    expect(within(screen.getByTestId("reach-step-3")).getByText("After step 2")).toBeInTheDocument();
     expect(screen.getByTestId("reach-egress").textContent).toBe(TELEGRAM_LEAVES);
     expect(screen.getAllByTestId("reach-egress")).toHaveLength(1);
     const field = screen.getByLabelText("Bot token");
@@ -103,9 +112,9 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Calls" }));
     expect(screen.getByTestId("reach-phone-state").textContent).toBe(unpaired.channels.phone_app.words);
     expect(screen.getByTestId("reach-calls-state").textContent).toBe(unpaired.channels.calls.words);
-    fireEvent.click(screen.getByRole("tab", {name:"When"}));
+    sendsRow("When to reach you");
     expect(screen.getByRole("combobox", { name: "Telegram" })).toHaveValue("at_once");
-    fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
+    sendsRow("Digest and Later");
     fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByRole("combobox", { name: "Later means" })).toHaveValue("in_2h");
     expect(screen.getByRole("combobox", { name: "Digest" })).toHaveValue("end_of_quiet");
@@ -114,7 +123,7 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Calls" }));
     const rows = screen.getAllByTestId("phone-reach-row");
     expect(new Set(rows.map((r) => r.getAttribute("data-kind")))).toEqual(new Set(Object.keys(unpaired.ladder.kinds).filter((kind) => kind !== "level")));
-    fireEvent.click(screen.getByRole("tab", { name: "When" }));
+    sendsRow("When to reach you");
     expect(screen.getByTestId("quiet-rows")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Calls" }));
     fireEvent.click(screen.getByTestId("reach-phone-open"));
@@ -126,11 +135,11 @@ describe("Settings ▸ Reach", () => {
     pane();
     await screen.findByTestId("reach-telegram");
     expect(screen.getAllByRole("tab").length).toBeLessThanOrEqual(4);
-    fireEvent.click(screen.getByRole("tab", {name: "Brief"}));
+    sendsRow("Digest and Later");
     const row = screen.getByRole("row", {name: "Digest and Later"});
     expect(row.closest('[role="row"]')).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
-    expect(within(screen.getByRole("grid", {name: "Brief choices"})).queryByRole("columnheader")).toBeNull();
+    expect(within(screen.getByRole("grid", {name: "Send choices"})).queryByRole("columnheader")).toBeNull();
     expect(screen.queryByRole("button", {name: "Open choice"})).toBeNull();
     fireEvent.click(screen.getByText("Notices", {exact: true}));
     expect(screen.getByTestId("cadence-rows")).toBeInTheDocument();
@@ -138,17 +147,18 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('[role="row"]')!, {key: "Enter"});
     expect(screen.getByRole("region", {name: "Digest and Later"})).toBeInTheDocument();
-    expect(screen.getByRole("combobox", {name: "Digest"})).toHaveFocus();
+    expect(screen.getByRole("combobox", {name: "Daily brief"})).toHaveFocus();
     fireEvent.doubleClick(row);
-    expect(screen.getByRole("combobox", {name: "Digest"})).toHaveFocus();
+    expect(screen.getByRole("combobox", {name: "Daily brief"})).toHaveFocus();
     expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
     expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
     fireEvent.click(screen.getByText("Notices", {exact: true}));
     fireEvent.click(screen.getByRole("tab", {name: "Telegram"}));
     expect(screen.getByTestId("reach-unpair")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", {name: "Brief"}));
-    expect(screen.getByRole("row", {name: "Digest and Later"})).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
+    // The tab opens on what Telegram sends each time.
+    fireEvent.click(screen.getByRole("tab", {name: "What it sends"}));
+    expect(screen.getByRole("row", {name: "To Telegram"})).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", {name: "To Telegram"})).toBeInTheDocument();
     expect(calls.some((call) => call.startsWith("PUT ") || call.startsWith("DELETE "))).toBe(false);
   });
 
@@ -187,7 +197,7 @@ describe("Settings ▸ Reach", () => {
     expect((await screen.findByTestId("reach-token-refused")).textContent).toBe(tokenRefused.detail);
     expect(field).toHaveValue("fixture-bot-token");
     expect(telegramState()).toBe("not_set_up");
-    fireEvent.click(screen.getByRole("tab", { name: "When" }));
+    sendsRow("When to reach you");
     fireEvent.click(screen.getByRole("tab", { name: "Telegram" }));
     expect(screen.getByLabelText("Bot token")).toHaveValue("fixture-bot-token");
     fireEvent.click(screen.getByTestId("reach-token-save"));
@@ -238,7 +248,7 @@ describe("Settings ▸ Reach", () => {
     expect(within(facts).getByText("At once")).toBeInTheDocument();
     expect(within(facts).getByText(`${String(paired.quiet_hours.start).padStart(2, "0")}:00 to ${String(paired.quiet_hours.end).padStart(2, "0")}:00`)).toBeInTheDocument();
     await waitFor(() => expect(strip).toHaveBeenLastCalledWith("Telegram connected"));
-    fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
+    sendsRow("Digest and Later");
     fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByTestId("reach-digest-now")).not.toBeDisabled();
   });
@@ -305,6 +315,10 @@ describe("Settings ▸ Reach", () => {
     hub({ "GET /api/reach": keystoreLocked });
     pane();
     expect((await screen.findByTestId("reach-telegram-health")).textContent).toBe(keystoreLocked.channels.telegram.keystore_words);
+    // Its one verb reads the hub again.
+    const reads = calls.filter((call) => call === "GET /api/reach").length;
+    fireEvent.click(screen.getByTestId("reach-read-again"));
+    await waitFor(() => expect(calls.filter((call) => call === "GET /api/reach").length).toBe(reads + 1));
     expect(screen.queryByLabelText("Bot token")).toBeNull();
     expect(screen.queryByTestId("reach-pair")).toBeNull();
     opened.mockRestore();
@@ -354,10 +368,74 @@ describe("Settings ▸ Reach", () => {
     expect(screen.getByTestId("reach-bot-name").textContent).toBe("HoldSpeak · @holdspeak_karol_bot");
   });
 
+  it("What it sends: one row for each kind from the hub, the limit and the People rule; a press saves one kind", async () => {
+    hub({ "GET /api/reach": paired, "PUT /api/reach": kindSendDigest });
+    pane();
+    await screen.findByTestId("reach-telegram");
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Telegram", "What it sends", "Calls"]);
+    fireEvent.click(screen.getByRole("tab", { name: "What it sends" }));
+    const group = screen.getByRole("region", { name: "To Telegram" });
+    // The rows, their words and their modes are the hub's.
+    for (const row of paired.ladder.sends) {
+      const gadget = within(group).getByRole("combobox", { name: row.label });
+      expect(gadget).toHaveValue(row.mode);
+      expect([...gadget.querySelectorAll("option")].map((option) => option.textContent)).toEqual(row.modes.map((mode) => mode.label));
+    }
+    expect(within(group).getAllByRole("combobox")).toHaveLength(paired.ladder.sends.length);
+    const due = paired.ladder.sends.find((row) => row.kind === "due")!;
+    expect(screen.getByTestId("reach-send-fact-due").textContent).toBe(due.fact);
+    expect(screen.getByTestId("reach-send-cap").textContent).toBe(paired.ladder.cap_words);
+    expect(screen.getByTestId("reach-send-people").textContent).toBe(paired.ladder.people_words);
+    // One press on the cycle: the next word goes through the one save, and the hub's answer shows.
+    const send = paired.ladder.sends.find((row) => row.kind === "send")!;
+    fireEvent.click(within(group).getByRole("combobox", { name: send.label }));
+    await waitFor(() => expect(calls).toContain('PUT /api/reach {"kinds":{"send":"digest"}}'));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: send.label })).toHaveValue("digest"));
+    expect(screen.getByRole("combobox", { name: paired.ladder.sends[0].label })).toHaveValue("at_once");
+  });
+
+  it("What it sends: with Telegram off each row says Off now and takes no press", async () => {
+    hub({ "GET /api/reach": rungOff });
+    pane();
+    await screen.findByTestId("reach-telegram");
+    fireEvent.click(screen.getByRole("tab", { name: "What it sends" }));
+    const group = screen.getByRole("region", { name: "To Telegram" });
+    for (const row of rungOff.ladder.sends) {
+      expect(within(group).getByRole("combobox", { name: row.label })).toBeDisabled();
+      expect(screen.getByTestId(`reach-send-now-${row.kind}`).textContent).toBe(`Now: ${row.now_words}`);
+    }
+    expect(calls.some((call) => call.startsWith("PUT "))).toBe(false);
+  });
+
+  it("the daily brief goes off and on through the one save", async () => {
+    hub({ "GET /api/reach": paired, "PUT /api/reach": briefOff });
+    pane();
+    await screen.findByTestId("reach-telegram");
+    sendsRow("Digest and Later");
+    const brief = screen.getByRole("combobox", { name: "Daily brief" });
+    expect(brief).toHaveValue("on");
+    fireEvent.click(brief);
+    await waitFor(() => expect(calls).toContain('PUT /api/reach {"brief":"off"}'));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Daily brief" })).toHaveValue("off"));
+  });
+
+  it("a done step shows a check and one fact row; the next step is the current one", async () => {
+    hub({ "GET /api/reach": tokenChecked });
+    pane();
+    await screen.findByTestId("reach-telegram");
+    expect(telegramState()).toBe("token_checked");
+    for (const step of ["Step 1, done: Make a bot in Telegram", "Step 2, done: Paste its token", "Step 3: Connect your chat"]) expect(screen.getByRole("heading", { name: step })).toBeInTheDocument();
+    expect(screen.getByTestId("reach-step-2")).toHaveAttribute("data-state", "done");
+    expect(screen.getByTestId("reach-step-2").textContent).toContain("✓");
+    expect(screen.queryByLabelText("Bot token")).toBeNull();
+    expect(screen.getByTestId("reach-bot-name").textContent).toBe("HoldSpeak · @holdspeak_karol_bot");
+    expect(screen.getByTestId("reach-pair")).not.toBeDisabled();
+  });
+
   it("DIR7: the ladder's rungs in the hub's order, each with its wait; Phone saves through PUT /api/reach", async () => {
     hub({ "GET /api/reach": paired, "PUT /api/reach": phoneOff });
     pane();
-    fireEvent.click(screen.getByRole("tab", {name:"When"}));
+    sendsRow("When to reach you");
     const ladder = await screen.findByTestId("reach-ladder");
     await waitFor(() => expect(within(ladder).getAllByRole("combobox").length).toBe(2));
     const labels = [...ladder.querySelectorAll(".gadget-row-label")].map((node) => node.childNodes[0]?.textContent?.trim());
@@ -380,12 +458,12 @@ describe("Settings ▸ Reach", () => {
   it("Telegram's rung, the digest and Later means save through PUT /api/reach", async () => {
     hub({ "GET /api/reach": paired, "PUT /api/reach": saved });
     pane();
-    fireEvent.click(screen.getByRole("tab", {name:"When"}));
+    sendsRow("When to reach you");
     const rung = await screen.findByRole("combobox", { name: "Telegram" });
     fireEvent.change(rung, { target: { value: "after_10" } });
     await waitFor(() => expect(calls).toContain('PUT /api/reach {"telegram":"after_10"}'));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Telegram" })).toHaveValue("after_10"));
-    fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
+    sendsRow("Digest and Later");
     fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByRole("combobox", { name: "Digest" })).toHaveValue("7");
     fireEvent.change(screen.getByRole("combobox", { name: "Digest" }), {

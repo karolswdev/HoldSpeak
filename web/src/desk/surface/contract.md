@@ -1943,6 +1943,12 @@ The channel tabs keep the document's Send preview.
 Programs follow-up (2026-11-10): `InspectorBody` is the bounded vertical
 composition of facts and reading content inside an inspector. `PaneNotice`
 is a plain in-pane status line. Both have Live pieces gallery examples.
+`StepHeading` (2026-11-13) is the heading of one numbered step of a setup
+pane: the number in a circle, a sentence-case title, and a state: `current`
+(cobalt, filled), `done` (a check) or `later` (dimmed, with `after`: what it
+waits for, in a short pill). A done step collapses to one fact row under its
+heading. It is the group's one heading: the group under it has no caption.
+Gallery: Live pieces, "Step heading".
 A one-step `Meter` keeps a 36 px track. `StepTrack` rings only `current`;
 `selected` is a separate selection mark. Selection toolbars measure each
 verb and keep the fitting prefix before Actions, including verbs added after
