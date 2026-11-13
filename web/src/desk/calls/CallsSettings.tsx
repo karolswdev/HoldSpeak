@@ -330,7 +330,8 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
         <div className="surface-tab-panel" hidden={tab !== "setup"}>
           <PreferenceWell>
             <GadgetGroup>
-              <GadgetRow label="Calls"><span data-testid="calls-egress">Audio: carrier · Words: home engine</span></GadgetRow>
+              <GadgetRow label="Audio"><span data-testid="calls-egress">Carrier</span></GadgetRow>
+              <GadgetRow label="Words">Home engine</GadgetRow>
               <GadgetRow label="Calls" controlWidth="standard">
                 <CheckGadget
                   label="Calls on"

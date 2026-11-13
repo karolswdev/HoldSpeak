@@ -139,7 +139,7 @@ export function MeaningSearchRow({ form = false }: { form?: boolean } = {}) {
   const action: Action = failure ? failure.retry : off ? "turn-on" : "turn-off";
   const reason = failure?.reason ?? status?.error ?? "";
 
-  if (form) return <GadgetGroup label="Meaning search"><GadgetRow label="Enabled"><span title={leaves && status ? `Downloads from ${status.model.source}` : undefined}><CheckGadget label="Meaning search" checked={!off} disabled={pressing} onChange={() => void run(off ? "turn-on" : "turn-off")} /></span></GadgetRow>
+  if (form) return <GadgetGroup><GadgetRow label="Enabled"><span title={leaves && status ? `Downloads from ${status.model.source}` : undefined}><CheckGadget label="Meaning search" checked={!off} disabled={pressing} onChange={() => void run(off ? "turn-on" : "turn-off")} /></span></GadgetRow>
     {status ? <><GadgetRow label="Model">{status.model.label}</GadgetRow><GadgetRow label="State">{meaningSearchChip(status)}</GadgetRow></> : null}
     {failure ? <PaneActions><span role="alert">{reason}</span><Button dense disabled={pressing} onClick={() => void run(action)}>Retry</Button></PaneActions> : null}
   </GadgetGroup>;

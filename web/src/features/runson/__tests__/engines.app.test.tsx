@@ -116,8 +116,9 @@ describe("Settings > Engines", () => {
     expect(writes).toEqual([expect.objectContaining({ draft: expect.objectContaining({ preset: "claude", profile_id: "agent-claude" }) })]);
     fireEvent.click(within(screen.getByRole("region", { name: "Add engine" })).getByRole("button", { name: "Done" }));
     expect(await screen.findByTestId("settings-engine-agent-claude")).toHaveTextContent("Ready");
-    fireEvent.click(await screen.findByRole("tab", { name: "Engines" }));
+    expect(screen.queryByRole("tab", { name: "Engines" })).toBeNull();
     fireEvent.click(within(screen.getByRole("region", { name: "Model library" })).getByRole("button", { name: "Done" }));
+    expect(screen.getByRole("tab", {name:"Engines"})).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("settings-engines-library")).toBeNull();
   });
 });
@@ -129,4 +130,68 @@ it("offers only candidates the hub admits for the selected job's modality", asyn
   const choice = screen.getByRole("combobox", {name:"Everything else engines"});
   expect(within(choice).queryByRole("option", {name:"Whisper mlx base"})).toBeNull();
   expect(within(editor).getByRole("button", {name:"Add engine"})).toBeDisabled();
+});
+
+
+it("gives the library its pane instead of keeping a second engine list above it", async () => {
+  chainHub();
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  expect(screen.getByRole("region", {name:"Model library"})).toBeVisible();
+  expect(screen.queryByRole("grid", {name:"Engines on this desk"})).toBeNull();
+  fireEvent.click(within(screen.getByRole("region", {name:"Model library"})).getByRole("button", {name:"Done"}));
+  expect(screen.getByRole("grid", {name:"Engines on this desk"})).toBeVisible();
+});
+
+
+it("does not label a library category with the installed engine count", async () => {
+  chainHub();
+  const count = vi.fn();
+  render(<EnginesSection onCount={count} />);
+  await waitFor(() => expect(count.mock.calls.at(-1)?.[0]).toBeGreaterThan(0));
+  const installed = count.mock.calls.at(-1)![0];
+  fireEvent.click(screen.getByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  await waitFor(() => expect(count).toHaveBeenLastCalledWith(0));
+  fireEvent.click(within(screen.getByRole("region", {name:"Model library"})).getByRole("button", {name:"Done"}));
+  await waitFor(() => expect(count).toHaveBeenLastCalledWith(installed));
+});
+
+
+it("clears a previous count when the engine read fails", async () => {
+  vi.mocked(apiFetch).mockRejectedValue(new Error("No answer"));
+  const count = vi.fn();
+  render(<EnginesSection onCount={count} />);
+  await screen.findByText("Engines not read", {exact:true});
+  expect(count).toHaveBeenLastCalledWith(0);
+});
+
+
+it("keeps an inspected engine name in the shared facts seat", async () => {
+  chainHub();
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  const library = screen.getByTestId("settings-engines-library");
+  fireEvent.click(within(library).getByText("Codex", {exact:true}));
+  fireEvent.click(within(library).getByRole("button", {name:"Inspect"}));
+  const facts = library.querySelector<HTMLElement>(".surface-inspector-facts")!;
+  expect(facts).toHaveAttribute("data-feedback-redact", "true");
+  expect(within(facts).getByText("Name", {exact:true}).closest(".gadget-row")).toHaveTextContent("Codex");
+});
+
+
+it("keeps Cancel then Check in the server completion seat", async () => {
+  chainHub();
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
+  fireEvent.click(screen.getByTestId("runson-kind-lan"));
+  const check = screen.getByTestId("concierge-add-check");
+  expect(check).toBeDisabled();
+  const actions = check.closest<HTMLElement>(".surface-inspector-actions")!;
+  expect(within(actions).getAllByRole("button").map(button => button.textContent)).toEqual(["Cancel", "Check"]);
+  expect(screen.getByRole("textbox", {name:"Server address"})).toBeVisible();
 });

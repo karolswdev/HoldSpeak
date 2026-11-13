@@ -2040,14 +2040,16 @@ its destination chooser a complete value seat and its destination line one row.
 The Live pieces gallery includes Failure notice and Form fit.
 
 Send owns its delivery status: New, Prepared, Sending, Sent at the kit clock,
-Result unknown or Failed. Hosts yield their ordinary status while Send is open.
-Prepared-by and document labels use facts. Preview title dates use kit words;
-the frozen payload and editable body keep their bytes. Preview text fills its well.
-File receipts use MiddleText with keepFileName, retaining the final file name
-beside the middle ellipsis whenever it fits; a longer file name keeps its full text on following lines. Hover and Copy path retain the full path.
+Result unknown, Refused or Failed. Hosts yield their ordinary status while Send is open.
+Prepared-by and document labels use facts. Preview titles, the frozen payload and editable body keep their bytes. Preview text fills its well.
+File receipts use MiddleText on one line; a long path keeps both ends around a middle ellipsis. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
+Settings' model library takes the engine pane while it is open. Done restores
+its installed list and tab. Inspect keeps the full engine name in redacted facts.
+Nested Add rosters use ListPane's row floor. A server form has Cancel then
+Check in its completion seat; the destination stays in the fixed notice above it.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
 
