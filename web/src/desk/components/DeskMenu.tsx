@@ -217,21 +217,9 @@ const SUB_HOVER_INTENT_MS = 120;
 const NARROW = () =>
   typeof window !== "undefined" && window.innerWidth <= 720;
 
-function clampStyle(x: number, y: number): CSSProperties {
-  if (NARROW()) {
-    // The phone panel: full-width, pinned above the safe band.
-    return {
-      position: "fixed",
-      left: 8,
-      right: 8,
-      top: Math.min(y, window.innerHeight - 280),
-    };
-  }
-  return {
-    position: "fixed",
-    left: Math.min(x, (window.innerWidth || 1280) - 232),
-    top: Math.min(y, (window.innerHeight || 800) - 320),
-  };
+/** Start at the anchor; the measured layout below decides the available seat. */
+function menuStyle(x: number, y: number): CSSProperties {
+  return {position: "fixed", left: x, top: y};
 }
 
 /** HS-148-01: render a keycap string as drawn keycap wells.
@@ -449,11 +437,10 @@ export function WorkMenu({
   anchor = "below",
   entries: given,
   onClose,
-  opener,
+  opener: suppliedOpener,
   returnFocus,
   autoFocus,
   menuContext,
-  clearChrome = false,
 }: {
   label: string;
   x: number;
@@ -468,13 +455,22 @@ export function WorkMenu({
   autoFocus?: boolean;
   /** HS-148-01: panel-level context declaration (mechanism — default "verb"). */
   menuContext?: string;
-  /** A window menu opens below its tabs and list verb row. */
-  clearChrome?: boolean;
 }) {
+  // Older point-opened menus still belong to the object under their anchor.
+  // Capture it before the portal paints; explicit openers keep their identity.
+  const opener = useMemo(() => {
+    if (suppliedOpener) return suppliedOpener;
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && focused !== document.body && focused !== document.documentElement && !focused.closest(".desk-work-menu")) {
+      const box = focused.getBoundingClientRect();
+      if (box.width && x >= box.left-1 && x <= box.right+1 && y >= box.top-1 && y <= box.bottom+1) return focused;
+    }
+    return document.elementsFromPoint?.(x,y).find(node => node instanceof HTMLElement && !node.closest(".desk-work-menu")) as HTMLElement | undefined;
+  }, [suppliedOpener,x,y]);
   const owner = opener?.closest<HTMLElement>('[data-layer="window"][data-guide-running]') ?? null;
   const ownerBox = owner?.getBoundingClientRect();
   const guideStyle: CSSProperties | null = ownerBox ? {
-    position: "absolute", left: Math.max(8, x-ownerBox.left), top: Math.max(36, y-ownerBox.top),
+    position: "absolute", left: x-ownerBox.left, top: y-ownerBox.top,
     width: NARROW() ? Math.min(ownerBox.width-16, innerWidth-16) : undefined,
     zIndex: "var(--desk-z-local)",
   } : null;
@@ -491,71 +487,78 @@ export function WorkMenu({
   const subRef = useRef<HTMLElement | null>(null);
   const subOpener = useRef<HTMLElement | null>(null);
 
-  // PHILO-9-04 (the ratified list canvas): the species keeps its measured
-  // panel inside the viewport (8 px margin). The clamp above guesses the
-  // panel's height; a longer menu opened near the bottom edge ran past it
-  // (the list's row menu at 393: Delete cut 15 px). Runs after layout and
-  // before paint, so the panel never shows cut, then moves. Every WorkMenu
-  // consumer gets it.
-  // Round two (Codex Astra r1 finding 2): the desktop submenu keeps itself in
-  // view by the same measurement; past the right edge it opens on the
-  // parent panel's left side, and only if that does not fit is it clamped.
+  // One measured placement for every menu. Protected rows split the owner
+  // window into free seats; fitting never clamps a panel back over a row.
   useLayoutEffect(() => {
-    const margin = 8;
-    const keepInView = (el: HTMLElement | null, flipFrom?: DOMRect) => {
-      if (!el) return;
-      if (el === panelRef.current && anchor === "above" && opener) {
-        const edge = opener.getBoundingClientRect();
-        const room = Math.max(0, edge.top - margin);
+    const place = () => {
+      const windowOwner = opener?.closest<HTMLElement>('[data-layer="window"]');
+      const windowBox = windowOwner?.getBoundingClientRect();
+      const margin = 8;
+      const bounds = {
+        left: Math.max(margin, (windowBox?.left ?? 0) + margin),
+        right: Math.min(innerWidth - margin, (windowBox?.right ?? innerWidth) - margin),
+        top: Math.max(margin, (windowBox?.top ?? 0) + margin),
+        bottom: Math.min(innerHeight - margin, (windowBox?.bottom ?? innerHeight) - margin),
+      };
+      // A nested list toolbar can belong to a whole labelled form row.
+      const row = opener?.closest<HTMLElement>('.gadget-row') ?? opener?.closest<HTMLElement>('[role="row"], [role="listitem"], .kit-toolbar, .surface-pane-actions, .desk-pullout-head, [role="menubar"]') ?? opener?.closest<HTMLElement>('button, [role="button"], [data-object-id], [data-object-ref]');
+      const edge = row?.getBoundingClientRect() ?? {top: y, bottom: y, left: x, right: x};
+      const protectedNodes = new Set<HTMLElement>(row ? [row] : []);
+      if (!windowOwner) document.querySelectorAll<HTMLElement>(".desk-menubar, .desk-dock").forEach(node => protectedNodes.add(node));
+      windowOwner?.querySelectorAll<HTMLElement>('.desk-pullout-head, [role="tablist"], .object-list-head, .object-list-inner-toolbar, .object-list-row[aria-selected="true"]').forEach(node => protectedNodes.add(node));
+      const protectedRects = [...protectedNodes].map(node => node.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0 && rect.bottom > bounds.top && rect.top < bounds.bottom);
+      const keepInView = (el: HTMLElement | null, parent?: DOMRect) => {
+        if (!el) return;
+        el.style.boxSizing = "border-box";
+        el.style.maxWidth = `${Math.max(0, bounds.right-bounds.left)}px`;
+        el.style.width = NARROW() ? `${Math.max(0,bounds.right-bounds.left)}px` : "max-content";
+        el.style.maxHeight = "none";
+        el.style.overflowY = "auto";
+        const size = el.getBoundingClientRect();
+        const left = parent
+          ? parent.right + 1 + size.width <= bounds.right ? parent.right + 1 : Math.max(bounds.left,parent.left-size.width-1)
+          : Math.max(bounds.left,Math.min(x,bounds.right-size.width));
+        const beside = Boolean(parent && (left >= parent.right || left+size.width <= parent.left));
+        const reference = parent ? subOpener.current?.getBoundingClientRect() ?? edge : edge;
+        const avoid = parent && !beside ? [...protectedRects,parent] : protectedRects;
+        const obstacles = avoid.filter(rect => rect.right > left && rect.left < left+size.width).sort((a,b) => a.top-b.top);
+        let start = bounds.top;
+        const gaps: {top: number; bottom: number}[] = [];
+        for (const rect of obstacles) {
+          if (rect.top-1 > start) gaps.push({top:start,bottom:Math.min(bounds.bottom,rect.top-1)});
+          start = Math.max(start,rect.bottom+1);
+        }
+        if (start < bounds.bottom) gaps.push({top:start,bottom:bounds.bottom});
+        const below = gaps.map(gap=>({...gap,top:Math.max(gap.top,reference.bottom+1)})).filter(gap=>gap.bottom>gap.top);
+        const above = gaps.map(gap=>({...gap,bottom:Math.min(gap.bottom,reference.top-1)})).filter(gap=>gap.bottom>gap.top).reverse();
+        const preferred = anchor === "above" ? [...above,...below] : [...below,...above];
+        const height = size.height;
+        // Full panels flip before they scroll. If neither side fits, use the
+        // largest free seat, preserving every item through internal scrolling.
+        const alignedTop = (gap: {top: number; bottom: number}) => Math.max(gap.top,Math.min(reference.top,gap.bottom-height));
+        const alongside = beside ? gaps.filter(gap=>gap.bottom-gap.top >= height)
+          .sort((a,b)=>Math.abs(alignedTop(a)-reference.top)-Math.abs(alignedTop(b)-reference.top))[0] : undefined;
+        const seat = alongside
+          ?? preferred.find(gap=>gap.bottom-gap.top >= height)
+          ?? [...preferred].sort((a,b)=>(b.bottom-b.top)-(a.bottom-a.top))[0]
+          ?? gaps[0];
+        const room = seat ? seat.bottom-seat.top : 0;
+        const top = alongside ? alignedTop(alongside)
+          : seat ? seat.bottom <= reference.top ? seat.bottom-Math.min(height,room) : seat.top
+          : bounds.top;
+        el.style.left = `${left-(ownerBox?.left ?? 0)}px`;
+        el.style.top = `${top-(ownerBox?.top ?? 0)}px`;
         el.style.maxHeight = `${room}px`;
-        el.style.overflowY = "auto";
-        const height = Math.min(el.getBoundingClientRect().height, room);
-        el.style.top = `${edge.top - height - (ownerBox?.top ?? 0)}px`;
-      }
-      // A selection menu belongs beside its row, never over its words.
-      if (el === panelRef.current && opener && anchor !== "above") {
-        const edge = (opener.closest('[role="row"], .kit-toolbar, .surface-pane-actions') ?? opener).getBoundingClientRect();
-        const chrome = clearChrome ? [...(opener.closest('[data-layer="window"]') ?? opener.closest('.surface-preference-pane') ?? opener).querySelectorAll<HTMLElement>('[role="tablist"], .object-list-head, .object-list-inner-toolbar')].filter(node => node.getBoundingClientRect().height > 0) : [];
-        const floor = Math.max(edge.bottom, ...chrome.map(node => node.getBoundingClientRect().bottom));
-        const height = el.getBoundingClientRect().height;
-        const below = window.innerHeight - margin - floor;
-        const above = edge.top - margin;
-        const under = clearChrome || below >= height || below >= above;
-        const room = Math.max(0, under ? below : above);
-        el.style.maxHeight = `${room}px`;
-        el.style.overflowY = "auto";
-        el.style.top = `${(under ? floor : edge.top - Math.min(height, room)) - (ownerBox?.top ?? 0)}px`;
-      }
-      const r = el.getBoundingClientRect();
-      if (ownerBox) {
-        const left = Math.max(ownerBox.left + margin, margin);
-        const right = Math.min(ownerBox.right - margin, innerWidth - margin);
-        const top = Math.max(ownerBox.top + 36, margin);
-        const bottom = Math.min(ownerBox.bottom - margin, innerHeight - margin);
-        el.style.left = `${Math.max(left, Math.min(r.left, right-r.width))-ownerBox.left}px`;
-        el.style.top = `${Math.max(top, Math.min(r.top, bottom-r.height))-ownerBox.top}px`;
-        el.style.maxHeight = `${bottom-top}px`;
-        el.style.overflowY = "auto";
-        return;
-      }
-      if (r.bottom > window.innerHeight - margin) {
-        el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
-      }
-      // PHILO-13-15 (C5, Astra canvas r1 condition 4, ratified 2026-10-03):
-      // a desktop submenu opens NEXT TO its parent panel -- on the right
-      // side if it fits, otherwise on the left side. Only when neither side
-      // fits is it clamped to the viewport. (Main clamped it to the right
-      // edge, far from its parent.)
-      if (!NARROW() && flipFrom) {
-        const right = flipFrom.right + 1;
-        const left = flipFrom.left - r.width - 1;
-        el.style.left = `${right + r.width <= window.innerWidth - margin ? right : left >= margin ? left : Math.max(margin, window.innerWidth - margin - r.width)}px`;
-      } else if (!NARROW() && r.right > window.innerWidth - margin) {
-        el.style.left = `${Math.max(margin, window.innerWidth - margin - r.width)}px`;
-      }
+      };
+      keepInView(panelRef.current);
+      keepInView(subRef.current,panelRef.current?.getBoundingClientRect());
     };
-    keepInView(panelRef.current);
-    keepInView(subRef.current, panelRef.current?.getBoundingClientRect());
+    place();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(place);
+    if (opener) observer?.observe(opener.closest('[data-layer="window"]') ?? opener);
+    window.addEventListener("resize",place);
+    document.fonts?.addEventListener("loadingdone",place);
+    return () => {observer?.disconnect();window.removeEventListener("resize",place);document.fonts?.removeEventListener("loadingdone",place);};
   });
 
   // The desktop dismissal rule: any outside pointer-down, Escape from
@@ -655,7 +658,7 @@ export function WorkMenu({
       }
       role="menu"
       aria-label={narrow && current ? `${current.label} submenu` : label}
-      style={guideStyle ?? clampStyle(x, y)}
+      style={guideStyle ?? menuStyle(x, y)}
       data-menu-context={menuContext || "verb"}
       data-menu-owner={opener?.closest('[data-layer="window"]')?.id}
       onPointerDown={(e) => e.stopPropagation()}
@@ -723,7 +726,7 @@ export function WorkMenu({
           className="desk-menu-list desk-work-menu desk-work-submenu is-below"
           role="menu"
           aria-label={`${sub.label} submenu`}
-          style={clampStyle(subAt.x, subAt.y)}
+          style={menuStyle(subAt.x, subAt.y)}
           data-menu-context={sub.menuContext || menuContext || "verb"}
           onKeyDown={(e) => {
             // The submenu owns its own keys; never let them bubble to

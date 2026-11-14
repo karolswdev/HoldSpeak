@@ -1,0 +1,6 @@
+/* Parked: ListView measures its real header cells, with their row inheritance. */
+/* Intrinsic header measurement stays available even after its column drops. */
+.object-list-measure { position: absolute; visibility: hidden; pointer-events: none; font: 600 12px / 18px var(--font-sans); }
+.object-list-measure > span { display: block; width: max-content; white-space: nowrap; }
+.object-list-measure > span::before { content: attr(data-label); }
+

@@ -88,7 +88,10 @@
 /* HS-111-07: species v2 — portal panel, separator, key column, submenu */
 .desk-next .desk-work-menu {
   z-index: var(--desk-z-popover);
+  overscroll-behavior: contain;
 }
+/* A short menu seat scrolls; it never compresses its entries. */
+.desk-next .desk-work-menu > * { flex-shrink: 0; }
 /* PHILO-9-04: the 12 px floor holds in the work menu as in the list: its
    quiet reason ("Select a Project") and its keycap wells ("F2", "Delete"). */
 .desk-next .desk-work-menu .quiet,
