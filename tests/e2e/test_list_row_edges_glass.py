@@ -166,7 +166,7 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width,
                 try:
                     expect(well.locator('[data-object-id]').first).to_be_visible(timeout=15000)
                 except AssertionError:
-                    page.screenshot(path=str(ROOT / f".tmp/agents-r3-load-{name}-{PHASE}-{width}.png"))
+                    page.screenshot(path=str(OUT / f"{name}-unavailable-{PHASE}-{900 if width == 1440 else 393}.png"))
                     print(win.inner_text()[:2000] if win.count() else f"{app} did not mount")
                     raise
                 _measure(page, well, f"{name}-ready", width, faults)
