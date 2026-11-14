@@ -1,8 +1,9 @@
 // Settings owns the model library; these controls use the existing Runs on controller.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { openSurfaceOr } from "../../desk/shell";
+import { useCompactViewport } from "../../desk/useCompactViewport";
 import { Button } from "../../components/signal/Signal";
-import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, ListPane, ListView, PreferencePane, InspectorActions, type ListVerb } from "../../desk/surface";
+import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, ListPane, ListView, PreferencePane, InspectorActions, SegmentedTabs, type ListVerb } from "../../desk/surface";
 import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { Token } from "../../desk/surface/Token";
 import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
@@ -181,10 +182,10 @@ function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEng
 
 /** Betterment E4: the five kinds, named by where the prompt goes. */
 const KINDS: Array<{ kind: AddKind; name: string; hint: string }> = [
-  { kind: "agent", name: "An agent on this Mac", hint: "Claude Code · Codex" },
-  { kind: "service", name: "A service", hint: "OpenRouter · OpenAI · Anthropic · Gemini" },
-  { kind: "lan", name: "A server on my network", hint: "llama.cpp · vLLM · Ollama" },
-  { kind: "local", name: "A model on this Mac", hint: "Download" },
+  { kind: "agent", name: "Agent", hint: "Claude Code · Codex" },
+  { kind: "service", name: "Service", hint: "OpenRouter · OpenAI · Anthropic · Gemini" },
+  { kind: "lan", name: "My network", hint: "llama.cpp · vLLM · Ollama" },
+  { kind: "local", name: "This Mac", hint: "Download" },
   { kind: "mesh", name: "Another HoldSpeak", hint: "Mesh" },
 ];
 
@@ -208,10 +209,10 @@ function AddByKind({
   const service = services.find((tile) => tile.id === a.service);
   return (
     <div className="surface-inspector-body" data-testid="runson-add-kinds">
-      <CycleGadget label="Kind of engine" roster value={a.kind ?? ""} options={[{value:"",label:"Choose a kind"}, ...KINDS.map(tile => ({value:tile.kind,label:tile.name}))]} onChange={kind => a.choose(kind ? kind as AddKind : null)} />
+      <SegmentedTabs label="Kind of engine" collapse="popup" placeholder="Choose a kind" value={a.kind ?? ""} tabs={KINDS.map(tile=>({id:tile.kind,label:tile.name}))} onChange={kind=>a.choose(kind as AddKind)}>
 
       {a.kind === "agent" ? <>
-        <ListPane label="Agent engines" minimumRows={1} list={<ListView label="Agent engines" rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: agent.vendor }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
+        <ListPane label="Agent engines" minimumRows={1} list={<ListView label="Agent engines" wholeRows rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: agent.vendor }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
           columns={[{ key: "name", word: "Agent", priority: 100 }, { key: "vendor", word: "Prompts go to", priority: 20, track: "140px" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
           selectedId={picked} onSelect={pick} verbs={[{ id: "add", label: "Add", enabled: (row) => !ctrl.busy && Boolean(foundAgents.find((engine) => engine.agentPreset === row?.id)) && !agents.find((agent) => agent.preset === row?.id)?.added,
             run: (row) => { const found = foundAgents.find((engine) => engine.agentPreset === row?.id); if (found) void ctrl.useFound(found.key); } }]} />} />
@@ -259,12 +260,14 @@ function AddByKind({
           </span>
         </div>
       ) : null}
+      </SegmentedTabs>
     </div>
   );
 }
 
 
 export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnController; onClose?: () => void; onBackChange?: (back: (() => void) | null) => void }) {
+  const compact = useCompactViewport();
   const [picked, setPicked] = useState<string | null>(null);
   const [tab, setTab] = useState("engines");
   const [speechPicked, pickSpeech] = useState<string | null>(null);
@@ -278,12 +281,16 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
   const checking = ctrl.add.open && (ctrl.add.kind === "lan" || ctrl.add.kind === "service" && Boolean(ctrl.add.service));
   const checkHost = checking ? endpointHostPort(ctrl.add.url) : "";
   const verbs: ListVerb[] = [
+    {id:"back",label:"Back",toolbar:compact ? false : undefined,enabled:()=>true,run:()=>close()},
     { enabled: () => true, id: "add", label: "Add an engine", symbol: "+", run: () => ctrl.add.openRow() },
     { id: "open", label: "Inspect", key: "Enter", enabled: (row) => Boolean(row), run: () => { if (ctrl.add.open) ctrl.add.close(); inspect(true); } },
     { id: "use", label: "Add", enabled: (row) => !ctrl.busy && Boolean(engines.find((engine) => engine.key === row?.id)?.found), run: (row) => { if (row) void ctrl.useFound(row.id); } },
     { id: "download", label: "Download", enabled: (row) => !ctrl.busy && engines.find((engine) => engine.key === row?.id)?.kind === "preset", run: (row) => { if (row) void ctrl.download(row.id); } },
   ];
-  const list = <ListView label="Model library" ordered rows={engines.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
+  const categories = [{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}];
+  const changeCategory = (next: string) => { inspect(false); setTab(next); };
+  const category = <CycleGadget label="Library" value={tab} onChange={changeCategory} options={categories} />;
+  const list = <ListView label="Model library" wholeRows toolbar={{scopes:[{id:"library",kind:"cycle",label:"Library",value:tab,options:categories,onChange:changeCategory}]}} ordered rows={engines.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
     cells: { where: engine.kind === "agent" || engine.kind === "local" || engine.kind === "preset" ? "This Mac" : engine.host },
     state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
   }))} columns={[{ key: "name", word: "Engine", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
@@ -297,7 +304,6 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
     else onClose?.();
   }, [onClose]);
   useEffect(() => { onBackChange?.(close); return () => onBackChange?.(null); }, [close, onBackChange]);
-  const category = <CycleGadget label="Model library category" value={tab} onChange={next => { inspect(false); setTab(next); }} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} />;
   const normal = !ctrl.add.open && tab === "engines";
   const checkFailure = ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null;
   const details = inspecting && selected ? <InspectorForm key={selected.key} facts={{
@@ -310,13 +316,12 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
       {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</GadgetRow> : null}
     {ctrl.failedDownloads[selected.key] ? <GadgetRow label="Download"><span role="alert">{ctrl.failedDownloads[selected.key]}</span></GadgetRow> : null}
   </InspectorForm> : null;
-  return <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : "Model library"} onClose={normal ? undefined : close}>
-    <PreferencePane label="Model library" testId="settings-engines-library">
+  return <PreferencePane role={normal ? "region" : undefined} label="Model library" testId="settings-engines-library">
     {normal ? <>
-      <GadgetRow label="Library">{category}</GadgetRow>
       <ListPane label="Engine inspector" list={<>{checkFailure}{list}</>}>{details}</ListPane>
       <InspectorActions completion={{done: close}} />
-    </> : <InspectorForm completion={checking ? {
+    </> : <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : "Model library"} onClose={close}>
+    <InspectorForm completion={checking ? {
       cancel: ctrl.add.close,
       primary: { label: "Check", testId: "concierge-add-check", busy: ctrl.add.state === "CHECKING", disabled: !ctrl.add.url.trim(), run: () => void ctrl.add.check() },
     } : undefined} notice={<>
@@ -327,12 +332,12 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
       {tab === "engines" ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
       : tab === "speech" ? <>
         <GadgetRow label="Speech to text"><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></GadgetRow>
-        <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
+        <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" wholeRows ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
           cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
         }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "licence", word: "Licence", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
           selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}</GadgetRow>
       </> : <GadgetRow label="Search"><MeaningSearchRow form /></GadgetRow>}
-    </InspectorForm>}
-    </PreferencePane>
-  </PaneInspector>;
+    </InspectorForm>
+    </PaneInspector>}
+  </PreferencePane>;
 }

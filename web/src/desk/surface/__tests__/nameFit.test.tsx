@@ -68,3 +68,14 @@ it("fits an inspector name into two measured lines and keeps its full accessible
   expect(title.textContent!.split("\n").length).toBeLessThanOrEqual(2);
   expect(title.querySelector('[title]')).toHaveAttribute('title',name);
 });
+
+
+it("cuts receipt paths at joins on both sides of the middle gap", () => {
+  const path="~/Documents/Reports/2026-11-13-review-the-architecture-migration-and-keep-the-current-rollback-note-b5c4e405.md";
+  const [shown]=fitName(path, 48, 1, fitsIn(48), "path");
+  const [head,tail]=shown.split("…");
+  expect(path.startsWith(head)).toBe(true);
+  expect(path.endsWith(tail)).toBe(true);
+  expect(head).toMatch(/[\s_\-./:]$/);
+  expect(path[path.length-tail.length-1]).toMatch(/[\s_\-./:]/);
+});

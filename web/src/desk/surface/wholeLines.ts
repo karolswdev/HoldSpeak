@@ -10,6 +10,7 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
       const savedScroll = el.scrollTop;
       if (rows) { el.style.maxHeight = ""; el.style.marginBottom = ""; }
       let box = el.getBoundingClientRect();
+      const bottomBorder = rows ? parseFloat(getComputedStyle(el).borderBottomWidth) || 0 : 0;
       const rectangles: DOMRect[] = [];
       if (rows) rectangles.push(...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
       else {
@@ -20,18 +21,18 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
           if (typeof range.getClientRects === "function") rectangles.push(...range.getClientRects());
         }
       }
-      const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom + .5);
+      const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
       let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows ? 0 : 1)));
       if (rows) {
         // Reserve the full seat while its field box ends at a whole row.
         // Clearing the previous fit above lets a changed form grow again.
-        const height = Math.max(0, cut - box.top);
+        const height = Math.max(0, cut - box.top + (cut < box.bottom ? bottomBorder : 0));
         el.style.maxHeight = `${Math.floor(height)}px`;
         el.style.marginBottom = `${Math.ceil(box.height - height)}px`;
         el.scrollTop = savedScroll;
         box = el.getBoundingClientRect();
         rectangles.splice(0, rectangles.length, ...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
-        const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom + .5);
+        const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
         cut = Math.min(box.bottom, ...partial.map(rect => rect.top));
       }
       const start = rows ? Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom)) : box.top;

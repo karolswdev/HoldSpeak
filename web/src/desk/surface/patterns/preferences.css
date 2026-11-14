@@ -307,13 +307,10 @@
   clip-path: inset(50%);
 }
 .desk-next .pref-status-bar .pref-status-save {
-  color: var(--wb-ink);
+  color: inherit;
   font: inherit;
   text-transform: none;
   letter-spacing: 0;
-}
-.desk-next .pref-status-bar .pref-status-save[data-tone="danger"] {
-  color: var(--wb-danger-ink);
 }
 @container surface (max-width: 520px) {
   .desk-next .surface-preference-window .pref-pane-back {
@@ -489,7 +486,8 @@
 .surface-pane-inspector:has(> .surface-pane-actions) > .surface-inspector-form > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .surface-pane-inspector > .surface-pane-actions { flex: none; margin-top: auto; }
 
-.surface-completion-state { grid-column: 1 / -1; flex-basis: 100%; }
+.surface-completion-state { grid-column: 1 / -1; flex: 0 1 100%; min-width: 0; }
+.surface-inspector-actions.surface-verb-row:has(> .surface-completion-state) { flex-wrap: wrap; }
 
 .surface-tab-panel > .surface-pane-actions { padding: 0 12px 8px; }
 
@@ -609,3 +607,7 @@
 
 /* Object names use the shared measured fitter; facts keep the complete value. */
 .surface-inspector-facts .gadget-row-gadget { overflow-wrap: anywhere; }
+
+/* A choice roster keeps one pop-up when its complete segments do not fit. */
+.surface-segmented-tabs[data-popup] { display: flex; border: 0; padding: 0; }
+.surface-segmented-tabs[data-popup] > .gadget-cycle { width: 100%; }
