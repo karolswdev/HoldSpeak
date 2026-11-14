@@ -1989,7 +1989,11 @@
             }
           ]
         }
-      ]
+      ],
+      "binding": {
+        "id": "pupd_9b433950cfde42f699275f28b38d0340",
+        "revision": "c26436d299211d92b33a602bb4b85f74c58b74edab89b62eec30b16c53953bf1"
+      }
     }
   },
   "PUT": {
@@ -2030,7 +2034,11 @@
             }
           ]
         }
-      ]
+      ],
+      "binding": {
+        "id": "pupd_9b433950cfde42f699275f28b38d0340",
+        "revision": "049b6e2f62d38150ec3332363aeeb151f2d2888b72d755991a6b0ef14ebe6947"
+      }
     }
   },
   "UPDATES_AFTER_SENDS": {
@@ -2081,7 +2089,11 @@
         ],
         "generatorHost": null,
         "generatorModel": null,
-        "editable_claims": []
+        "editable_claims": [],
+        "binding": {
+          "id": "pupd_9b433950cfde42f699275f28b38d0340",
+          "revision": "0b010f3cbf9f226978ebc2baaded93248f0aff8f6b8841629528d4ff44bfe808"
+        }
       }
     ],
     "latest_published_update_id": "pupd_9b433950cfde42f699275f28b38d0340"
@@ -2920,7 +2932,11 @@
             }
           ]
         }
-      ]
+      ],
+      "binding": {
+        "id": "pbrief_0563f59277ef3374ed2b0bb8",
+        "revision": "2cd5d37ed262bf737afcadd8604976ae3c65f0992e3bf075337fbf0213f2cd61"
+      }
     }
   },
   "KEEP": {
@@ -3134,7 +3150,11 @@
       "created_at": "2026-10-11T16:31:11.263927+00:00",
       "updated_at": "2026-10-11T16:31:13.051264+00:00",
       "kept_at": "2026-10-11T16:31:13.051264+00:00",
-      "editable_claims": []
+      "editable_claims": [],
+      "binding": {
+        "id": "pbrief_0563f59277ef3374ed2b0bb8",
+        "revision": "dd412d524f7c788143fea067cf2a3c2b51d0a61dc522283b625a4e5ca3c74e4a"
+      }
     }
   },
   "BRIEFS_KEPT": {
@@ -3348,7 +3368,11 @@
         "created_at": "2026-10-11T16:31:11.263927+00:00",
         "updated_at": "2026-10-11T16:31:13.051264+00:00",
         "kept_at": "2026-10-11T16:31:13.051264+00:00",
-        "editable_claims": []
+        "editable_claims": [],
+        "binding": {
+          "id": "pbrief_0563f59277ef3374ed2b0bb8",
+          "revision": "dd412d524f7c788143fea067cf2a3c2b51d0a61dc522283b625a4e5ca3c74e4a"
+        }
       }
     ]
   },

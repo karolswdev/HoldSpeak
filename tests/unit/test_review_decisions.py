@@ -342,7 +342,7 @@ class TestDecideProposal:
             )
 
     def test_edit_accept(self, rig) -> None:
-        """edit_accept merges edited fields and then accepts."""
+        """edit_accept changes declared fields and then accepts."""
         db, project_svc, delta_svc = rig
         pid = _seed_project(db)
         _seed_meeting(db)
@@ -359,14 +359,14 @@ class TestDecideProposal:
 
         result = delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "edit_accept",
-            patch={"title": "Edited Risk Title", "severity": "high"}, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "edit_accept"),
+            patch={"lane": "stale", "stale_score": "0.9"}, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "edit_accept"),
         )
         assert result["lifecycle"] == "accepted"
         assert "item_id" in result
-        # Verify the item picked up the edited title
-        item = db.projects.get_project_item(result["item_id"])
-        assert item["title"] == "Edited Risk Title"
-        assert item["severity"] == "high"
+        # These producer facts are declared in the saved patch. Title and
+        # severity are not declared here and cannot be added by this edit.
+        stored = db.project_observations.get_proposal(risk_prop["id"])
+        assert json.loads(stored["patch_json"]) == {"lane": "stale", "stale_score": "0.9"}
 
     def test_defer_stores_deferred_until(self, rig) -> None:
         """Defer verb stores lifecycle + deferred_until."""

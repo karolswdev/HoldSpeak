@@ -296,7 +296,8 @@ class ProjectProposalSource(Source):
         kind = str(item.get("proposal_kind") or "")
         adds = {"risk_attention": "a risk item", "action_attention": "an action item"}.get(kind, "")
         try:
-            patch = _json.loads(item.get("patch_json") or "{}")
+            from .room_edit_fields import read_review_patch
+            patch = read_review_patch(_json.loads(item.get("patch_json") or "{}"), kind)
         except ValueError:
             patch = {}
         lines = [f"Accept adds {adds}: {title}" if adds else f"Accept records: {title}"]

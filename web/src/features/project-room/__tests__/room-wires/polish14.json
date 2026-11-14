@@ -2141,12 +2141,16 @@
           }
         ]
       }
-    ]
+    ],
+    "binding": {
+      "id": "pupd_3095dbd3210548f3bc805ab890106fc2",
+      "revision": "a42354bad6c3dcccb4485d91f82e1d236a52e9c18124c770025515b02929a469"
+    }
   },
   "brief": {
     "binding": {
       "id": "pbrief_f3dc9e128e24a7601e1e4ebb",
-      "revision": "1250c7b118788ab4ef2f7e097ac73e4e00681c052c5f044d32dc1ffe14bd1d87"
+      "revision": "26f0b57ae4514797f7ebda3cce6f7125d5d0062d284666059f131cb45b59e8b0"
     },
     "id": "pbrief_f3dc9e128e24a7601e1e4ebb",
     "project_id": "proj-d38e0b64097f",
@@ -2332,7 +2336,7 @@
         "target_ref": "project:proj-d38e0b64097f",
         "title": "Read the saved cutover plan",
         "rationale": "The cutover window needs review",
-        "patch_json": "{\"text\": \"web/src/features/project-room/review/ReviewPosture.tsx: keep the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team\", \"state\": \"open\"}",
+        "patch_json": "{\"state\":\"open\",\"text\":\"web/src/features/project-room/review/ReviewPosture.tsx: keep the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team\"}",
         "materiality": null,
         "producer_kind": null,
         "lifecycle": "open",

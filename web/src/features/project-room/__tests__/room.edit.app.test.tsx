@@ -73,6 +73,7 @@ it("edits the selected claim's subject and declared choices and reads the saved 
   const saved = io.api.mock.calls.find(([, init]) => init?.method === "PUT")![1]
     .json;
   expect(saved.claim_edits).toEqual([WIRE.edit]);
+  expect(saved.binding).toEqual(WIRE.update.binding);
   expect(saved.body_md).toBeUndefined();
 });
 it("keeps the edited subject and choices when the hub refuses the save", async () => {

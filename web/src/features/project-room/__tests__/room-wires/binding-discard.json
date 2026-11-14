@@ -3,7 +3,7 @@
   "read": {
     "binding": {
       "id": "pbrief_d1cee8a099c77bf3051a52a9",
-      "revision": "e8aa5a12a7c062b0e0756cf9559d1311845d7016926ce1a0ef23ca22e6ed52d5"
+      "revision": "70bf210389047449b519d1ebe14aa7e0996303e53c68c8669eb842f73cb64443"
     },
     "id": "pbrief_d1cee8a099c77bf3051a52a9",
     "project_id": "proj-ebd83251fb43",
@@ -288,7 +288,7 @@
       "brief": {
         "binding": {
           "id": "pbrief_d1cee8a099c77bf3051a52a9",
-          "revision": "e8aa5a12a7c062b0e0756cf9559d1311845d7016926ce1a0ef23ca22e6ed52d5"
+          "revision": "70bf210389047449b519d1ebe14aa7e0996303e53c68c8669eb842f73cb64443"
         },
         "id": "pbrief_d1cee8a099c77bf3051a52a9",
         "project_id": "proj-ebd83251fb43",

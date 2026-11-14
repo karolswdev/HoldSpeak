@@ -1986,8 +1986,9 @@ PROJECT_UPDATE_DRAFT = OperationDescriptor(
         "type": "object",
         "properties": {
             "update_id": _UPDATE_ID,
+            "binding": {"description": "Required update {id, revision} from the last read when saving claim_edits. Missing or stale: nothing changes."},
             "body_md": {"description": "The new Markdown text of the draft."},
-            "claim_edits": {"type": "array", "description": "Only the owner can edit claims returned in editable_claims; each edit binds the span and its saved text.",
+            "claim_edits": {"type": "array", "description": "Only the owner can edit claims returned in editable_claims; each edit binds the span and its saved text, with the update binding.",
                             "items": {"type": "object", "properties": {"span_id": {"type": "string"}, "text": {"type": "string"}, "values": {"type": "object"}},
                                       "required": ["span_id", "text", "values"]}},
             "source_refs": {"type": "array", "items": {"type": "string"},

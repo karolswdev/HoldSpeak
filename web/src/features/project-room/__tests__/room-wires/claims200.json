@@ -1643,7 +1643,11 @@
          }
         ]
        }
-      ]
+      ],
+      "binding": {
+       "id": "pupd_200_mixed_glass_01",
+       "revision": "05e2f43ab1e1be4823c9e0e0976902586465a608ad75dd369b2edbee57db631c"
+      }
      }
     ]
    },
@@ -2277,7 +2281,11 @@
       }
      ]
     }
-   ]
+   ],
+   "binding": {
+    "id": "pupd_6edaaae3330246c89776e38480db2446",
+    "revision": "c3623b92cbc4f986f95e81a2aa7fa18c2ad984994e6ac4abc1adc10714e37d3a"
+   }
   },
   "edit": {
    "answer": {
@@ -2711,7 +2719,11 @@
         }
        ]
       }
-     ]
+     ],
+     "binding": {
+      "id": "pupd_6edaaae3330246c89776e38480db2446",
+      "revision": "8ddcbbdd48ffb3a22fa8df833085fc679288995428c437483bd1e02ac32b56fb"
+     }
     }
    },
    "method": "PUT",
@@ -4776,7 +4788,11 @@
          }
         ]
        }
-      ]
+      ],
+      "binding": {
+       "id": "pupd_6edaaae3330246c89776e38480db2446",
+       "revision": "8ddcbbdd48ffb3a22fa8df833085fc679288995428c437483bd1e02ac32b56fb"
+      }
      }
     ]
    },

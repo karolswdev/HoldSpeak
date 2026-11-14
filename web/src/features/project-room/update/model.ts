@@ -95,6 +95,7 @@ export type EditableClaim = {
 export type ClaimEdit = Pick<EditableClaim, "span_id" | "text" | "values">;
 
 export type ProjectUpdate = {
+  binding?: import("../model").RoomBinding;
   id: string;
   projectId: string;
   projectRevision: number;
@@ -276,6 +277,7 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
   }
 
   return {
+    binding: raw.binding as import("../model").RoomBinding | undefined,
     editableClaims: Array.isArray(raw.editable_claims) ? raw.editable_claims as EditableClaim[] : [],
     id: String(raw.id ?? ""),
     projectId: String(raw.project_id ?? ""),

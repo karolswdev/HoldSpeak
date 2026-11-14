@@ -1463,7 +1463,11 @@
          }
         ]
        }
-      ]
+      ],
+      "binding": {
+       "id": "pupd_173_det_glass_01",
+       "revision": "4b8844438482a6c3f0cdd11af9bfe3693584c1b15053657768e7e79614e73b78"
+      }
      }
     ]
    },
@@ -3029,7 +3033,11 @@
          }
         ]
        }
-      ]
+      ],
+      "binding": {
+       "id": "pupd_173_model_glass_01",
+       "revision": "6b86bbd02c244e3cc5fd4045c5da993139d37856d2fe9e9e0ce6afe456e11986"
+      }
      }
     ]
    },

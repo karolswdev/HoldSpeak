@@ -32,7 +32,7 @@
       "target_ref": "action_item:philo13-b4-owned-action",
       "title": "risk_attention: action_item:philo13-b4-owned-action",
       "rationale": "Overdue follow-through requires risk attention",
-      "patch_json": "{\"_source_version\":\"2026-10-15\",\"card_id\":\"philo13-b4-owned-action\",\"due\":\"2026-10-15\",\"lane\":\"overdue\",\"owner\":\"Priya\",\"text\":\"Send the dry-run report\"}",
+      "patch_json": "{\"card_id\":\"philo13-b4-owned-action\",\"due\":\"2026-10-15\",\"lane\":\"overdue\",\"owner\":\"Priya\",\"text\":\"Send the dry-run report\"}",
       "materiality": "0.795",
       "producer_kind": "assessment",
       "lifecycle": "open",

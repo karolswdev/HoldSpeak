@@ -63,9 +63,9 @@ export async function saveUpdate(
 }
 
 /** Save one or more bound claim edits through the existing draft operation. */
-export async function saveClaimEdits(updateId: string, edits: import("./model").ClaimEdit[]): Promise<ProjectUpdate> {
+export async function saveClaimEdits(updateId: string, edits: import("./model").ClaimEdit[], binding: import("../model").RoomBinding | undefined): Promise<ProjectUpdate> {
   const raw = await apiFetch<{success:boolean; update:Record<string,unknown>}>(`/api/updates/${encodeURIComponent(updateId)}`,
-    {method:"PUT", json:{claim_edits:edits}});
+    {method:"PUT", json:{claim_edits:edits,binding}});
   return decodeUpdate(raw.update);
 }
 

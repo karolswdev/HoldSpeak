@@ -487,7 +487,7 @@ export function useUpdateController(
     try {
       // Betterment P1: his plain text, saved over the stored body (a line he
       // did not change keeps its stored form).
-      const saved = claimEdit ? await updateApi.saveClaimEdits(current.id, Array.isArray(claimEdit) ? claimEdit : [claimEdit]) : await updateApi.saveUpdate(current.id, bodyFromPlain(sent, current.bodyMd));
+      const saved = claimEdit ? await updateApi.saveClaimEdits(current.id, Array.isArray(claimEdit) ? claimEdit : [claimEdit], current.binding) : await updateApi.saveUpdate(current.id, bodyFromPlain(sent, current.bodyMd));
       if (currentId.current !== current.id) return false;
       setCurrent(saved);
       // Words typed while the save was in flight stay, and stay unsaved.
