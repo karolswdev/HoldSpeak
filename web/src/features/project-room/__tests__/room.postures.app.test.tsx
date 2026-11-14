@@ -37,7 +37,14 @@ function route(url: string, init: { method?: string } = {}) {
   return {};
 }
 function press(name: string) { fireEvent.click(screen.getAllByRole("button", { name }).at(-1)!); }
-function choose(label: string, value: string) { fireEvent.change(screen.getByRole("combobox", { name: label }), { target: { value } }); }
+function choose(label: string, value: string) {
+  const update = screen.queryByRole("button", {name:"Update view"});
+  if (label === "View" && update) {
+    fireEvent.click(update);
+    const word = value === "updates" ? "Text" : value[0].toUpperCase() + value.slice(1);
+    fireEvent.click(screen.getByRole("menuitem", {name:word}));
+  } else fireEvent.change(screen.getByRole("combobox", { name: label }), { target: { value } });
+}
 function Updates({ published = false }: { published?: boolean }) {
   const ctrl = useUpdateController(TAPE.DRAFT.update.project_id, () => {});
   useEffect(() => { ctrl.openUpdate(decodeUpdate(published ? TAPE.UPDATES_AFTER_SENDS.updates[0] : TAPE.DRAFT.update)); }, []);

@@ -321,3 +321,15 @@ it("passes existing Room states to the kit's lamp and pill", () => {
   expect(done.querySelector('[data-col="state"] .object-list-dot-word')).toHaveTextContent("Done");
   expect(container.querySelector('[data-object-id="risk"] .surface-lamp')).toHaveAttribute("data-state", "failed");
 });
+
+it("uses one View chooser for update records and keeps every project view reachable", async () => {
+  routes[`GET /api/projects/${room.project_id}/updates`]=TAPE.UPDATES_AFTER_SENDS;
+  mount();fireEvent.click(await screen.findByRole("tab",{name:"Updates"}));
+  await screen.findByRole("grid",{name:"Updates"});
+  await waitFor(() => expect(screen.queryAllByRole("button",{name:/^(Project|Update) view$/}).length + screen.queryAllByRole("combobox",{name:"View"}).length).toBe(1));
+  fireEvent.click(screen.getByRole("button",{name:"Update view"}));
+  for(const label of ["Text","Claims","Sources","Send","Delivery","History"])
+    expect(screen.getByRole(label === "Text" ? "menuitemradio" : "menuitem",{name:label})).toBeVisible();
+  fireEvent.click(screen.getByRole("menuitem",{name:"History"}));
+  await screen.findByRole("grid",{name:"History"});
+});

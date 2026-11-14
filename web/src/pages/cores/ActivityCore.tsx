@@ -5,7 +5,7 @@ import type { CoreProps } from "./core-types";
 import type { DeskProjection } from "../../desk/projections";
 import { openSurface } from "../../desk/shell";
 import { ALL_DESK_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { ActionNotice, InspectorFacts, InspectorQuestion, ListApp, PreferencePane, SegmentedTabs, useListApp, useWindowMast, countWords, wireDayClock, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ActionNotice, objectSprite, InspectorFacts, InspectorQuestion, ListApp, PreferencePane, SegmentedTabs, useListApp, useWindowMast, countWords, wireDayClock, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { recheckProvider } from "./connections/api";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { activityRow, activityItems, activityWords, receiptDoor, type ActivityItem, type ActivityKind } from "./activityModel";
@@ -80,9 +80,10 @@ function ActivityList({view}: {view: ActivityKind}) {
     onSelect={()=>{setQuestion(null);setDryRun(null);setNotice("");}}
     notice={notice ? <ActionNotice role="alert" tone="danger">{notice}</ActionNotice> : undefined}
     pane={item=>question ? <InspectorQuestion actionId={question.id} targetId={question.target} question={question.id==="clear"?"Clear all records?":"Delete this rule?"} cancel={()=>setQuestion(null)} verb={{label:question.id==="clear"?"Clear records":"Delete",busy,run:()=>void act(()=>apiFetch(question.id==="clear"?"/api/activity/records":`/api/activity/project-rules/${encodeURIComponent(item!.id)}`,{method:"DELETE"}))}} />
-      :item ? <InspectorFacts data-feedback-redact="true" name={activityRow(item).name} rows={[
+      :item ? <InspectorFacts object={item.kind === "candidates" ? <img src={objectSprite("meeting", item.id, "rest", 32)} alt="" draggable={false} /> : undefined} data-feedback-redact="true" name={activityRow(item).name} rows={[
         ...(item.receipt ? [{label:"What",value:item.receipt.summary},{label:"To",value:item.receipt.subject_label},{label:"When",value:wireDayClock(item.receipt.timestamp)},{label:"By",value:item.receipt.origin==="remote"?"Another device":"You"}]
-          :Object.entries(item.raw).filter(([key,value])=>["title","name","domain","url","pattern","source","source_browser","entity_type","status","last_error","last_seen_at","occurred_at","starts_at","kind","label","enabled"].includes(key)&&value!=null).map(([key,value])=>({label:key.replaceAll("_"," "),paths:key==="url",value:typeof value==="boolean"?(value?"On":"Off"):["last_seen_at","occurred_at","starts_at"].includes(key)?wireDayClock(String(value)):["source_browser","entity_type","status","kind"].includes(key)?activityWords(value):String(value)}))),
+          :Object.entries(item.raw).filter(([key,value])=>["title","name","domain","url","pattern","source","source_browser","entity_type","status","last_error","last_seen_at","occurred_at","starts_at","kind","label","enabled"].includes(key)&&value!=null).map(([key,value])=>({label:key.replaceAll("_"," "),paths:key==="url",value:typeof value==="boolean"?(value?"On":"Off"):["last_seen_at","occurred_at","starts_at"].includes(key)?wireDayClock(String(value)):["source","source_browser","entity_type","status","kind"].includes(key)?activityWords(value):String(value)}))),
+        ...(item.kind === "connectors" ? [{label:"Last run",value:item.raw.last_run_at ? wireDayClock(String(item.raw.last_run_at)) : "Never ran"}] : []),
         ...(dryRun ? (()=>{const preview=(dryRun as {dry_run:{proposed_annotations:unknown[];proposed_candidates:unknown[];commands:{command?:string[]}[];warnings:string[]}}).dry_run;const changes=preview.proposed_annotations.length+preview.proposed_candidates.length;return [{label:"Dry run",value:changes ? `${changes} changes` : "No changes"},{label:"Commands",value:preview.commands.map(command=>command.command?.join(" ") ?? "").filter(Boolean).join(" · ")},{label:"Notice",value:preview.warnings.map(word=>word.split(". ")[0]).join(" · ")}];})() : []),
       ]} /> : null}
     status={[{text:countWords(app.total,"item")},!enabled&&{text:"Watching paused"},Boolean(account)&&{text:`Confluence: ${account}`}]}><ShowMe app="inspect-activity" /></ListApp>;

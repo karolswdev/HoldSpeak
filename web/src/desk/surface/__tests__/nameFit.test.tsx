@@ -68,3 +68,8 @@ it("fits an inspector name into two measured lines and keeps its full accessible
   expect(title.textContent!.split("\n").length).toBeLessThanOrEqual(2);
   expect(title.querySelector('[title]')).toHaveAttribute('title',name);
 });
+
+it("breaks a path at its separators and keeps a file extension with its name", () => {
+  const name="web/src/desk/programs/ProgramWindow.tsx";
+  expect(fitName(name,36,2,fitsIn(36),"end")).toEqual(["web/src/desk/programs/", "ProgramWindow.tsx"]);
+});

@@ -1,10 +1,10 @@
 """Needs names, automation counts and dated update names use saved wire shapes."""
-import copy,json,mimetypes,os,re
+import copy,json,os
 from pathlib import Path
 import pytest
 from .glass_infra import _api,_boot,_ensure_build,_normal_chair,_settle,clear_hub_windows_http
 from .test_programs_group_polish_glass import LONG_NAME
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'.tmp/evidence-shots/programs-group14-r2';TOKEN='group-detail-fit'
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'.tmp/evidence-shots/programs-group14-r3';TOKEN='group-detail-fit'
 
 @pytest.mark.parametrize('width',[1440,393])
 @pytest.mark.timeout(240)
@@ -25,10 +25,6 @@ def test_group_detail_fits(tmp_path,monkeypatch,width):
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch();page=browser.new_page(viewport={'width':width,'height':900 if width==1440 else 852},reduced_motion='reduce')
-            if phase=='before':
-                frozen=ROOT/'.tmp/programs-group14/r2/held-built'
-                page.route('**/_built/**',lambda route:route.fulfill(path=str(frozen/route.request.url.split('/_built/',1)[1]),content_type=mimetypes.guess_type(route.request.url)[0] or 'application/octet-stream'))
-                page.route(re.compile(r'^'+re.escape(base)+r'/(?:\?.*)?$'),lambda route:route.fulfill(path=str(frozen/'index.html'),content_type='text/html'))
             page.route('**/api/workbenches',lambda route:route.fulfill(json={**home,'workbenches':rows}))
             page.route('**/api/desk/needs-you*',lambda route:route.fulfill(json=current))
             page.route('**/api/coders/sessions?*',lambda route:route.fulfill(json=needs['questionSessions']))
@@ -46,8 +42,14 @@ def test_group_detail_fits(tmp_path,monkeypatch,width):
             expect(win.get_by_role('button',name='New automation',exact=True)).to_be_visible()
             win.locator('[data-object-id="long-auto-0"]').click();shot('automations','selected')
             if not win.get_by_test_id('automation-home-status').get_by_text('1 with new results',exact=True).count():faults.append('new count is not the number of visible automations')
-            switch=win.get_by_role('checkbox',name='Automation on',exact=True)
-            if switch.locator('..').inner_text().strip() not in ['On','Off']:faults.append('automation switch has no visible On/Off label')
+            (ROOT/f'.tmp/programs-group14/r3/automation-name-{width}-{phase}.json').write_text(json.dumps(win.evaluate('''el=>{const row=el.querySelector('[data-object-id]'),cell=row.querySelector('[data-col="name"]'),title=cell.querySelector('.object-list-selection-title');return {cell:cell.getBoundingClientRect().toJSON(),title:title.getBoundingClientRect().toJSON(),shown:title.textContent,full:title.title,tracks:getComputedStyle(row).gridTemplateColumns};}'''),indent=2))
+            switches=win.get_by_role('checkbox',name='Automatic starts',exact=True)
+            if not switches.count():faults.append('switch does not name what starts')
+            else:
+                control=switches.locator('..')
+                if not control.locator('.surface-lamp').count():faults.append('switch has no state lamp')
+                font=control.locator('.gadget-check-state-word').evaluate('el=>getComputedStyle(el).fontFamily')
+                if 'mono' in font.lower():faults.append(('switch state uses mono',font))
             win=open_window('chair:needs',{'kind':'chair','ref':'needs'});expect(win.get_by_test_id('needs-row')).to_have_count(len(current['items']));shot('needs','mixed-list')
             if width==393:
                 state=win.locator('.object-list-row [data-col="state"]').first
@@ -66,6 +68,8 @@ def test_group_detail_fits(tmp_path,monkeypatch,width):
             first=grid.locator('[data-object-id]').first
             if 'Team folder' not in first.locator('.object-list-selection-name').inner_text():faults.append('update name loses its saved audience')
             first.click();shot('room','update-selected')
+            choosers=win.get_by_role('button',name='Project view',exact=True).count()+win.get_by_role('button',name='Update view',exact=True).count()+win.get_by_role('combobox',name='View',exact=True).count()
+            if choosers!=1:faults.append(('one View chooser',choosers))
             browser.close()
     finally:server.stop()
     assert not faults,faults

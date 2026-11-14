@@ -7,7 +7,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"projects-list\"] .object-list-row",
-        "words": "Click a project to select it. Its saved dates and updates show below when they are set."
+        "words": "Click a project to read its state, sources, open items and last update."
       },
       "press": {
         "target": "[data-testid=\"projects-list\"] .object-list-row",

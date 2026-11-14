@@ -243,7 +243,7 @@ export interface ObjectListProps {
   verbs?: readonly ListVerb[];
   /** A row menu can use a subset of the same declared verbs. */
   rowVerbs?: readonly ListVerb[];
-  /** Keep a bounded grouped list on whole row edges. */
+  /** End a bounded well on whole rows; on by default for selection lists. */
   wholeRows?: boolean;
   /** The object window draws the published selection entries in its toolbar. */
   externalToolbar?: boolean;
@@ -287,7 +287,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
-  rowVerbs, wholeRows = false,
+  rowVerbs, wholeRows = selection,
   toolbar, externalToolbar,
   defaultVerb,
   ordered = false,
@@ -311,24 +311,53 @@ export function ObjectList({
   useLayoutEffect(() => {
     const list = listRef.current, well = bodyRef.current;
     if (!wholeRows || !list || !well) return;
-    let frame = 0;
+    let frame = 0, reveal = true;
     const fit = () => {
-      const chrome = [...list.children].filter(child => child !== well && getComputedStyle(child).position !== "absolute").reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
-      const available = list.clientHeight - chrome;
-      const top = well.getBoundingClientRect().top;
-      const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
-      const end = Math.max(0, ...ends.map(edge => edge + well.scrollTop));
+      const siblings = [...list.children].filter(child => child !== well && getComputedStyle(child).display !== "none" && !["absolute", "fixed"].includes(getComputedStyle(child).position));
+      const style = getComputedStyle(list);
+      const chrome = siblings.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0)
+        + (parseFloat(style.rowGap) || 0) * siblings.length + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const border = Math.max(0, well.offsetHeight - well.clientHeight);
+      const budget = Math.max(0, list.clientHeight - chrome - border);
+      const top = well.getBoundingClientRect().top + well.clientTop;
+      const rows = [...well.querySelectorAll<HTMLElement>(".object-list-row, .object-list-group > .kit-toolbar")].map(node => {
+        const box = node.getBoundingClientRect();
+        const heading = node.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label")?.getBoundingClientRect().height ?? 0;
+        const start = box.top - top + well.scrollTop;
+        return {node, start, end: start + box.height, anchor: Math.max(0, start - heading), heading};
+      });
+      if (!rows.length || !budget) return;
+      // A sticky group heading owns the top of its well. Start a row below it,
+      // then end at the last complete row that fits the remaining seat.
+      let anchor = rows.filter(row => row.anchor <= well.scrollTop + .5).at(-1)?.anchor ?? 0;
+      const picked = rows.find(row => row.node.getAttribute("aria-selected") === "true");
+      const followsPick = reveal || Boolean(picked && picked.end > well.scrollTop && picked.start < well.scrollTop + well.clientHeight);
+      if (followsPick && picked && (picked.start < anchor + picked.heading - .5 || picked.end > anchor + budget + .5)) {
+        anchor = rows.find(row => row.anchor >= picked.end - budget - .5 && row.anchor <= picked.anchor + .5)?.anchor ?? picked.anchor;
+      }
+      reveal = false;
+      const last = rows.filter(row => row.end <= anchor + budget + .5 && row.end > anchor).at(-1);
       well.style.flex = "none";
-      // A short well ends at its last row. Overflow keeps a partial row as its cue.
-      well.style.height = `${Math.max(0, Math.min(available, end))}px`;
+      well.style.height = `${last ? Math.min(budget, last.end - anchor) + border : 0}px`;
+      well.scrollTop = anchor;
     };
-    const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
-    observer?.observe(list); well.addEventListener("scrollend", schedule);
+    const schedule = (follow = false) => {
+      reveal ||= follow;
+      cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);
+    };
+    const resized = () => schedule(true), scrolled = () => schedule();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resized);
+    observer?.observe(list);
+    for (const child of list.children) if (child !== well) observer?.observe(child);
+    const mutations = new MutationObserver(changes => schedule(changes.some(change => change.attributeName === "aria-selected")));
+    mutations.observe(list, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["aria-selected", "data-detail"]});
+    well.addEventListener("scrollend", scrolled);
+    let active = true;
+    document.fonts?.addEventListener("loadingdone", resized);
+    void document.fonts?.ready.then(() => {if (active) schedule(true);});
     fit();
-    return () => {observer?.disconnect(); well.removeEventListener("scrollend", schedule); cancelAnimationFrame(frame);};
-  }, [wholeRows, rows]);
-
+    return () => {active = false; observer?.disconnect(); mutations.disconnect(); document.fonts?.removeEventListener("loadingdone", resized); well.removeEventListener("scrollend", scrolled); cancelAnimationFrame(frame); well.style.flex = ""; well.style.height = "";};
+  }, [wholeRows]);
   const [localSelected, setLocalSelected] = useState<string | null>(null);
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;

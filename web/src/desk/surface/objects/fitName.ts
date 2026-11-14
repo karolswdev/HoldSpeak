@@ -3,7 +3,8 @@
  *  `lines` lines.
  *
  *  Break priority: between words (spaces) first. A word that cannot fit on
- *  a line breaks after one of its joins (`_ - . / :`), never inside a run of
+ *  a line breaks after a join (`_ - . / :`). Paths break at separators and
+ *  keep their basename and extension together. Other words never split a run of
  *  letters. When the name needs more lines than the label has, it is cut in
  *  the MIDDLE: the start stays, then `…`, then the end (the last word, or
  *  the last part of a single long word). Two names that differ only at the
@@ -61,6 +62,9 @@ export function fitName(
 /** A word's pieces: it may break after each `_ - . / :` join (the join stays
  *  at the end of its piece). */
 function joinPieces(word: string): string[] {
+  // A path keeps its basename and extension together on the next line.
+  if (/[/\\]/.test(word)) return word.split(/(?<=[/\\])(?=.)/);
+  if (nameIsFile(word) && word.includes(".")) return [word];
   return word.split(/(?<=[_\-./:])(?=.)/);
 }
 

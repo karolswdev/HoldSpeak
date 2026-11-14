@@ -1270,7 +1270,9 @@ button.gadget-chip-egress {
 /* The checkbox, square and value are one native target. */
 .gadget-check[data-variant="state"] {
   flex: none;
-  width: 84px;
+  width: max-content;
+  min-width: 84px;
+  max-width: 100%;
   min-height: 32px;
   padding: 6px 8px;
   gap: 10px;
@@ -1291,7 +1293,8 @@ button.gadget-chip-egress {
 .gadget-check[data-variant="state"] .gadget-check-well,
 .gadget-check[data-variant="state"] .gadget-check-well *,
 .gadget-check-state-word { pointer-events: none; }
-.gadget-check-state-word { font: 600 12px / 1 var(--font-mono); }
+.gadget-check-label { font: 400 14px / 1.3 var(--font-sans); }
+.gadget-check-state-word { display: inline-flex; align-items: center; gap: 6px; flex: none; font: 600 14px / 1.2 var(--font-sans); }
 .gadget-check[data-variant="state"]:has(input:checked) { color: var(--wb-ok-ink); }
 .gadget-check[data-variant="state"]:has(input:focus-visible) {
   outline: var(--focus-outline-width) solid var(--wb-sel);

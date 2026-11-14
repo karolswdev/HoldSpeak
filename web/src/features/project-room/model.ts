@@ -58,6 +58,11 @@ export type RoomProjectOrientation = {
   revision: number;
 };
 
+/** The same open-item rule serves the Room list and its collection facts. */
+export function planItemOpen(lifecycle: string): boolean {
+  return !["closed", "resolved", "done", "retired", "mitigated", "reached", "dropped"].includes(lifecycle.toLowerCase());
+}
+
 /** Focus item from the items section. */
 export type RoomFocusItem = {
   id: string;

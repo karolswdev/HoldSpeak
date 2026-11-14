@@ -183,3 +183,53 @@ describe("Projects selection list", () => {
   expect(screen.queryByText("No date set")).toBeNull();
   expect(screen.getByTestId("projects-pane")).toHaveTextContent("Vendor review");
  });
+
+ it("keeps the read Room facts for a selected project, including an honest missing meeting", async () => {
+  seed(); render(<ProjectsCore />); await settle();
+  fireEvent.click(rows()[0]);
+  const pane = screen.getByTestId("projects-pane");
+  for (const label of ["State", "Sources", "Last update", "Open items", "Next meeting"])
+    expect(within(pane).getByText(label, {selector:".gadget-row-label"})).toBeVisible();
+  expect(within(pane).getByText("No sources")).toBeVisible();
+  expect(within(pane).getByText("1 open item")).toBeVisible();
+  expect(within(pane).getByText("Not supplied")).toBeVisible();
+  expect(pane).toHaveTextContent("Update drafted");
+  fireEvent.click(rows()[1]);
+  expect(pane).toHaveTextContent("New");
+  expect(pane).toHaveTextContent("No updates");
+  expect(pane).toHaveTextContent("No open items");
+  expect(apiFetch.mock.calls.filter(([path]) => path === `/api/projects/${WIRE.vendor}/room`)).toHaveLength(1);
+ });
+
+ it("does not use a total that includes closed or omitted items as the open-item count", async () => {
+  seed();
+  apiFetch.mockImplementation((path: string) => {
+    const raw=structuredClone(gets[path]) as Record<string,unknown>;
+    if(path===`/api/projects/${WIRE.payments}/room`) {
+      const items=raw.items as {total:number;focus:{lifecycle:string}[]};
+      items.focus[0].lifecycle="closed";
+    }
+    if(path===`/api/projects/${WIRE.vendor}/room`) (raw.items as {total:number}).total=50;
+    return Promise.resolve(raw);
+  });
+  render(<ProjectsCore />);await settle();
+  fireEvent.click(rows()[0]);
+  expect(screen.getByTestId("projects-pane")).toHaveTextContent("No open items");
+  fireEvent.click(rows()[1]);
+  const label=within(screen.getByTestId("projects-pane")).getByText("Open items",{selector:".gadget-row-label"});
+  expect(label.closest('.gadget-row')).toHaveTextContent("Not supplied");
+ });
+
+ it("keeps an unavailable source count distinct from zero and retries it", async () => {
+  seed();let failed=true;
+  apiFetch.mockImplementation((path: string) => {
+    const raw=structuredClone(gets[path]) as Record<string,unknown>;
+    if(path===`/api/projects/${WIRE.vendor}/room` && failed) raw.sources={state:"degraded",error_code:"project_store_unavailable"};
+    return Promise.resolve(raw);
+  });
+  render(<ProjectsCore />);await settle();fireEvent.click(rows().find(row=>row.textContent?.includes("Vendor review"))!);
+  const label=within(screen.getByTestId("projects-pane")).getByText("Sources",{selector:".gadget-row-label"});
+  expect(label.closest('.gadget-row')).toHaveTextContent("Not read");
+  failed=false;fireEvent.click(screen.getByRole("button",{name:"Retry"}));await settle();
+  expect(label.closest('.gadget-row')).toHaveTextContent("No sources");
+ });
