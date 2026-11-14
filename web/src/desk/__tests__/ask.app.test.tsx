@@ -471,6 +471,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     const sent = calls.find((call) => call.url.endsWith("/api/ask"))!;
     expect(sent.body?.context).toEqual([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }]);
     expect(sent.body?.prompt).toContain("Mira owns review");
+    // The way back is a verb in the row, never folded into Actions (#2343 folded it).
+    expect(within(screen.getByTestId("ask-actions")).getByRole("button", { name: "Back to note" })).toBeInTheDocument();
     expect(askVerb("Back to note").closest("details")).toBeNull();
     const returned: unknown[] = [];
     const onReturn = (event: Event) => returned.push((event as CustomEvent).detail);

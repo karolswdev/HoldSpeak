@@ -62,7 +62,17 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         const line = first.getBoundingClientRect();
         if (top >= box.top && top < cut && line.bottom > cut) cut = top;
       }
-      const start = Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom));
+      let start = Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom));
+      // Words on one visual line can have different boxes (a small speaker
+      // name beside larger words). An edge that lands inside a neighbour's
+      // box would cut that neighbour, so each edge moves until it cuts no box.
+      for (let moved = true, turns = 0; moved && turns < 8; turns++) {
+        moved = false;
+        for (const rect of rectangles) {
+          if (start > box.top && rect.top < start - .5 && rect.bottom > start + .5 && rect.bottom < cut) { start = rect.bottom; moved = true; }
+          if (cut < box.bottom && rect.top < cut - .5 && rect.bottom > cut + .5 && rect.top > start) { cut = rect.top; moved = true; }
+        }
+      }
       const top = blocks.some(rect => rect.bottom === start) ? start - box.top : Math.ceil(start - box.top);
       const bottom = blocks.some(rect => rect.top === cut) ? box.bottom - cut : Math.ceil(box.bottom - cut);
       el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${top === 0 ? "0" : `${top}px`} 0 ${bottom}px 0)` : "";

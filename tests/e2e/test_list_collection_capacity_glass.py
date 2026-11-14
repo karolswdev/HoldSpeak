@@ -123,7 +123,7 @@ def test_need_list_uses_every_complete_row_in_its_seat(tmp_path,monkeypatch,widt
             metrics=win.evaluate(r"""el => {
               const grid=el.querySelector('.object-list'),well=grid.querySelector('.object-list-rows');
               const slot=grid.getBoundingClientRect(),box=well.getBoundingClientRect();
-              const bottom=el.querySelector('[data-testid=arrival-headline]').getBoundingClientRect().top;
+              const bottom=Math.min(el.querySelector('[data-testid=arrival-headline]').getBoundingClientRect().top,slot.bottom); // the list's own seat: the face's padding under it is not row room
               const rows=[...well.querySelectorAll('.object-list-row')];
               const style=getComputedStyle(well),border=parseFloat(style.borderBottomWidth)||0;
               const top=box.top+well.clientTop,edge=top+well.clientHeight;
