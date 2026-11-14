@@ -37,3 +37,8 @@
 }
 
 .surface-mast-inline-verbs { box-sizing: border-box; padding: var(--space-2) var(--space-3); flex-wrap: wrap; min-width: 0; }
+
+/* The direction is fixed; only the complete navigation word yields its seat. */
+.desk-next .surface-mast-back { display: flex; justify-content: center; width: 100%; min-width: 0; }
+.desk-next .surface-mast-back > span { flex: none; white-space: pre; }
+.desk-next .surface-mast-back > [hidden] { display: none; }
