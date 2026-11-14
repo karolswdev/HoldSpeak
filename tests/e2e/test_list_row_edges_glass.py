@@ -54,8 +54,9 @@ def _measure(page, well, name, width, faults, *, selected=False):
 
 
 @pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.parametrize("face", ["agents", "people", "needs", "activity", "ask-sources"])
 @pytest.mark.timeout(240)
-def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width):
+def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width, face):
     from playwright.sync_api import sync_playwright, expect
     import holdspeak.agent_context as context
     from holdspeak.agent_context import event_log
@@ -134,29 +135,32 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width)
                     page.keyboard.press("Control+KeyI")
                 return page.locator(f'[id="{app}"]')
 
-            win = open_app("conductor")
-            expect(win.locator(".surface-mast-facts")).to_contain_text("55 sessions", timeout=15000)
-            well = win.get_by_test_id("agents-list").locator(".object-list-rows")
-            # CSS snapping and selection use actual grouped, two-line rows.
-            target = well.locator('[data-object-id="launch:launch_ag0_done"]')
-            target.click()
-            _list_face(win, well)
-            _measure(page, well, "agents-selected", width, faults, selected=True)
-            target.press("ArrowUp")
-            expect(well.locator('[aria-selected="true"]')).not_to_have_attribute("data-object-id", "launch:launch_ag0_done")
-            _measure(page, well, "agents-keyboard", width, faults, selected=True)
-            well.evaluate("el=>{el.scrollTop=183}")
-            _measure(page, well, "agents-odd-scroll", width, faults)
-            box = well.bounding_box()
-            page.mouse.move(box["x"]+box["width"]/2, box["y"]+box["height"]/2)
-            page.mouse.wheel(0, 173)
-            _measure(page, well, "agents-wheel", width, faults)
-            well.evaluate("el=>{el.scrollTop=el.scrollHeight}")
-            _measure(page, well, "agents-end", width, faults)
+            if face == "agents":
+                win = open_app("conductor")
+                expect(win.locator(".surface-mast-facts")).to_contain_text("55 sessions", timeout=15000)
+                well = win.get_by_test_id("agents-list").locator(".object-list-rows")
+                # The one shared fitter handles grouped, two-line rows.
+                target = well.locator('[data-object-id="launch:launch_ag0_done"]')
+                target.click()
+                _list_face(win, well)
+                _measure(page, well, "agents-selected", width, faults, selected=True)
+                target.press("ArrowUp")
+                expect(well.locator('[aria-selected="true"]')).not_to_have_attribute("data-object-id", "launch:launch_ag0_done")
+                _measure(page, well, "agents-keyboard", width, faults, selected=True)
+                well.evaluate("el=>{el.scrollTop=183}")
+                _measure(page, well, "agents-odd-scroll", width, faults)
+                box = well.bounding_box()
+                page.mouse.move(box["x"]+box["width"]/2, box["y"]+box["height"]/2)
+                page.mouse.wheel(0, 173)
+                _measure(page, well, "agents-wheel", width, faults)
+                well.evaluate("el=>{el.scrollTop=el.scrollHeight}")
+                _measure(page, well, "agents-end", width, faults)
 
             for app, name, selector in [("surface-people", "people", '[data-testid="people-roster"] .object-list-rows'),
                                         ("chair:needs", "needs", '[data-testid="needs-list"] .object-list-rows'),
                                         ("surface-activity", "activity", '.object-list-rows')]:
+                if face != name:
+                    continue
                 win = open_app(app)
                 well = win.locator(selector).first
                 try:
@@ -165,6 +169,7 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width)
                     page.screenshot(path=str(ROOT / f".tmp/agents-r3-load-{name}-{PHASE}-{width}.png"))
                     print(win.inner_text()[:2000] if win.count() else f"{app} did not mount")
                     raise
+                _measure(page, well, f"{name}-ready", width, faults)
                 well.locator('[data-object-id]').last.click()
                 _list_face(win, well)
                 _measure(page, well, f"{name}-selected", width, faults, selected=True)
@@ -176,30 +181,31 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width)
                     fitted = _measure(page, well, "people-fitting-list", width, faults)
                     assert fitted["rows"][-1]["bottom"] - fitted["rows"][0]["top"] <= fitted["bottom"] - fitted["edge"] + 1, fitted
 
-            tools = json.loads((ROOT / "web/src/test/wire/ask.tools.wire.json").read_text())
-            answer = {**tools["answer"], "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
-            win = open_app("ask")
-            editor = win.get_by_role("textbox", name="Ask about your work", exact=True)
-            editor.fill("Read the recovery points")
-            editor.press("Enter")
-            well = win.get_by_test_id("ask-looked-at").locator(".object-list-rows")
-            expect(well.locator('[data-object-id]')).to_have_count(len(notes))
-            well.locator('[data-object-id]').last.click()
-            _measure(page, well, "ask-sources-selected", width, faults, selected=True)
-            well.evaluate("el=>{el.scrollTop=137}")
-            _measure(page, well, "ask-sources-odd-scroll", width, faults)
-            well.evaluate("el=>{el.scrollTop=el.scrollHeight}")
-            end = _measure(page, well, "ask-sources-end", width, faults, selected=True)
-            whole = [row for row in end["visible"] if row["top"] >= end["edge"]-.1 and row["bottom"] <= end["bottom"]+.1]
-            gap = max(0, end["bottom"]-end["border"]-end["last"]["bottom"])
-            top_gap = max(0, end["first"]["top"]-end["edge"])
-            if len(whole) != 3 or len(end["visible"]) != 3 or gap > .1 or top_gap > .1 or end["last"]["id"] != end["rows"][-1]["id"]:
-                faults.append(("ask-sources-end", "Three whole source rows and no end gap", {"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}))
-            report = os.environ.get("LIST_EDGE_REPORT")
-            if report:
-                folder = Path(report)
-                folder.mkdir(parents=True, exist_ok=True)
-                (folder/f"ask-sources-end-{900 if width==1440 else 393}.json").write_text(json.dumps({"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}, indent=2))
+            if face == "ask-sources":
+                tools = json.loads((ROOT / "web/src/test/wire/ask.tools.wire.json").read_text())
+                answer = {**tools["answer"], "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
+                win = open_app("ask")
+                editor = win.get_by_role("textbox", name="Ask about your work", exact=True)
+                editor.fill("Read the recovery points")
+                editor.press("Enter")
+                well = win.get_by_test_id("ask-looked-at").locator(".object-list-rows")
+                expect(well.locator('[data-object-id]')).to_have_count(len(notes))
+                well.locator('[data-object-id]').last.click()
+                _measure(page, well, "ask-sources-selected", width, faults, selected=True)
+                well.evaluate("el=>{el.scrollTop=137}")
+                _measure(page, well, "ask-sources-odd-scroll", width, faults)
+                well.evaluate("el=>{el.scrollTop=el.scrollHeight}")
+                end = _measure(page, well, "ask-sources-end", width, faults, selected=True)
+                whole = [row for row in end["visible"] if row["top"] >= end["edge"]-.1 and row["bottom"] <= end["bottom"]+.1]
+                gap = max(0, end["bottom"]-end["border"]-end["last"]["bottom"])
+                top_gap = max(0, end["first"]["top"]-end["edge"])
+                if len(whole) != 3 or len(end["visible"]) != 3 or gap > .1 or top_gap > .1 or end["last"]["id"] != end["rows"][-1]["id"]:
+                    faults.append(("ask-sources-end", "Three whole source rows and no end gap", {"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}))
+                report = os.environ.get("LIST_EDGE_REPORT")
+                if report:
+                    folder = Path(report)
+                    folder.mkdir(parents=True, exist_ok=True)
+                    (folder/f"ask-sources-end-{900 if width==1440 else 393}.json").write_text(json.dumps({"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}, indent=2))
             browser.close()
     finally:
         server.stop()
