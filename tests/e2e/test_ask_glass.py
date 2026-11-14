@@ -673,7 +673,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
 
             for tool, args, state in [
                 ("thread.set_status", {"thread_id": "ask-facts", "text": "Reading sources"}, "9-held-undeclared"),
-                ("door.add_item", {"task": "Review the platform recovery point", "owner": "Me", "due": "2026-11-20"}, "9-held-task"),
+                ("door.add_item", {"task": "Review the platform recovery point", "owner": "Me", "due": "2026-11-20", "source_type": "meeting", "source_ref": "private-source"}, "9-held-task"),
             ]:
                 handle = ToolCallHandle(call_id=state, thread_id="ask-facts", turn_operation_id=invocation,
                                         name=tool, args=args, tool_class="effect_proposal", sensitive=False,
@@ -688,6 +688,11 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
                     expect(question.get_by_text(fact["label"], exact=True)).to_be_visible()
                     expect(question.get_by_text("Nov 20" if fact["label"] == "Due" else fact["value"], exact=True)).to_be_visible()
                 shot(state)
+                if state == "9-held-task":
+                    fields = question.locator(".surface-inspector-fields")
+                    fields.evaluate("el => el.scrollTop = el.scrollHeight")
+                    shot("9-held-task-tail")
+                    fields.evaluate("el => el.scrollTop = 0")
             page.route("**/api/threads/*/decide", lambda route: route.fulfill(status=503, json={}))
             authority = json.loads((wire / "ask.held-authority.wire.json").read_text())["held"]
             server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [authority]})
