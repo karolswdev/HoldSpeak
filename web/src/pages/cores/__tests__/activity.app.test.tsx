@@ -41,9 +41,9 @@ it("opens a read-only collection, gives each row a target and time, and opens th
   fireEvent.click(row);press("Open receipt");expect(opened).toHaveBeenCalledWith("configure-cadence",undefined);
   expect(writes).toEqual([]);
 });
-it("keeps an unspaced page identifier in the name and Visited in its second line",async()=>{
+it("keeps an unspaced page identifier in the name and Seen in its second line",async()=>{
   await ready();const row=screen.getAllByTestId("activity-row").find(row=>row.textContent?.includes("activity_saved_revision_"))!;
-  expect(row).toBeTruthy();expect(row).toHaveTextContent("Visited");expect(row).not.toHaveTextContent("Visited…");
+  expect(row).toBeTruthy();expect(row).toHaveTextContent("Seen");expect(row).not.toHaveTextContent("Seen…");
 });
 it("refreshes once, and Watching changes only after the explicit press",async()=>{
   await ready();expect(writes).toEqual([]);
@@ -123,6 +123,6 @@ it("distinguishes repeated page titles by the hub's saved URLs",async()=>{
   for(const page of pages.records.slice(0,2)){
     const row=document.getElementById(`activity-record-${page.id}`)!;
     expect(row.querySelector('.object-list-selection-name')).toHaveAttribute('title',page.url);
-    expect(row).toHaveTextContent("Visited");
+    expect(row).toHaveTextContent("Seen");
   }
 });

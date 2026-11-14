@@ -35,6 +35,6 @@ export function activityRow(item:ActivityItem):ObjectListRow {
   const cli=row.cli_status as {available?:boolean}|undefined;
   const state=row.last_error?"Failed":row.enabled===false?"Off":item.kind==="connectors"&&row.requires_cli&&cli?.available===false?"CLI not found":String(row.status||(row.enabled===true||item.kind==="connectors"?"On":""));
   return {id:item.id,kind:item.kind==="rules"?"project":"artifact",name,when:wireDayClock(stamp),whenSort:Date.parse(stamp)||0,sortValues:{who:"You"},
-    detail:item.kind==="records"?createElement("span",null,createElement("span",null,"Visited"),` · ${activityWords(row.source_browser || row.entity_type)} · ${wireDayClock(stamp)}`):undefined,
+    detail:item.kind==="records"?createElement("span",null,createElement("span",null,"Seen"),` · ${activityWords(row.source_browser || row.entity_type)} · ${wireDayClock(stamp)}`):undefined,
     state:state?{label:activityWords(state),tone:row.last_error?"fail":row.enabled===false?"idle":"info"}:undefined};
 }
