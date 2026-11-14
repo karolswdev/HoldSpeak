@@ -59,7 +59,10 @@ describe("Agents window grammar", () => {
     expect(screen.getByRole("rowgroup", { name: "Done today" })).toBeTruthy();
     expect(row.querySelector("button")).toBeNull();
     fireEvent.click(screen.getByRole("tab", {name: "Facts"}));
-    expect(within(screen.getByTestId("agents-pane")).getByText("Name").closest(".gadget-row")).toHaveTextContent("Write the on-call note");
+    // The heading shows the whole name here, so no Name fact says it again
+    // (the kit shows that fact only while the heading is cut).
+    expect(screen.getByTestId("agents-mast")).toHaveAttribute("aria-label", "Write the on-call note");
+    expect(within(screen.getByTestId("agents-pane")).queryByText("Name")).toBeNull();
   });
   it("reveals the selected inspector when its verb is pressed from the list", async () => {
     render(<ConductorWindow />);

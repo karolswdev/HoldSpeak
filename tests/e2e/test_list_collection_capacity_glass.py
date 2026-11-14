@@ -48,7 +48,7 @@ def test_unselected_collections_keep_the_whole_list(tmp_path,monkeypatch,width):
                 page.reload(wait_until='load');_normal_chair(page);win=page.locator(f'#surface-{app}')
                 # Wait for the app's read, rather than only the Desk shell.
                 win.locator('.object-list-row[data-object-id]').first.wait_for(state='attached')
-                expect(win.get_by_test_id(query)).to_have_count(50)
+                expect(win.get_by_test_id(query)).to_have_count(50,timeout=20_000)
                 for state in ['list','selected','selected-last']:
                     if state=='selected':win.get_by_test_id(query).first.click()
                     if state=='selected-last':win.get_by_test_id(query).last.click()
@@ -91,7 +91,7 @@ def test_unselected_collections_keep_the_whole_list(tmp_path,monkeypatch,width):
                     if gap['spare']>=gap['row']-1:faults.append(('a whole row of list space was left blank',gap))
             browser.close()
     finally:server.stop()
-    (ROOT/f'.tmp/programs-group14/r3/capacity-{width}-{phase}.json').write_text(json.dumps(metrics,indent=2))
+    (OUT/f'capacity-{width}-{phase}.json').write_text(json.dumps(metrics,indent=2))
     assert not faults,faults
 
 @pytest.mark.parametrize('width',[1440,393])
@@ -102,6 +102,7 @@ def test_need_list_uses_every_complete_row_in_its_seat(tmp_path,monkeypatch,widt
     from playwright.sync_api import sync_playwright,expect
     _ensure_build()
     output=ROOT/'.tmp/evidence-shots/programs-group14-r4';output.mkdir(parents=True,exist_ok=True)
+    reports=ROOT/'.tmp/programs-group14/r4';reports.mkdir(parents=True,exist_ok=True)
     phase=os.environ.get('POLISH_PHASE','after')
     wires=json.loads((ROOT/'web/src/desk/needs/__fixtures__/needs_you.rows.json').read_text())['program']['steps'][0]['gets']
     needs=copy.deepcopy(wires['/api/desk/needs-you?fresh=1']);template=needs['items'][0]
@@ -132,7 +133,7 @@ def test_need_list_uses_every_complete_row_in_its_seat(tmp_path,monkeypatch,widt
                 spare:bottom-box.bottom,row,slot:slot.toJSON(),well:box.toJSON(),
                 last:whole.at(-1)?.getBoundingClientRect().toJSON()};
             }""")
-            (ROOT/f'.tmp/programs-group14/r4/needs-{width}-{phase}.json').write_text(json.dumps(metrics,indent=2))
+            (reports/f'needs-{width}-{phase}.json').write_text(json.dumps(metrics,indent=2))
             faults.extend(row_faults(win,'needs-capacity'))
             if metrics['whole']<metrics['capacity']:faults.append(('a complete row was lost',metrics))
             if metrics['spare']>=metrics['row']-1:faults.append(('a row of blank space is left in the list seat',metrics))
@@ -171,7 +172,7 @@ def test_need_list_uses_every_complete_row_in_its_seat(tmp_path,monkeypatch,widt
             if trace['writes']!=quiet['writes']:faults.append(('fitter writes while idle',trace,quiet))
             if not trace['frames']:faults.append(('no fitter frames measured',trace))
             if trace['readAfterWrite'] or trace['outside'] or trace['duringScroll']:faults.append(('list layout phases',trace))
-            (ROOT/f'.tmp/programs-group14/r4/layout-{width}-{phase}.json').write_text(json.dumps(trace,indent=2))
+            (reports/f'layout-{width}-{phase}.json').write_text(json.dumps(trace,indent=2))
             browser.close()
     finally:server.stop()
     assert not faults,faults

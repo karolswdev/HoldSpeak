@@ -25,7 +25,10 @@ pytestmark = [pytest.mark.e2e]
 def _fit(win: Any, width: int) -> None:
     if width == 393 and win.locator(".object-list").is_visible():
         headings = win.locator(".object-list-th").evaluate_all("els => els.filter(e=>e.getClientRects().length && getComputedStyle(e).display!=='none').map(e=>e.textContent)")
-        assert headings == ["What", "State"], headings
+        # A column that is empty in every row in view is not declared at
+        # this width (#2319): State stands only when a row shows one.
+        states = win.locator('.object-list-row [data-col="state"]').evaluate_all("els => els.filter(e=>e.getClientRects().length && e.textContent.trim()).length")
+        assert headings == (["What", "State"] if states else ["What"]), headings
         for at in win.locator(".object-list-row [data-folded-col=when]").all():
             assert at.is_visible(), "At must move to the second line"
     for detail in win.locator(".object-list-detail").all():

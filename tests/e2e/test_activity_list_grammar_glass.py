@@ -107,11 +107,11 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             assert receipt.inner_text() == 'Checked 2 rooms · Heartbeat', receipt.inner_text()
             page.route('**/api/desk/projections?*',lambda route:route.fulfill(json={'projections':[],'page':{'offset':0,'limit':50,'total':0,'has_more':False}}))
             page.reload(wait_until='load');_normal_chair(page);expect(win.get_by_text('No activity yet',exact=True)).to_be_visible();shot('empty')
-            (ROOT/f'.tmp/programs-group14/r3/activity-producer-{width}.json').write_text(json.dumps(tape,indent=2)+'\n')
+            (OUT/f'activity-producer-{width}.json').write_text(json.dumps(tape,indent=2)+'\n')
             if width==1440 and os.environ.get('HOLDSPEAK_RECORD_ACTIVITY')=='1':
                 folder=ROOT/'web/src/pages/cores/__tests__/fixtures';folder.mkdir(exist_ok=True)
                 (folder/'activity-grammar.json').write_text(json.dumps(tape,indent=2)+'\n')
-            (ROOT/f'.tmp/programs-group14/r3/activity-tabs-{width}.json').write_text(json.dumps(tab_geometry,indent=2))
+            (OUT/f'activity-tabs-{width}.json').write_text(json.dumps(tab_geometry,indent=2))
             browser.close()
         assert not faults,faults
     finally:server.stop()

@@ -128,14 +128,14 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
           "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "press",
-        "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+        "selector": "[id='activity-receipt-{sweep_projection_id}']",
         "key": "Enter",
         "adapter": "ui-keyboard",
         "timeout_s": 15,
@@ -145,9 +145,16 @@
             "kind": "ui",
             "action": "click_role",
             "role": "tab",
-            "name": "When",
+            "name": "What it sends",
             "adapter": "ui-pointer",
-            "why": "Reach keeps Quiet hours in When, beside Channels, Calls and Brief."
+            "why": "Reach keeps Quiet hours under What it sends (2026-11-13), in When to reach you."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "#surface-settings [data-object-id='when']",
+            "adapter": "ui-pointer",
+            "why": "The row When to reach you shows the quiet hours."
           }
         ]
       },

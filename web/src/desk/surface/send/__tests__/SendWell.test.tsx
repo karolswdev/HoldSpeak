@@ -447,13 +447,14 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(screen.getByTestId("send-verb")).toBeDisabled();
     await act(async () => { previewReady({ payload_digest: "frozen-digest", preview: { text: "Exact frozen words\nSecond line." } }); });
     const preview = await screen.findByTestId("send-preview");
-    expect(within(preview).getByRole("heading", { name: "Preview" })).toBeVisible();
+    expect(preview).toHaveAccessibleName("Preview");
     expect(screen.queryByTestId("send-preview-loading")).toBeNull();
     const fields = within(preview).getAllByTestId("send-preview-field");
     expect(fields.map((field) => field.textContent)).toEqual(["#leads"]);
     expect(fields[0].closest(".surface-well")).toBeNull();
     const body = screen.getByTestId("send-preview-body");
-    expect(body.textContent).toBe("Exact frozen words\nSecond line.");
+    expect(body.textContent).toBe("Exact frozen wordsSecond line.");
+    expect(body.querySelector("br")).toBeTruthy();
     expect(body.closest(".surface-well")).toBeTruthy();
     const verb = screen.getByTestId("send-verb");
     expect(verb.closest(".surface-well")).toBeNull();
@@ -464,8 +465,10 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(row.textContent).toContain("Slack");
     // Betterment send S1: an account chip only for a sign-in failure; a webhook that is set says nothing.
     expect(row.textContent).not.toContain("WEBHOOK SET");
-    // W4-PHONE: the egress is said on the destination row, and only there.
-    expect(verb.closest(".surface-inspector-actions")?.querySelector(".gadget-chip-egress")?.textContent).toBe("hooks.slack.com");
+    // The confirmation names the destination and service in words at the act.
+    expect(verb.closest(".surface-inspector-actions")?.querySelector(".surface-completion-state")?.textContent).toBe("Send to Slack #leads on Slack");
+    expect(row.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(row.textContent).not.toContain("hooks.slack.com");
     expect(within(preview).queryByText("hooks.slack.com")).toBeNull();
   });
 
@@ -514,7 +517,8 @@ describe("the SEND well species on a brief (not an update)", () => {
     })] });
     render(<SendWells doc={BRIEF} />);
     const row = await pick("Slack #leads");
-    expect(row.textContent).toContain("hooks.slack.com");
+    expect(row.textContent).not.toContain("hooks.slack.com");
+    expect(row.querySelector(".surface-completion-state")?.textContent).toBe("Send to Slack #leads on Slack");
     expect(row.textContent).not.toContain("WEBHOOK SET");   // betterment send S1: no chip beside a good send
     const sent = await screen.findByTestId("send-sent");
     expect(sent.textContent).toContain("Posted");

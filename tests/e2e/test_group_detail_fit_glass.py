@@ -42,7 +42,7 @@ def test_group_detail_fits(tmp_path,monkeypatch,width):
             expect(win.get_by_role('button',name='New automation',exact=True)).to_be_visible()
             win.locator('[data-object-id="long-auto-0"]').click();shot('automations','selected')
             if not win.get_by_test_id('automation-home-status').get_by_text('1 with new results',exact=True).count():faults.append('new count is not the number of visible automations')
-            (ROOT/f'.tmp/programs-group14/r3/automation-name-{width}-{phase}.json').write_text(json.dumps(win.evaluate('''el=>{const row=el.querySelector('[data-object-id]'),cell=row.querySelector('[data-col="name"]'),title=cell.querySelector('.object-list-selection-title');return {cell:cell.getBoundingClientRect().toJSON(),title:title.getBoundingClientRect().toJSON(),shown:title.textContent,full:title.title,tracks:getComputedStyle(row).gridTemplateColumns};}'''),indent=2))
+            (OUT/f'automation-name-{width}-{phase}.json').write_text(json.dumps(win.evaluate('''el=>{const row=el.querySelector('[data-object-id]'),cell=row.querySelector('[data-col="name"]'),title=cell.querySelector('.object-list-selection-title');return {cell:cell.getBoundingClientRect().toJSON(),title:title.getBoundingClientRect().toJSON(),shown:title.textContent,full:title.title,tracks:getComputedStyle(row).gridTemplateColumns};}'''),indent=2))
             switches=win.get_by_role('checkbox',name='Automatic starts',exact=True)
             if not switches.count():faults.append('switch does not name what starts')
             else:

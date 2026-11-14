@@ -1140,7 +1140,8 @@ def pytest_sessionfinish(session, exitstatus):
 
 @pytest.hookimpl(optionalhook=True)
 def pytest_testnodedown(node, error):
-    leaks = node.workeroutput.get("holdspeak_process_leaks", [])
+    # A worker that died has no output: the run must still print its report.
+    leaks = getattr(node, "workeroutput", {}).get("holdspeak_process_leaks", [])
     if leaks:
         node.config._holdspeak_worker_leaks = getattr(node.config, "_holdspeak_worker_leaks", []) + leaks
 

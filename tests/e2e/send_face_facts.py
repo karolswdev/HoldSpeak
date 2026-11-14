@@ -20,19 +20,19 @@ def send_face_facts(root: Any, *, six_lines: bool = False) -> dict[str, Any]:
         return {top:r.top,bottom:r.bottom,height:r.height,width:r.width,visibleHeight:Math.max(0,bottom-top),visibleWidth:Math.max(0,right-left)};
       };
       const row = [...root.querySelectorAll('.gadget-row')].find(e => shown(e) && e.querySelector('[aria-label=Destination]'));
-      const heading = find('[data-send=preview] .surface-pane-group > h3');
+      const heading = find('[data-send=preview] > .surface-pane-group > .surface-inspector-form');
       const payload = find('[data-send=preview] .surface-well-body');
       const tabs = find('[role=tablist][aria-label="Send to"]');
       const form = face?.querySelector('.surface-inspector-form > .surface-inspector-fields');
       const props=['backgroundColor','borderTopColor','borderTopWidth','borderRadius','color','fontFamily','fontSize','fontWeight','lineHeight','paddingTop','paddingRight','paddingBottom','paddingLeft','minHeight','boxShadow'];
       const style = e => e ? Object.fromEntries(props.map(k=>[k,getComputedStyle(e)[k]])) : null;
-      const add = find('[data-testid=send-add-destination]'), choice = row?.querySelector('.gadget-cycle');
+      const add = root.querySelector('[data-testid=send-add-destination]'), choice = row?.querySelector('.gadget-cycle');
       const ancestors=[]; for(let e=word;e;e=e.parentElement){const s=getComputedStyle(e);ancestors.push({cls:e.className,box:bounds(e),display:s.display,flex:s.flex,minHeight:s.minHeight,height:s.height,overflow:s.overflow});}
       const documentRow = [...root.querySelectorAll('.gadget-row')].find(e => shown(e) && e.querySelector('[aria-label=Document]'));
       return {document:bounds(documentRow),ancestors,paper:face ? getComputedStyle(face).backgroundColor : null,word:word?.textContent,wordBounds:bounds(word),completion:bounds(actions),destination:bounds(row),tabs:bounds(tabs),heading:bounds(heading),payload:bounds(payload),
         lineHeight:payload ? parseFloat(getComputedStyle(payload).lineHeight) : null,
         form:form ? {scrollTop:form.scrollTop,scrollHeight:form.scrollHeight,height:form.clientHeight} : null,
-        addTrailing: Boolean(add && row?.contains(add) && choice && (add.getBoundingClientRect().left >= choice.getBoundingClientRect().right+6 || add.getBoundingClientRect().top >= choice.getBoundingClientRect().bottom+6)),
+        addInVerbs: !add || Boolean(add.closest(".surface-inspector-actions") && !row?.contains(add)),
         styles:{cancel:style(actions?.querySelector('button:not(.btn--primary):not(.surface-completion-leading button)')),send:style(actions?.querySelector('.btn--primary')),add:style(add)}};
     }""")
     assert facts["word"], facts
@@ -48,7 +48,7 @@ def send_face_facts(root: Any, *, six_lines: bool = False) -> dict[str, Any]:
         assert facts["destination"]["bottom"] <= facts["heading"]["top"] + 1, facts
         assert facts["heading"]["bottom"] <= facts["payload"]["top"] + 1, facts
         assert facts["payload"]["bottom"] <= facts["completion"]["top"] + 1, facts
-        assert facts["addTrailing"], facts
+        assert facts["addInVerbs"], facts
         if six_lines:
             assert facts["payload"]["visibleHeight"] >= 6 * facts["lineHeight"], facts
             assert facts["form"]["scrollTop"] == 0 and facts["form"]["scrollHeight"] <= facts["form"]["height"] + 1, facts

@@ -73,3 +73,13 @@ it("breaks a path at its separators and keeps a file extension with its name", (
   const name="web/src/desk/programs/ProgramWindow.tsx";
   expect(fitName(name,36,2,fitsIn(36),"end")).toEqual(["web/src/desk/programs/", "ProgramWindow.tsx"]);
 });
+
+it("cuts receipt paths at joins on both sides of the middle gap", () => {
+  const path="~/Documents/Reports/2026-11-13-review-the-architecture-migration-and-keep-the-current-rollback-note-b5c4e405.md";
+  const [shown]=fitName(path, 48, 1, fitsIn(48), "path");
+  const [head,tail]=shown.split("…");
+  expect(path.startsWith(head)).toBe(true);
+  expect(path.endsWith(tail)).toBe(true);
+  expect(head).toMatch(/[\s_\-./:]$/);
+  expect(path[path.length-tail.length-1]).toMatch(/[\s_\-./:]/);
+});

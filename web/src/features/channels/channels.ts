@@ -89,7 +89,7 @@ export type PreviewField = { label: string; value: string };
 export type Preview = {
   credential_blocked?: boolean;
   fields: PreviewField[];
-  body_kind: "markdown" | "text";
+  body_kind: "markdown" | "text" | "slack";
   body: string;
   /** Source Markdown used by Send's Edit action. The receiver-facing body
    * remains the rendered `text` value; this preserves the producer bytes for
@@ -560,7 +560,7 @@ export function previewOf(
       // A webhook has no read call: the fields are the channel label and the one host.
       return { ...blocked,
         fields: [...warning, { label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
-        body_kind: "text", body, source_markdown: sourceMarkdown,
+        body_kind: "slack", body, source_markdown: sourceMarkdown,
       };
     default:
       return { ...blocked, fields: [], body_kind: "text", body, source_markdown: sourceMarkdown };
