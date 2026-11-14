@@ -10,6 +10,7 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
       const savedScroll = el.scrollTop;
       if (rows) { el.style.maxHeight = ""; el.style.marginBottom = ""; }
       let box = el.getBoundingClientRect();
+      const bottomBorder = rows ? parseFloat(getComputedStyle(el).borderBottomWidth) || 0 : 0;
       const rectangles: DOMRect[] = [];
       const embeddedRows = rows ? [] : [...el.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height);
       if (rows) rectangles.push(...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
@@ -32,18 +33,18 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         }
       }
       rectangles.push(...embeddedRows);
-      const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom + .5);
+      const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
       let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows || embeddedRows.includes(rect) ? 0 : 1)));
       if (rows) {
         // Reserve the full seat while its field box ends at a whole row.
         // Clearing the previous fit above lets a changed form grow again.
-        const height = Math.max(0, cut - box.top);
-        el.style.maxHeight = `${height}px`;
-        el.style.marginBottom = `${box.height - height}px`;
+        const height = Math.max(0, cut - box.top + (cut < box.bottom ? bottomBorder : 0));
+        el.style.maxHeight = `${Math.floor(height)}px`;
+        el.style.marginBottom = `${Math.ceil(box.height - height)}px`;
         el.scrollTop = savedScroll;
         box = el.getBoundingClientRect();
         rectangles.splice(0, rectangles.length, ...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
-        const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom + .5);
+        const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
         cut = Math.min(box.bottom, ...partial.map(rect => rect.top));
       }
       if (!rows) for (const pre of el.querySelectorAll<HTMLElement>("pre")) {

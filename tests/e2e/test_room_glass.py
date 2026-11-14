@@ -133,7 +133,7 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             assert [row["delivered_to"] for row in read["deliveries"]] == ["Steering group", "Architecture guild"]
             expect(win.locator(f"[data-object-id='{update['id']}']")).to_be_visible()
             if width == 1440:
-                expect(win.get_by_role("grid", name="Updates")).to_contain_text("Steering group · Architecture guild")
+                expect(win.get_by_role("grid", name="Updates")).to_contain_text("Steering group, Architecture guild")
             suffix = "900x600" if width == 1440 else "393"
             page.screenshot(path=str(OUT / f"delivery-custody-{suffix}-after.png"))
             browser.close()

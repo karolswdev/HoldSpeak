@@ -15,8 +15,9 @@ press):
   window menu; Go reaches a daily window in 2 taps, and a second tap
   closes Go (Astra r1 #751).
 * Escape on an open strip menu closes the menu, not the window (PHILO-13-18):
-  Activity's wings fold into one strip menu at 393; a tap opens it and leaves
-  focus on the Button; the first Escape closes the menu and Activity stays in
+  Meetings' wings fold into one strip menu at 393 (Activity is a kit list now
+  and has none); a tap opens it and leaves
+  focus on the Button; the first Escape closes the menu and Meetings stays in
   front; a second Escape still closes the window.
 
 * PHILO-16 the compositor core (moved whole): planes, Tile with its divider
@@ -512,14 +513,14 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
             page.set_default_timeout(20_000)
             page.goto(f"{base}/?token={token}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
-            page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'inspect-activity'}))")
+            page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'review-meetings'}))")
             page.reload(wait_until="load")
             _normal_chair(page)
-            window = page.locator(".desk-window-shell[aria-label='Activity']")
+            window = page.locator(".desk-window-shell[aria-label='Meetings']")
             window.wait_for()
             _settle(page)
             strip = window.locator(".desk-wings-menu")
-            assert strip.count() == 1, "at 393 the Activity wings fold into one strip menu"
+            assert strip.count() == 1, "at 393 the Meetings wings fold into one strip menu"
             box = strip.bounding_box()
             page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
             strip_menu = page.get_by_role("menu", name="Window faces", exact=True)
@@ -541,7 +542,7 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
         server.stop()
 
     assert menu_open == 0, "the first Escape left the strip menu open"
-    assert still_open and front == "Activity", f"the first Escape closed the window (front now {front!r})"
+    assert still_open and front == "Meetings", f"the first Escape closed the window (front now {front!r})"
     assert closed_after_second, "a second Escape no longer closes the window"
 
 
@@ -2453,7 +2454,16 @@ class TestTheDeskRemembers(_Rig):
                 # window then covers the Room at 393).
                 page.wait_for_timeout(900)
                 _settle(page)
-                self._press(page, room.get_by_test_id("updates-verb"), width)
+                draft = room.get_by_test_id("updates-verb")
+                if draft.count() and draft.first.is_visible():
+                    self._press(page, draft, width)
+                else:
+                    # At 393 Ask shares the verb row: Draft update is in Actions.
+                    from playwright.sync_api import expect
+                    TestThePhoneDesk._tap(page, room.get_by_role("button", name="Actions ▾", exact=True).last, width)
+                    item = page.get_by_role("menuitem", name="Draft update", exact=True)
+                    expect(item).to_be_enabled(timeout=15_000)
+                    TestThePhoneDesk._tap(page, item, width)
                 # The Room's Draft update now creates the draft directly,
                 # rather than entering a list with a second generator verb.
                 room.locator('.surface-object-reader[aria-label=Update]').wait_for()

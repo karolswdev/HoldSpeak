@@ -32,10 +32,7 @@
 [data-send="preview"] > .surface-pane-group > .surface-inspector-form .gadget-row { align-items: start; }
 .send-preview-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 .desk-next [data-send="preview"] .reading-document.surface-material { width: 100%; max-width: 100%; }
-[data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: nowrap; }
 .desk-next [data-send="face"] .gadget-row-gadget .gadget-cycle { flex: 1 1 auto; width: auto; min-width: 0; }
-[data-send="face"] [data-testid="send-add-destination"] { flex: none; }
-[data-send="face"] .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
 [data-testid="send-destination-word"] { white-space: normal; overflow-wrap: normal; word-break: normal; }
 /* A send takes the whole selection pane; Back returns its list. */
 .surface-list-pane:has(> .surface-list-pane-preview :is(.send-sheet, [data-send="face"])) > .surface-list-pane-list { display: none; }
@@ -50,7 +47,6 @@
 .send-sheet { min-height: min(360px, 60dvh); }
 .surface-list-pane-preview .send-sheet { min-height: 0; }
 
-[data-send="face"] .surface-completion-leading { flex-wrap: nowrap; margin-inline-end: 0; }
 
 /* The window grip owns the final 20px, as it does in SurfaceFooter. */
 :is([data-send="well"], [data-send="face"]) .surface-inspector-actions { justify-content: flex-end; padding-block-end: var(--space-2); padding-inline-end: 24px; }
@@ -60,35 +56,15 @@
 .send-proof-path[data-multiline] { white-space: normal; overflow-wrap: anywhere; }
 [data-testid="send-receipt-line"] { display: block; min-width: 0; width: 100%; }
 [data-testid="send-sent"] { width: 100%; min-width: 0; }
-[data-send="prepared"] > [data-question] > .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
-[data-send="prepared"] > [data-question] .surface-completion-leading { grid-column: 1 / -1; }
-[data-send="prepared"] > [data-question] .surface-inspector-actions > button:first-of-type { grid-column: 2; }
-[data-send="prepared"] > [data-question] .surface-inspector-actions > button:last-of-type { grid-column: 3; }
 [data-send="prepared"] > [data-send="face"] { min-height: 0; }
 [data-send="prepared"] > [data-question] { flex: none; }
 
-@container surface (max-width: 520px) {
-  [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: wrap; }
-  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) .gadget-cycle { flex: 1 0 170px; }
-  [data-send="face"] .surface-completion-leading { grid-column: 1 / -1; }
-  [data-send="face"] .surface-inspector-actions { row-gap: 8px; }
-}
-@container surface (max-width: 520px) {
-  [data-send="face"] .surface-inspector-actions { grid-template-columns: minmax(0, 1fr) auto; }
-  [data-send="face"] .surface-inspector-actions > button { justify-self: end; }
-  [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-label { align-self: start; padding-top: 0; }
-}
 
 .send-sheet { box-sizing: border-box; padding: var(--space-3); }
-[data-send="face"] .surface-completion-leading { flex-wrap: wrap; }
-@container surface (max-width: 520px) {
-  [data-send="face"] .surface-inspector-actions { grid-template-columns: 1fr auto; }
-  [data-send="face"] .surface-completion-leading { grid-column: 1 / -1; width: 100%; }
-}
 
 /* Fit the Send form itself, including a narrow seat inside a wide host. */
+
 @container inspector-form (max-width: 520px) {
-  .desk-next [data-send="face"] .surface-inspector-rows > .gadget-row:has([data-testid="send-add-destination"]) { grid-template-columns: minmax(0, 1fr); }
-  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: wrap; }
-  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) .surface-inspector-control > .gadget-cycle { flex: 1 0 100%; }
+  .desk-next [data-send="face"] .surface-inspector-rows > .gadget-row:has(select[aria-label="Destination"]) { grid-template-columns: minmax(0, 1fr); }
+  .desk-next [data-send="face"] .gadget-row:has(select[aria-label="Destination"]) .gadget-cycle { width: 100%; }
 }

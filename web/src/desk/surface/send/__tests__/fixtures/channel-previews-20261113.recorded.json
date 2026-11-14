@@ -1,0 +1,89 @@
+{
+  "producer": "test_send_os_grammar_glass.py::test_send_form_states; isolated destinations and preview HTTP routes; engine mode none; no remote dispatch",
+  "base": "b155e9e5e",
+  "channels": {
+    "email": {
+      "destination": {
+        "id": "chd_c9b9303664203f25b3659931",
+        "name": "Architecture review group 2",
+        "channel": "email",
+        "account": {
+          "from_email": "owner@example.test",
+          "from_name": "",
+          "key_ref": "rig-email-1",
+          "provider": "resend"
+        },
+        "target": {
+          "cc": [],
+          "to": [
+            "review-1@example.test"
+          ]
+        },
+        "builtin": false,
+        "target_digest": "8264241a637c4160cead35bcebc411e59e28603e6a003a8a08dc205cb212da6b",
+        "synced": false,
+        "state": "active",
+        "badge": "cloud",
+        "created_at": "2026-11-14T00:35:31+00:00",
+        "parked_at": null,
+        "connection": null
+      },
+      "reply": {
+        "document_ref": "note:note_thought_fa1d2e80d828b1f5",
+        "title": "Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.",
+        "destination_id": "chd_c9b9303664203f25b3659931",
+        "channel": "email",
+        "badge": "cloud",
+        "payload_digest": "970cc2394932c3b42eb3fe06bd2a00ac2829e1c3e4c46d8c3ab6696cddb65320",
+        "size": 4325,
+        "preview": {
+          "from": "owner@example.test",
+          "to": [
+            "review-1@example.test"
+          ],
+          "cc": [],
+          "subject": "Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.",
+          "text": "Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.\n\nWeekly report \u00b7 2026-11-12\n\nThe weekly report is ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.",
+          "html": "<h1>Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.</h1>\n<h2>Weekly report \u00b7 2026-11-12</h2>\n<p>The weekly report is ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n<p>Next step: review the plan.</p>\n",
+          "markdown": "# Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.\n\n## Weekly report \u00b7 2026-11-12\n\nThe weekly report is ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. \n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n",
+          "credential_blocked": false
+        }
+      }
+    },
+    "slack": {
+      "destination": {
+        "id": "chd_86188830b4e3d5993e66e837",
+        "name": "Architecture migration channel 2",
+        "channel": "slack",
+        "account": {
+          "key_ref": "slack_1dd08482927e5e90bf7536ae"
+        },
+        "target": {
+          "channel_label": "#architecture-review-1"
+        },
+        "builtin": false,
+        "target_digest": "987bf3ca60c3923676c45594d85476290991312baac64e190843379555452068",
+        "synced": false,
+        "state": "active",
+        "badge": "cloud",
+        "created_at": "2026-11-14T00:35:31+00:00",
+        "parked_at": null,
+        "connection": null
+      },
+      "reply": {
+        "document_ref": "note:note_thought_fa1d2e80d828b1f5",
+        "title": "Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.",
+        "destination_id": "chd_86188830b4e3d5993e66e837",
+        "channel": "slack",
+        "badge": "cloud",
+        "payload_digest": "a7d62a982439cbcf7e4ef17aa493b5a993ca627c6bb8b3497a041cfce2e4bded",
+        "size": 1858,
+        "preview": {
+          "text": "*Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.*\n\n*Weekly report \u00b7 2026-11-12*\n\nThe weekly report is ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. \n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n",
+          "markdown": "# Review the architecture migration and keep the current rollback plan, its decisions and the report for the steering group in view while the next delivery waits for its destination.\n\n## Weekly report \u00b7 2026-11-12\n\nThe weekly report is ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. The migration plan keeps the rollback path ready. \n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n\nNext step: review the plan.\n",
+          "credential_blocked": false
+        }
+      }
+    }
+  }
+}

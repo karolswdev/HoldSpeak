@@ -63,8 +63,10 @@
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
 /* Intrinsic hosts, such as a source pop-up, must include their list rows. */
 .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: var(--surface-list-min, 160px); }
-/* A window pane has a bounded seat; its unselected list yields below tabs. */
-.surface-preference-pane > .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: 0; }
+/* A window pane has a bounded seat; its unselected list yields below tabs.
+   A popover has no bounded seat: there the list keeps its own height (the
+   Ask scope list fell to no rows). */
+.surface-preference-pane:not(.surface-popover *) > .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: 0; }
 /* Plain setup and state panes receive the same inset as an inspector.
    Object inspectors and nested panes already own that seat. */
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview:not(:has(> .surface-pane-inspector, > .surface-inspector-body > .surface-pane-inspector, > .surface-pane-views, > .surface-list-pane, > .surface-step-track)) { padding: var(--space-3); box-sizing: border-box; }

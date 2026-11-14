@@ -148,7 +148,9 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       expect(words).toContain(NAME);
       expect(screen.getByRole("combobox",{name:"Destination"})).toHaveValue("holdspeak-folder");
       expect(words).not.toContain("This device");
-      expect(Boolean(screen.getByTestId("send-verb").closest(".surface-inspector-actions")?.querySelector(".gadget-chip-egress"))).toBe(icloud);
+      const confirmation = screen.getByTestId("send-verb").closest(".surface-inspector-actions")!;
+      expect(confirmation.querySelector(".gadget-chip-egress")).toBeNull();
+      expect(confirmation.querySelector(".surface-completion-state")?.textContent).toContain(icloud ? "iCloud" : "on this device");
       // The open destination leaves its target to the exact preview field.
       expect(pv.textContent).toContain("HoldSpeak/Sent");
       expect(words).not.toContain("~/");

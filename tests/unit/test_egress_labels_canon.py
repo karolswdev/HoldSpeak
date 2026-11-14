@@ -118,7 +118,9 @@ def test_a_working_window_draws_no_egress_label(face: str) -> None:
 
 # Where the choice or the act is made, the destination is still named.
 KEPT_DISCLOSURE = (
-    "desk/surface/send/SendWell.tsx",
+    # Send names the destination and provider in plain words at the act. Its
+    # rendered property (including no host chip) uses real hub recordings in
+    # surface/send/__tests__/grammar.test.tsx, rather than requiring this chip.
     "pages/cores/connections/Destinations.tsx",
     "desk/hand/HandConfirm.tsx",
     "desk/components/HandSheet.tsx",

@@ -564,7 +564,7 @@ it("a nested selection choice retains one completion row", () => {
   ).toBeTruthy();
 });
 
-it("facts keep the full Name beside its fitted heading, including a node", () => {
+it("facts show the full Name only while the fitted heading is cut, including a node", async () => {
   const { container } = render(
     <InspectorFacts
       name="Priya Nair"
@@ -576,13 +576,15 @@ it("facts keep the full Name beside its fitted heading, including a node", () =>
   );
   const heading=container.querySelector(".surface-pane-inspector-head")!;
   const facts=container.querySelector(".surface-inspector-facts")!;
+  const nameRow=()=>[...facts.querySelectorAll(".gadget-row")].find(row=>row.querySelector(".gadget-row-label")?.textContent==="Name");
   expect(heading).toHaveTextContent("Priya Nair");
-  const name=[...facts.querySelectorAll(".gadget-row")].find(row=>row.querySelector(".gadget-row-label")?.textContent==="Name");
-  expect(name).toHaveTextContent("Priya Nair");
-  expect(container.querySelector(".surface-inspector-facts")).toHaveAttribute(
-    "data-facts-name",
-    "Priya Nair",
-  );
+  // A whole heading: the fact would say the name twice.
+  expect(nameRow()).toBeUndefined();
+  // The fitter cut the heading: the fact holds the whole name.
+  const shown=heading.querySelector(".surface-inspector-name")!;
+  shown.firstChild!.nodeValue="Priya…";
+  await waitFor(()=>expect(nameRow()).toHaveTextContent("Priya Nair"));
+  expect(facts).toHaveAttribute("data-facts-name","Priya Nair");
 });
 
 it("a question writes the cleared and kept things as sentences", () => {

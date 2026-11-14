@@ -6,6 +6,7 @@ import { apiFetch, ApiError } from "../../../lib/api";
 import { recordedGet, type Gets } from "../../../test/recordedHub";
 import recorded from "./fixtures/engines.recorded.json";
 import chainRecorded from "./fixtures/settings-chain.recorded.json";
+import speechRecorded from "./fixtures/speech.recorded.json";
 import { useRunsOn } from "../useRunsOn";
 import { WHAT_ROWS } from "../whatRows";
 import { EnginesSection } from "../../../pages/cores/settings/Engines";
@@ -109,7 +110,7 @@ describe("Settings > Engines", () => {
     expect(within(library).queryByRole("grid", {name:"Model library"})).toBeNull();
     expect(screen.getByRole("region", {name:"Add engine"})).toHaveAttribute("data-pending-choice");
     expect(within(library).getByRole("button", {name:"Done"})).toBeVisible();
-    fireEvent.change(within(library).getByRole("combobox", {name:"Kind of engine"}), {target:{value:"agent"}});
+    fireEvent.click(document.querySelector('[role="tab"][data-tab="agent"]')!);
     const agents = await screen.findByRole("grid", { name: "Agent engines" });
     fireEvent.click(within(agents).getByText("Claude Code"));
     fireEvent.click(within(agents).getByRole("button", { name: "Add" }));
@@ -192,7 +193,7 @@ it("keeps Cancel then Check in the server completion seat", async () => {
   fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
-  fireEvent.change(screen.getByRole("combobox", {name:"Kind of engine"}), {target:{value:"lan"}});
+  fireEvent.click(document.querySelector('[role="tab"][data-tab="lan"]')!);
   const check = screen.getByTestId("concierge-add-check");
   expect(check).toBeDisabled();
   const actions = check.closest<HTMLElement>(".surface-inspector-actions")!;
@@ -207,10 +208,10 @@ it("opens a model's facts when Inspect is used from Add on this Mac", async () =
   fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
-  fireEvent.change(screen.getByRole("combobox", {name:"Kind of engine"}), {target:{value:"local"}});
+  fireEvent.click(document.querySelector('[role="tab"][data-tab="local"]')!);
   const models = screen.getByRole("grid", {name:"Model library"});
   fireEvent.click(within(models).getByText("Codex", {exact:true}));
-  fireEvent.click(within(models).getByRole("button", {name:"Inspect"}));
+  fireEvent.click(within(screen.getByTestId("settings-engines-library")).getByRole("button", {name:"Inspect"}));
   expect(screen.queryByRole("region", {name:"Add engine"})).toBeNull();
   const facts = screen.getByTestId("settings-engines-library").querySelector<HTMLElement>(".surface-inspector-facts")!;
   expect(within(facts).getByText("Name", {exact:true}).closest(".gadget-row")).toHaveTextContent("Codex");
@@ -264,14 +265,42 @@ it("names the last successful read kept by the Settings window after reopening a
   await waitFor(() => expect(status).toHaveBeenLastCalledWith(expect.stringMatching(/Engines not read.*Last read Nov 12/)));
 });
 
-it("uses the kit pop-up for engine kinds so the last server field has its own seat", async () => {
+it("keeps the five engine kinds visible when they fit their shared strip", async () => {
   chainHub();
   render(<EnginesSection />);
   fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
-  fireEvent.change(screen.getByRole("combobox", {name:"Kind of engine"}), {target:{value:"lan"}});
-  expect(screen.getByRole("combobox", {name:"Kind of engine"}).closest(".gadget-popup")).not.toBeNull();
+  fireEvent.click(document.querySelector('[role="tab"][data-tab="lan"]')!);
+  expect(within(screen.getByRole("tablist",{name:"Kind of engine"})).getAllByRole("tab")).toHaveLength(5);
   expect(screen.getByTestId("runson-kind-find-lan")).toBeVisible();
   expect(screen.getByRole("checkbox", {name:"My server"})).toBeInTheDocument();
+});
+
+
+it("returns from the library with its Back verb when no engine is selected", async () => {
+  chainHub(); render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  const back=within(screen.getByTestId("settings-engines-library")).getByRole("button",{name:"Back"});
+  expect(back).toBeEnabled(); fireEvent.click(back);
+  expect(screen.getByRole("grid",{name:"Engines on this desk"})).toBeVisible();
+});
+
+
+it("gives the speech roster its list well and returns with Back", async () => {
+  chainHub();
+  const get=vi.mocked(apiFetch).getMockImplementation()!;
+  vi.mocked(apiFetch).mockImplementation(async (path,init) => path === "/api/concierge/speech" ? structuredClone(speechRecorded.start["/api/concierge/speech"]) as never : get(path,init));
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  fireEvent.change(screen.getByRole("combobox", {name:"Library"}), {target:{value:"speech"}});
+  const roster=await screen.findByRole("grid", {name:"Phone speech"});
+  for (const model of speechRecorded.start["/api/concierge/speech"].rows) {
+    expect(await within(roster).findByText(model.label,{exact:true})).toBeVisible();
+  }
+  expect(roster.closest(".surface-inspector-form")).toBeNull();
+  fireEvent.click(within(roster.closest<HTMLElement>(".surface-list-pane")!).getByRole("button", {name:"Back"}));
+  expect(screen.getByRole("grid", {name:"Engines on this desk"})).toBeVisible();
 });

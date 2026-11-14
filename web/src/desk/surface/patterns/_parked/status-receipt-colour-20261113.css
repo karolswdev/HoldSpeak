@@ -1,0 +1,4 @@
+/* Parked: the status bar owns ink-strip text colour; the lamp owns failure colour. */
+.desk-next .pref-status-bar .pref-status-save[data-tone="danger"] {
+  color: var(--wb-danger-ink);
+}
