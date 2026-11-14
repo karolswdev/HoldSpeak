@@ -47,8 +47,9 @@ export function fitName(
   }
   if (cut === "path" && joiner === "" && joinPieces(last).length > 1) {
     const wanted = last.length - tail.length;
-    let offset = 0;
-    const starts = joinPieces(last).map(piece => { const start = offset; offset += piece.length; return start; });
+    // A middle cut may keep a suffix of a long basename. Its word joins
+    // differ from line breaks, which keep the basename and extension together.
+    const starts = [0, ...Array.from(last.matchAll(/[_\-./:\\](?=.)/g), match => match.index + 1)];
     const start = starts.find(start => start >= wanted);
     if (start !== undefined) tail = last.slice(start);
   }
