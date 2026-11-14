@@ -472,7 +472,7 @@ export function ObjectList({
   }).join("\n");
   const compactColumns = (selection ? declaredColumns : columns).length <= 2;
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
-  const tracks = columns.map((column) => (declaredTrack(column.key) === "max-content" ? `${minimum(column)}px` : declaredTrack(column.key)) ?? (column.key === "name" ? "minmax(0, 1fr)"
+  const tracks = columns.map((column) => declaredTrack(column.key) ?? (column.key === "name" ? "minmax(0, 1fr)"
     : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
   const phoneTracks = columns.map((column) => columns.length <= 2 ? "minmax(0, 1fr)" : column.key === "name" ? "minmax(0, 1fr)" : column.key === "state" ? "104px" : "84px").join(" ");
   const has = (key: string) => columns.some((column) => column.key === key);
