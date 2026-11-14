@@ -42,6 +42,12 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             writes=[]
             page.on('request',lambda request:writes.append(request.url) if request.method=='POST' and '/connections/' in request.url and '/recheck' in request.url else None)
             clear_hub_windows_http(base,TOKEN);_api(page,'POST','/api/desk/windows/surface-activity/open',{},token=TOKEN)
+            if width==1440 and phase!='before':
+                page.reload(wait_until='load');_normal_chair(page)
+                default=page.locator('#surface-activity');expect(default.get_by_test_id('activity-row').first).to_be_visible();_settle(page)
+                page.screenshot(path=str(OUT/'activity-default-frame-1440-after.png'))
+                bounds=default.evaluate("""el=>{const body=el.querySelector('.desk-surface-body').getBoundingClientRect(),pane=el.querySelector('.surface-list-pane').getBoundingClientRect();return {bodyBottom:body.bottom,paneBottom:pane.bottom};}""")
+                assert bounds['paneBottom']<=bounds['bodyBottom']+1,bounds
             if width==1440:_api(page,'POST','/api/desk/windows/surface-activity/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
             page.reload(wait_until='load');_normal_chair(page);win=page.locator('#surface-activity')
             def shot(state):
