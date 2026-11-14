@@ -2312,7 +2312,8 @@ seat after padding, glyphs, lamps and meters.
 - Every `WorkMenu` uses the owner window's measured free seat. Its opener's
   row, visible selected rows, tabs and list chrome stay clear. A panel opens
   below, flips above when needed, and scrolls inside the window if neither
-  side holds its full height. There is no per-app placement opt-in.
+  side holds its full height. A short menu ends at a measured entry boundary;
+  entries scroll at their full height. There is no per-app placement opt-in.
 - The Mast Back gadget always keeps its chevron; its whole navigation word
   yields first when the measured gadget cannot hold both.
 - A selection list measures read-only columns from its header and visible facts;

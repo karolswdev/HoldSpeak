@@ -89,7 +89,9 @@
 .desk-next .desk-work-menu {
   z-index: var(--desk-z-popover);
   overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
 }
+.desk-next .desk-work-menu > [role^="menuitem"] { scroll-snap-align: start; }
 /* A short menu seat scrolls; it never compresses its entries. */
 .desk-next .desk-work-menu > * { flex-shrink: 0; }
 /* PHILO-9-04: the 12 px floor holds in the work menu as in the list: its

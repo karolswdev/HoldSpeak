@@ -543,12 +543,19 @@ export function WorkMenu({
           ?? [...preferred].sort((a,b)=>(b.bottom-b.top)-(a.bottom-a.top))[0]
           ?? gaps[0];
         const room = seat ? seat.bottom-seat.top : 0;
+        const style = getComputedStyle(el);
+        const foot = (parseFloat(style.paddingBottom)||0)+(parseFloat(style.borderBottomWidth)||0);
+        const endings = [...el.querySelectorAll<HTMLElement>(":scope > [role^=menuitem], :scope > [role=none]")]
+          .map(item=>item.getBoundingClientRect().bottom-size.top+foot).filter(end=>end<=room);
+        const fitted = height <= room ? height : endings.at(-1) ?? room;
         const top = alongside ? alignedTop(alongside)
-          : seat ? seat.bottom <= reference.top ? seat.bottom-Math.min(height,room) : seat.top
+          : seat ? seat.bottom <= reference.top ? seat.bottom-fitted : seat.top
           : bounds.top;
+        el.style.scrollPaddingTop = style.paddingTop;
+        el.style.scrollPaddingBottom = style.paddingBottom;
         el.style.left = `${left-(ownerBox?.left ?? 0)}px`;
         el.style.top = `${top-(ownerBox?.top ?? 0)}px`;
-        el.style.maxHeight = `${room}px`;
+        el.style.maxHeight = `${fitted}px`;
       };
       keepInView(panelRef.current);
       keepInView(subRef.current,panelRef.current?.getBoundingClientRect());
