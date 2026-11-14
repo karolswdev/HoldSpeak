@@ -62,7 +62,7 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
                     heads:[...el.querySelectorAll('.surface-pane-inspector-head strong')].map(e=>({text:e.textContent,width:e.clientWidth,scroll:e.scrollWidth})),
                     wells:[...el.querySelectorAll('.surface-preference-well')].map(e=>({height:e.clientHeight,scroll:e.scrollHeight})),
                     columns:[...el.querySelectorAll('[role=columnheader]')].map(e=>e.textContent)}; }''')
-                (ROOT / '.tmp/programs-group14' / f'{name}-{width}-{phase}.json').write_text(json.dumps(metrics, indent=2))
+                (OUT / f'{name}-{width}-{phase}.json').write_text(json.dumps(metrics, indent=2))
                 if metrics['body'][1] > metrics['body'][0] + 1: faults.append((name, 'body overflow', metrics))
                 if any(head['scroll'] > head['width'] + 1 for head in metrics['heads']): faults.append((name, 'heading overflow', metrics))
                 return metrics
@@ -173,7 +173,7 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
                     _settle(page)
                     page.screenshot(path=str(OUT / f'{app}-long-{state}-{900 if width == 1440 else 393}-after.png'))
                     seat = win.evaluate('''el=>({rect:el.getBoundingClientRect().toJSON(),scrolls:[...document.querySelectorAll('*')].filter(e=>e.scrollLeft && (e.contains(el) || el.contains(e))).map(e=>({tag:e.tagName,cls:e.className,left:e.scrollLeft,width:e.clientWidth,scroll:e.scrollWidth}))})''')
-                    (ROOT / '.tmp/programs-group14' / f'{app}-{state}-{width}-seat.json').write_text(json.dumps(seat, indent=2))
+                    (OUT / f'{app}-{state}-{width}-seat.json').write_text(json.dumps(seat, indent=2))
                     if width == 393: assert seat['rect']['x'] >= -1 and seat['rect']['right'] <= width + 1 and not seat['scrolls'], seat
                     assert win.evaluate('''el=>{const body=el.querySelector('.desk-surface-body, .chair-window-body');return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1;}''')
                     assert win.locator('[data-object-id][aria-selected="true"]').count() == (1 if state == 'selected' else 0)

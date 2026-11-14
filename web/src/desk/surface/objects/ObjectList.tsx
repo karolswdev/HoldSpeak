@@ -429,7 +429,8 @@ export function ObjectList({
         if (cell.querySelector("button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) controls.add(cell.dataset.col!);
         if (controls.has(cell.dataset.col!) || cell.querySelector(".kit-dotword, .object-list-dot-word")) facts.add(cell.dataset.col!);
         if (cell.dataset.col === "name" || !cell.textContent?.trim()) return;
-        if (viewport.ids.length && !viewport.ids.includes(cell.closest<HTMLElement>("[data-object-id]")!.dataset.objectId!)) return;
+        // Every row counts, in view or not: a fact column that follows the rows
+        // in view changes its width during a scroll and cuts the pills below.
         next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, intrinsic(cell));
       });
       setRequiredColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
@@ -463,8 +464,11 @@ export function ObjectList({
   const keptColumns = new Set(columns.map(column=>column.key));
   let shown = [...declaredColumns];
   const dropOrder = declaredColumns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || declaredColumns.indexOf(b) - declaredColumns.indexOf(a));
-  const fitRules = dropOrder.map((column) => {
-    const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
+  const fitRules = dropOrder.map((column, index) => {
+    // A leading time that folds under the name always folds in a compact
+    // list (520 px), also when its measured width would fit beside the name.
+    const fits = shown.reduce((sum, entry) => sum + minimum(entry), 2);
+    const threshold = index === 0 && foldIntoName && ["when", "with"].includes(column.key) ? Math.max(fits, 521) : fits;
     shown = shown.filter((entry) => entry !== column);
     const scope = `[data-list-layout="${layoutId}"]`;
     const folded = foldIntoName && ["when", "with"].includes(column.key) ? `${scope} [data-folded-col="${column.key}"] { display: inline; } ${scope} .object-list-row[data-has-when] { height: var(--object-list-two-line-height); min-height: var(--object-list-two-line-height); }` : "";

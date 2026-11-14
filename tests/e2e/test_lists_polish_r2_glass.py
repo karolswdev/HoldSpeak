@@ -58,7 +58,10 @@ def test_list_editors_and_long_names_fit_their_seats(tmp_path: Path, monkeypatch
                 result=title.evaluate("""el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {text:el.innerText,lines:r.height/parseFloat(s.lineHeight),fits:el.scrollWidth<=el.clientWidth+1};}""")
                 check(item,result['fits'] and result['lines']<=2.1 and (result['text'].endswith('…') or ' '.join(result['text'].split())==name),result)
                 full=facts.locator('.gadget-row').filter(has=page.get_by_text("Name",exact=True))
-                check(3,full.count()==1 and name in full.inner_text() if full.count() else False,"Full Name fact missing")
+                # The Name fact holds the whole name while the heading is cut; beside a
+                # whole heading it would say the name twice (the sweep's fence).
+                cut_heading=result['text'].endswith('…')
+                check(3,(full.count()==1 and name in full.inner_text()) if cut_heading else full.count()==0,"Full Name fact missing" if cut_heading else "Name fact repeats a whole heading")
             def verb(name):
                 direct=win.get_by_role('button',name=name,exact=True)
                 if direct.is_visible(): direct.click()
