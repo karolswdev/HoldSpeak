@@ -5,7 +5,7 @@ import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { ListApp, useListApp, InspectorFacts, ActionNotice, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ListApp, useListApp, InspectorFacts, objectSprite, ActionNotice, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { wireDate } from "../../desk/surface/format";
 import { planItemOpen, decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
@@ -146,7 +146,7 @@ export function ProjectsCore(_props: CoreProps) {
       shown && { text: "1 selected" },
       needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
     ]} pane={() =>
-      shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} notice={shown.unread ? <ActionNotice tone="danger">Project facts not read</ActionNotice> : undefined} rows={[
+      shown ? <InspectorFacts object={<img src={objectSprite("project",shown.id,"rest",32)} alt="" width={32} height={32} />} data-feedback-redact="true" name={shown.name} notice={shown.unread ? <ActionNotice tone="danger">Project facts not read</ActionNotice> : undefined} rows={[
         ...(shown.health ? [{ label: "State", value: wordOf(shown.health) }] : []),
         ...(sources?.state === "ok" ? [{ label: "Sources", value: sources.count ? countWords(sources.count, "source") : "No sources" }] : []),
         ...(shown.openItems != null ? [{ label: "Open items", value: shown.openItems ? countWords(shown.openItems, "open item") : "No open items" }] : []),

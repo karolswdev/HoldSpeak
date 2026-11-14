@@ -1,0 +1,10 @@
+// Parked: Room facts now use the declared row object, independent of its name.
+/** Paths use the file object; the facts and heading remain kit pieces. */
+export function RoomFacts({ entry }: { entry: RoomEntry }) {
+  const facts = <InspectorFacts name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />;
+  return nameIsFile(entry.name)
+    ? <PaneInspector label={entry.name} object={<img src={objectSprite("artifact", entry.id, "rest", 32)} alt="" width={32} height={32} />}>
+        <InspectorFacts header={false} name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />
+      </PaneInspector>
+    : facts;
+}

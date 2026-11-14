@@ -1,16 +1,18 @@
 /* The same transcript well serves a saved record and a live pane. */
 .surface-transcript-well {
   container: transcript / inline-size;
-  flex: 1 1 0;
+  flex: none;
   min-height: 0;
   min-width: 0;
-  overflow: auto;
+  overflow: visible;
   padding: 0 16px;
   color: var(--hs-ink);
   background: var(--hs-raised);
 }
+.surface-transcript-well[data-seat] { flex: 1 1 0; overflow: auto; }
 .desk-next .surface-transcript-well .transcript-list {
-  gap: 0;
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 0;
 }
 .desk-next .surface-transcript-well .transcript-list li {
   display: grid;
@@ -25,21 +27,27 @@
   grid-row: 1;
   width: auto;
   text-align: left;
+  font-variant-numeric: tabular-nums;
   font: 400 12px / 20px var(--font-sans);
   color: var(--hs-ink-2);
 }
 .desk-next .surface-transcript-well .transcript-speaker {
   grid-column: 2;
+  min-width: 0; overflow-wrap: anywhere;
   font: 700 12px / 20px var(--font-sans);
   color: var(--hs-steel);
 }
 .desk-next .surface-transcript-well .transcript-list p {
   grid-column: 3;
+  margin: 0; min-width: 0; overflow-wrap: anywhere;
   font: 400 14px / 1.6 var(--font-sans);
 }
+.desk-next .surface-transcript-well .transcript-list li:hover { background: var(--wash-1); }
+.desk-next .surface-transcript-well .transcript-list li[data-moment="true"],
 .desk-next .surface-transcript-well .transcript-list li[data-mark] {
   background: var(--hs-brass-tint);
 }
+.desk-next .surface-transcript-well .transcript-list li[data-moment="true"] time,
 .desk-next .surface-transcript-well .transcript-list li[data-mark] time { color: var(--hs-brass-ink); font-weight: 700; }
 .desk-next .surface-transcript-well[data-working] .transcript-list li:last-child:not([data-mark]):not([data-moment="true"]) {
   background: var(--hs-steel-tint);
@@ -72,7 +80,7 @@
   overflow: hidden;
   gap: 0;
 }
-@container transcript (max-width: 360px) {
+@container transcript (width < 360px) {
   .desk-next .surface-transcript-well .transcript-list li { grid-template-columns: auto minmax(0, 1fr); }
   .desk-next .surface-transcript-well .transcript-list time { grid-row: 1; }
   .desk-next .surface-transcript-well .transcript-speaker { grid-column: 2; grid-row: 1; }

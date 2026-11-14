@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { nameIsFile } from "./fitName";
 
-describe("nameIsFile: the one rule for a name that wears the file object", () => {
+describe("nameIsFile: path/code recognition for fitting and the initials fallback", () => {
   it.each([
     "web/src/pages/cores/PeopleCore.tsx: keep the selected person",
     "~/notes/plan.md",

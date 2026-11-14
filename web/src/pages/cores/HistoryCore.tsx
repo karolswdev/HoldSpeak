@@ -1,3 +1,4 @@
+import { objectSprite } from "../../desk/surface";
 import { useWindowMast } from "../../desk/surface";
 // PaneViews has no public nested-list boundary; keep the record View on its own toolbar.
 import { PaneViewContext } from "../../desk/surface/patterns/PaneViews";
@@ -310,7 +311,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     list={{ columns: meetingColumns, verbs: parkedOn ? deletedVerbs : verbs, defaultVerb: parkedOn ? "restore" : "open", rowProps: row => ({ "data-testid": `meeting-row-${row.id}` }) }}
     onSelect={() => { setSendRequest(0); setParkOutcome(null); setReceipt(null); }} status={[]}
     pane={selected => !selected ? null : parkedOn
-      ? <InspectorFacts name={String(selected.title || "Meeting")} rows={[{ label: "State", value: "Deleted" }]} />
+      ? <InspectorFacts object={<img src={objectSprite("meeting",String(selected.id),"rest",32)} alt="" width={32} height={32} />} name={String(selected.title || "Meeting")} rows={[{ label: "State", value: "Deleted" }]} />
       : <PaneViewContext.Provider value={null}><MeetingPreview key={marked} meeting={selected} onReceipt={setSummaryReceipt} onTaskStatus={setTaskStatus} view={previewView} onViewChange={setPreviewView} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()}
           state={listMeetingState(selected, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === marked ? runRefusal.refusal : null })?.label} /></PaneViewContext.Provider>}
   >

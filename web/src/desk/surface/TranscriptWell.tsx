@@ -3,7 +3,7 @@
 // accent for the owner. Timestamp as secondary when no speaker.
 import { useEffect, useRef, type ReactNode } from "react";
 import { SurfaceState } from "./Surface";
-import { PaneNotice, PreferenceWell } from "./patterns/PreferencePane";
+import { useWholeLines } from "./wholeLines";
 import { Disclosure } from "./patterns";
 import { useReadingEndAnchor } from "./useReadingEndAnchor";
 import "./transcript-well.css";
@@ -45,6 +45,8 @@ export function TranscriptWell({
 }) {
   const reading = useRef<HTMLDivElement>(null);
   useReadingEndAnchor(reading, live !== undefined);
+  const bounded = live !== undefined || seat;
+  useWholeLines(reading, bounded);
   useEffect(() => {
     if (momentSegmentIndex == null || !segments.length) return;
     const frame = window.requestAnimationFrame(() => {
@@ -58,15 +60,22 @@ export function TranscriptWell({
 
   // Inside the fold the fold's label is the head (said once).
   const content = (
-    <>
+    <div ref={reading} className="surface-transcript-well" data-seat={bounded || undefined}
+      role={live !== undefined ? "log" : undefined} aria-label={live !== undefined ? "Transcript" : undefined}
+      aria-live={live !== undefined ? "off" : undefined} data-working={live || undefined}
+      data-feedback-redact="true" data-testid={live !== undefined ? "live-transcript" : undefined}>
       {segments.length ? (
         <ol className="transcript-list" data-feedback-redact="true">
           {segments.map((row, index) => {
-            const speaker = String(row.speaker ?? "").trim();
+            const label = String(row.speaker ?? "").trim();
             const s = Number(row.start_time ?? row.start ?? NaN);
             const timestamp = Number.isFinite(s)
               ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
               : String(row.timestamp ?? "");
+            // Older callers supply a joined speaker/time label. Split that
+            // exact suffix once so both modes draw each fact only once.
+            const suffix = timestamp ? ` · ${timestamp}` : "";
+            const speaker = suffix && label.endsWith(suffix) ? label.slice(0,-suffix.length) : label;
 
             return (
               <li
@@ -76,13 +85,11 @@ export function TranscriptWell({
                 data-mark={mark?.(row, index) || undefined}
                 data-testid={live !== undefined ? "live-transcript-line" : undefined}
               >
-                {live !== undefined ? <time>{timestamp}</time> : null}
+                <time>{timestamp}</time>
                 {speaker ? (
                   <span className="transcript-speaker" data-testid="transcript-speaker">
                     {speaker}
                   </span>
-                ) : live === undefined ? (
-                  <time>{timestamp}</time>
                 ) : null}
                 <p>{String(row.text ?? row.transcript ?? "")}</p>
               </li>
@@ -92,32 +99,10 @@ export function TranscriptWell({
       ) : (
         <SurfaceState empty emptyLabel={emptyLabel} emptyGlyph="¶" />
       )}
-    </>
+      {footer}
+    </div>
   );
-  if (live !== undefined)
-    return (
-      <div
-        ref={reading}
-        className="surface-transcript-well"
-        role="log"
-        aria-label="Transcript"
-        aria-live="off"
-        data-working={live || undefined}
-        data-feedback-redact="true"
-        data-testid="live-transcript"
-      >
-        {content}
-        {footer}
-      </div>
-    );
-  if (seat)
-    return (
-      <PreferenceWell>
-        <PaneNotice>{content}</PaneNotice>
-      </PreferenceWell>
-    );
-  const well = <PaneNotice>{content}</PaneNotice>;
-  if (defaultOpen === undefined && open === undefined) return well;
+  if (bounded || defaultOpen === undefined && open === undefined) return content;
   const words = typeof wordCount === "number" && wordCount > 0
     ? `${wordCount} words`
     : undefined;
@@ -130,7 +115,7 @@ export function TranscriptWell({
       onOpenChange={onOpenChange}
       variant="dense"
     >
-      {well}
+      {content}
     </Disclosure>
   );
 }

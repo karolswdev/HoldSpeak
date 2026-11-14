@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { InspectorFacts, InspectorForm, ListView, PaneInspector, PreferencePane, StringGadget, SurfaceState, type ListVerb } from "../../../desk/surface";
+import { objectSprite, InspectorFacts, InspectorForm, ListView, PaneInspector, PreferencePane, StringGadget, SurfaceState, type ListVerb } from "../../../desk/surface";
 import { effectClassLabel, humanizeWireValue, authorityBasisLabel } from "../../../lib/productLanguage";
 import { apiFetch } from "../../../lib/api";
 import { openDecisionRecord, openPerson, openRef } from "../../../desk/openObject";
@@ -205,7 +205,7 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
       { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} onChange={owner => setDraft({ ...draft, owner })} /> },
       { label: "Due", control: <StringGadget label="Due" value={draft.due} onChange={due => setDraft({ ...draft, due })} /> },
     ]} notice={failure ? <SurfaceState error={failure} /> : null} completion={{ cancel: () => setDraft(null), primary: { label: "Confirm", disabled: !draft.text.trim() || data.busy, run: () => void data.confirmProposal(draft.id, { text: draft.text.trim(), owner: draft.owner.trim(), due: draft.due.trim() }) } }} /></PaneInspector>
-      : selected ? <InspectorFacts name={selected.text} nameMode="wrap" rows={[{ label: "Owner", value: selected.owner }, { label: "Due", value: selected.due }, { label: "State", value: proposal ? "To confirm" : selected.plate === "DEC" ? selected.meta === "Replaced" ? "Replaced" : selected.meta === "Disputed" ? "Disputed" : "Decided" : selected.actionStatus === "done" ? "Done" : "Open" }]} /> : !rows.length ? <p>{data.firstRead ? mode === "decisions" ? "No decisions" : "No commitments" : "Reading outcomes…"}</p> : null}
+      : selected ? <InspectorFacts object={<img src={objectSprite(selected.plate === "DEC" ? "decision" : "action", selected.key, "rest", 32)} alt="" width={32} height={32} />} name={selected.text} nameMode="wrap" rows={[{ label: "Owner", value: selected.owner }, { label: "Due", value: selected.due }, { label: "State", value: proposal ? "To confirm" : selected.plate === "DEC" ? selected.meta === "Replaced" ? "Replaced" : selected.meta === "Disputed" ? "Disputed" : "Decided" : selected.actionStatus === "done" ? "Done" : "Open" }]} /> : !rows.length ? <p>{data.firstRead ? mode === "decisions" ? "No decisions" : "No commitments" : "Reading outcomes…"}</p> : null}
     {personFailed ? <SurfaceState error="Person not read" onRetry={() => setCheck(value => value + 1)} /> : null}
   </PreferencePane>;
 }
@@ -222,7 +222,7 @@ export function MeetingProposals({ data, picked, onPick }: { data: MeetingData; 
       state: (row.policy_snapshot as Record<string, unknown> | null)?.outcome === "refused" ? { label: "Refused", tone: "fail" as const } : row.status !== "proposed" ? { label: String(row.status || "Unknown").replace(/^./, letter => letter.toUpperCase()), tone: "info" as const } : { label: "To decide", tone: "ask" as const } }))}
       columns={[{ key: "name", word: "Proposal", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]}
       verbs={[{ id: "approve", label: "Decide", enabled: () => actionable, run: () => answer("approved") }, { id: "reject", label: "Dismiss", enabled: () => actionable, run: () => answer("rejected") }]} />
-    {selected ? <InspectorFacts name={String(selected.title || selected.preview || "Proposed action")} rows={[
+    {selected ? <InspectorFacts object={<img src={objectSprite("action",String(selected.id),"rest",32)} alt="" width={32} height={32} />} name={String(selected.title || selected.preview || "Proposed action")} rows={[
       { label: "Effect", value: effectClassLabel(String(operation?.effect_class || selected.action || "")) },
       { label: "Destination", value: humanizeWireValue(String(operation?.destination || selected.target || "")) },
       { label: "Basis", value: authorityBasisLabel(String(policy?.authority_basis || "per_action_required")) },
