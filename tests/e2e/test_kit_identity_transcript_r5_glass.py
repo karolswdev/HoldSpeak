@@ -7,7 +7,14 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from . import open_rig, list_name_fit_rig
-from .glass_infra import _api, _boot, _ensure_build, _settle
+from .glass_infra import (
+    _api,
+    _boot,
+    _ensure_build,
+    _settle,
+    _normal_chair,
+    clear_hub_windows_http,
+)
 from .test_lists_wave14_glass import LONG_NAME, IDENTIFIER
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -88,6 +95,14 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
         from .test_agents_os_grammar_glass import _seed_fleet
 
         _seed_fleet(tmp_path / "home", count=50, examples=False)
+        for i in range(50):
+            db.proposals.create_proposal(
+                meeting_id="agents14-long",
+                project_id=None,
+                kind="action",
+                text=LONG_NAME if i % 2 == 0 else f"{IDENTIFIER}_{i}",
+                source_plugin="summary",
+            )
         tape = json.loads(
             (ROOT / "web/src/desk/calls/__fixtures__/calls.face.json").read_text()
         )
@@ -127,6 +142,9 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
 
             def shot(app):
+                win.locator("img").evaluate_all(
+                    "imgs=>Promise.all(imgs.filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&r.bottom>0&&r.top<innerHeight;}).map(e=>e.decode()))"
+                )
                 _settle(page)
                 page.screenshot(
                     path=str(OUT / f"{app}-{900 if width == 1440 else 393}-{phase}.png")
@@ -136,6 +154,37 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                 return list_name_fit_rig.open_window(
                     page, base, wid, width, object_ref=ref, payload=payload
                 )
+
+            def open_record(mid):
+                clear_hub_windows_http(base, TOKEN)
+                _api(
+                    page,
+                    "POST",
+                    "/api/desk/windows/surface-meetings/open",
+                    {"object_ref": f"meeting:{mid}"},
+                    token=TOKEN,
+                )
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                record = page.locator("#surface-meetings")
+                record.get_by_test_id("meeting-toolbar").wait_for()
+                record.get_by_test_id("meeting-summary").wait_for()
+                if width == 1440:
+                    _api(
+                        page,
+                        "POST",
+                        "/api/desk/windows/surface-meetings/set_geometry",
+                        {
+                            "rect": {
+                                "x": "-1/2 + 100",
+                                "y": "-1/2 + 80",
+                                "w": "900px",
+                                "h": "600px",
+                            }
+                        },
+                        token=TOKEN,
+                    )
+                return record
 
             def identity(win, app, expected, inspector=True):
                 if inspector:
@@ -150,6 +199,8 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                         ".object-list-row[aria-selected=true] .object-list-selection-name img"
                     ).first
                 )
+                if node.count():
+                    node.evaluate("e=>e.decode()")
                 value = (
                     node.evaluate(
                         "e=>({src:e.getAttribute('src'),box:e.getBoundingClientRect().toJSON(),loaded:e.complete&&e.naturalWidth>0,head:e.closest('.surface-pane-inspector-head,[role=row]').getBoundingClientRect().toJSON()})"
@@ -196,14 +247,10 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                 "[data-object-id][data-kind=agent]"
             ).first.click()
             identity(win, "needs-inspector", "agent-claude-code")
-            win = open_window("ask")
-            if not win.get_by_role("grid", name="Recent", exact=True).is_visible():
-                win.get_by_role("button", name="Recent", exact=True).click()
-            by_title(win, LONG_NAME).click()
-            identity(win, "ask-inspector", "thread", inspector=False)
-            win = open_window("surface-meetings", "meeting:agents14-long")
+            win = open_record("agents14-long")
 
             def meeting_view(label):
+                _settle(page)
                 button = win.get_by_role("tab", name=label, exact=True)
                 if button.count() and button.is_visible():
                     button.click()
@@ -266,8 +313,11 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
             def transcript(win, app):
                 _settle(page)
                 panel = win.locator(".transcript-list").first
-                value = panel.evaluate(
-                    """list=>{const line=list.querySelector('li'),p=line.querySelector('p'),speaker=line.querySelector('.transcript-speaker'),well=list.closest('.surface-transcript-well,.surface-preference-well'),w=well.getBoundingClientRect(),b=p.getBoundingClientRect(),s=speaker.getBoundingClientRect(),style=getComputedStyle(well);return {well:w.toJSON(),text:b.toJSON(),speaker:s.toJSON(),ownWidth:well.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),clip:style.clipPath,scroll:well.scrollHeight,client:well.clientHeight};}"""
+                well = panel.evaluate_handle(
+                    """list=>{for(let e=list.parentElement;e;e=e.parentElement){if(['auto','scroll'].includes(getComputedStyle(e).overflowY)&&e.scrollHeight>e.clientHeight+1&&e.clientHeight>0)return e;}throw new Error('A long transcript needs a bounded reading seat');}"""
+                )
+                value = well.evaluate(
+                    """well=>{const list=well.querySelector('.transcript-list'),line=list.querySelector('li'),p=line.querySelector('p'),speaker=line.querySelector('.transcript-speaker'),rowStyle=getComputedStyle(line);return {well:well.getBoundingClientRect().toJSON(),text:p.getBoundingClientRect().toJSON(),speaker:speaker.getBoundingClientRect().toJSON(),ownWidth:list.clientWidth,rowWidth:line.clientWidth-parseFloat(rowStyle.paddingLeft)-parseFloat(rowStyle.paddingRight),clip:getComputedStyle(well).clipPath,scroll:well.scrollHeight,client:well.clientHeight};}"""
                 )
                 measures[app] = value
                 narrow = value["ownWidth"] < 360
@@ -276,7 +326,7 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                     not narrow
                     or value["text"]["top"] >= value["speaker"]["bottom"] - 1
                     and value["text"]["left"] <= value["speaker"]["left"] + 1
-                    and value["text"]["width"] >= value["ownWidth"] - 20,
+                    and value["text"]["width"] >= value["rowWidth"] - 1,
                     {"app": app, **value},
                 )
                 check(
@@ -285,9 +335,6 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                     {"app": app, "needs-scroll": value},
                 )
                 shot(app)
-                well = panel.locator(
-                    "xpath=ancestor::*[contains(concat(' ',normalize-space(@class),' '),' surface-transcript-well ') or contains(concat(' ',normalize-space(@class),' '),' surface-preference-well ')][1]"
-                )
 
                 def whole_words():
                     return well.evaluate(
@@ -303,7 +350,7 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                     {"app": app, "cut-after-scroll": whole_words()},
                 )
 
-            win = open_window("surface-meetings", "meeting:identity-transcript")
+            win = open_record("identity-transcript")
             meeting_view("Transcript")
             transcript(win, "meeting-transcript")
             fixtures = ROOT / "web/src/desk/calls/__fixtures__"
@@ -359,6 +406,32 @@ def test_object_identity_and_transcript_seat(tmp_path, monkeypatch, width):
                 ).click()
             win.get_by_test_id("calls-transcript").wait_for()
             transcript(win, "calls-transcript")
+
+            clear_hub_windows_http(base, TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            page.keyboard.press("Control+KeyI")
+            win = page.locator("[id=ask][data-layer=window]")
+            win.get_by_role(
+                "textbox", name="Ask about your work", exact=True
+            ).wait_for()
+            if width == 1440:
+                box = win.bounding_box()
+                grip = win.locator(".desk-window-grip").bounding_box()
+                x, y = grip["x"] + grip["width"] / 2, grip["y"] + grip["height"] / 2
+                page.mouse.move(x, y)
+                page.mouse.down()
+                page.mouse.move(
+                    x + 900 - box["width"], y + 600 - box["height"], steps=8
+                )
+                page.mouse.up()
+                _settle(page)
+                size = win.bounding_box()
+                assert abs(size["width"] - 900) < 1 and abs(size["height"] - 600) < 1
+            if not win.get_by_role("grid", name="Recent", exact=True).is_visible():
+                win.get_by_role("button", name="Recent", exact=True).click()
+            by_title(win, LONG_NAME).click()
+            identity(win, "ask-inspector", "thread", inspector=False)
             browser.close()
     finally:
         (OUT.parent / f"r5-measures-{width}-{phase}.json").write_text(

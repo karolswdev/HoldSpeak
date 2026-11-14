@@ -272,7 +272,7 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
 
 export interface InspectorFact { label: string; value: ReactNode; key?: string; paths?: boolean }
 /** A name without a declared object gets initials; non-person text gets a file. */
-function InitialsObject({name}: {name: string}) {
+function initialsObject(name: string) {
   return nameIsFile(name) ? <img src={objectSprite("artifact", name, "rest", 32)} alt="" draggable={false} />
     : name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join("");
 }
@@ -292,7 +292,7 @@ export function InspectorFacts({ object, name, nameTestId, rows, testId, notice,
     watch.observe(head, { childList: true, characterData: true, subtree: true });
     return () => watch.disconnect();
   }, [name]);
-  if (header && heading !== name) return <PaneInspector object={object === undefined ? <InitialsObject name={name} /> : object} nameMode={nameMode} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
+  if (header && heading !== name) return <PaneInspector object={object === undefined ? initialsObject(name) : object} nameMode={nameMode} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
   return <div ref={factsRef} className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}>{figures ? <InspectorFigures figures={figures} label={name} /> : null}<InspectorForm notice={notice}
     rows={rows.filter(row => hasWords(row.value) && (factText(row.value).trim() !== name.trim() || row.label === "Name" && headingCut)).map(row => ({ ...row, control: factValue(row.value, row.paths) }))} /></div>;
 }

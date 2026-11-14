@@ -64,7 +64,7 @@ import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
 import { Token } from "../surface/Token";
-import { Toolbar, ListPane, ListView, PreferencePane, PaneGroup, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
+import { objectSprite, Toolbar, ListPane, ListView, PreferencePane, PaneGroup, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
 import { plainReason } from "../surface/plainFailure";
 
@@ -1213,7 +1213,7 @@ export function AskPanel() {
         <ShowMe app="ask:desk" />
         <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
           list={<ListView label="Recent" ordered wholeRows empty={railShown ? "No recent asks" : undefined}
-            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title,
+            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: objectSprite("thread", row.id, "rest", 20),
               detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
               leadingLamp: { state: row.state === "writing" ? "working" : row.state === "not_answered" ? "failed" : "done", label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }))}
             columns={[{ key: "name", word: "Recent" }]} selectedId={selectedRecent}

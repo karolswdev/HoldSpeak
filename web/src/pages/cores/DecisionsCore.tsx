@@ -351,7 +351,8 @@ function DecisionPreview({ row }: { row: Row }) {
     ...(record?.review_date ? [{ label: "Review", value: dayWords(record.review_date) }] : []),
     ...(record?.committed_to || row.committed_to ? [{ label: "Committed to", value: record?.committed_to || row.committed_to }] : []),
   ];
-  return <InspectorFacts object={<img src={objectSprite("decision",row.id,"rest",32)} alt="" width={32} height={32} />} name={row.text} rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} />;
+  const object = <img src={objectSprite("decision",row.id,"rest",32)} alt="" width={32} height={32} />;
+  return <InspectorFacts object={object} name={row.text} rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} />;
 }
 
 /** A decision record: one declared action set and bounded reading views. */
