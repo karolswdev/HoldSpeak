@@ -436,7 +436,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 else:
                                     section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
                                 expect(section.get_by_role("grid",name="Engines on this desk",exact=True)).to_be_visible()
-                                shot("engines-library-returned")
+                                shot("engines-installed-returned")
                                 list_verb("Model library")
                             section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
                             if only:
