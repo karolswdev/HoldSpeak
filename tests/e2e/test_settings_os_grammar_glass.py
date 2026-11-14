@@ -170,19 +170,17 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         if pane == "engines":
                             metrics = root / ".tmp/evidence-shots/send-engines-r3-metrics"
                             metrics.mkdir(parents=True, exist_ok=True)
-                            geometry = section.get_by_role("grid").evaluate_all("""grids => grids.map(grid => {
-                                const well=grid.querySelector('.object-list-rows'), box=well.getBoundingClientRect(), b={top:box.top+well.clientTop,bottom:box.top+well.clientTop+well.clientHeight,height:well.clientHeight};
+                            geometry = section.get_by_role("grid").evaluate_all(r"""grids => grids.map(grid => {
+                                const well=grid.querySelector('.object-list-rows'), box=well.getBoundingClientRect();
+                                const inset=getComputedStyle(well).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(/\s+/).map(parseFloat) || [];
+                                const b={top:box.top+well.clientTop+(inset[0]||0),bottom:box.top+well.clientTop+well.clientHeight-(inset[2]??inset[0]??0)};
                                 const rows=[...well.querySelectorAll('[data-object-id]')].map(row=>{const r=row.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height,shown:Math.max(0,Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top))};});
-                                return {height:b.height,whole:rows.filter(r=>r.shown>=r.height-.5).length,partial:rows.filter(r=>r.shown>.5 && r.shown<r.height-.5),columns:[...grid.querySelectorAll('[role=columnheader]')].map(c=>({column:c.dataset.col,width:c.getBoundingClientRect().width}))};
+                                return {label:grid.getAttribute('aria-label'),height:b.bottom-b.top,floor:Math.min(grid.closest('[data-testid="settings-engines-library"]')?.querySelector('.surface-inspector-facts') ? 4 : 6,rows.length)*(rows[0]?.height || 0),whole:rows.filter(r=>r.shown>=r.height-.5).length,partial:rows.filter(r=>r.shown>.5 && r.shown<r.height-.5),columns:[...grid.querySelectorAll('[role=columnheader]')].map(c=>({column:c.dataset.col,width:c.getBoundingClientRect().width}))};
                             })""")
                             (metrics / f"{state}-{width}-{os.environ.get('SEND_GRAMMAR_PHASE','after')}.json").write_text(json.dumps(geometry,indent=2))
                         if os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after":
                             if state in {"engines-library-engines", "engines-library-inspect"}:
-                                fit = section.get_by_role("grid", name="Model library", exact=True).evaluate("""grid => {
-                                    const well=grid.querySelector('.object-list-rows'), rows=[...well.querySelectorAll('[data-object-id]')];
-                                    const box=well.getBoundingClientRect(), b={top:box.top+well.clientTop,bottom:box.top+well.clientTop+well.clientHeight};
-                                    return {height:well.clientHeight, floor:Math.min(grid.closest('[data-testid="settings-engines-library"]')?.querySelector('.surface-inspector-facts') ? 4 : 6,rows.length)*(rows[0]?.getBoundingClientRect().height || 0),partial:rows.filter(row=>{const r=row.getBoundingClientRect();const shown=Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top);return shown>.5 && shown<r.height-.5;}).map(row=>row.innerText)};
-                                }""")
+                                fit = next(grid for grid in geometry if grid["label"] == "Model library")
                                 if width == 1440:
                                     assert fit["height"] >= fit["floor"] - 1, fit
                                 assert not fit["partial"], fit
@@ -190,7 +188,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 expect(section.get_by_role("checkbox", name="My server", exact=True).locator("..")).to_be_in_viewport(ratio=1)
                                 expect(section.get_by_test_id("runson-kind-find-lan")).to_be_in_viewport(ratio=1)
                             if state == "engines-library-speech":
-                                expect(section.get_by_role("grid", name="Phone speech", exact=True).locator("[data-object-id]").first).to_be_in_viewport(ratio=1)
+                                for model in section.get_by_role("grid", name="Phone speech", exact=True).locator("[data-object-id]").all():
+                                    expect(model).to_be_in_viewport(ratio=1)
                             if state == "engines-library-search":
                                 expect(section.get_by_text("State", exact=True).last).to_be_in_viewport(ratio=1)
                                 expect(section.get_by_text("Off", exact=True).last).to_be_in_viewport(ratio=1)

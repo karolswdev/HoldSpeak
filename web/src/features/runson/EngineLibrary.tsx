@@ -332,7 +332,7 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
       {tab === "engines" ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
       : tab === "speech" ? <>
         <GadgetRow label="Speech to text"><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></GadgetRow>
-        <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" wholeRows ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
+        <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
           cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
         }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "licence", word: "Licence", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
           selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}</GadgetRow>
