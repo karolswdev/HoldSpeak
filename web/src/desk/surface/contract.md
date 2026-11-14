@@ -2324,6 +2324,8 @@ seat after padding, glyphs, lamps and meters.
 
 `ListView wholeRows` uses the shared row-edge fitter as well as its list height.
 The reading well keeps its scroll range and paints whole rows at rest.
+The engine and speech rosters share ListPane; speech setup stays in its form
+row above the roster, so a form row cannot cap the model list.
 
 `ReadingDocument` and `Material` accept `dialect="slack"`. The same Lezer AST
 and renderer handle Slack's single-marker bold, italic and strike delimiters;

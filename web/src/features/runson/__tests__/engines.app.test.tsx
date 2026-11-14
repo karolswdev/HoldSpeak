@@ -6,6 +6,7 @@ import { apiFetch, ApiError } from "../../../lib/api";
 import { recordedGet, type Gets } from "../../../test/recordedHub";
 import recorded from "./fixtures/engines.recorded.json";
 import chainRecorded from "./fixtures/settings-chain.recorded.json";
+import speechRecorded from "./fixtures/speech.recorded.json";
 import { useRunsOn } from "../useRunsOn";
 import { WHAT_ROWS } from "../whatRows";
 import { EnginesSection } from "../../../pages/cores/settings/Engines";
@@ -284,4 +285,22 @@ it("returns from the library with its Back verb when no engine is selected", asy
   const back=within(screen.getByTestId("settings-engines-library")).getByRole("button",{name:"Back"});
   expect(back).toBeEnabled(); fireEvent.click(back);
   expect(screen.getByRole("grid",{name:"Engines on this desk"})).toBeVisible();
+});
+
+
+it("gives the speech roster its list well and returns with Back", async () => {
+  chainHub();
+  const get=vi.mocked(apiFetch).getMockImplementation()!;
+  vi.mocked(apiFetch).mockImplementation(async (path,init) => path === "/api/concierge/speech" ? structuredClone(speechRecorded.start["/api/concierge/speech"]) as never : get(path,init));
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  fireEvent.change(screen.getByRole("combobox", {name:"Library"}), {target:{value:"speech"}});
+  const roster=await screen.findByRole("grid", {name:"Phone speech"});
+  for (const model of speechRecorded.start["/api/concierge/speech"].rows) {
+    expect(await within(roster).findByText(model.label,{exact:true})).toBeVisible();
+  }
+  expect(roster.closest(".surface-inspector-form")).toBeNull();
+  fireEvent.click(within(roster.closest<HTMLElement>(".surface-list-pane")!).getByRole("button", {name:"Back"}));
+  expect(screen.getByRole("grid", {name:"Engines on this desk"})).toBeVisible();
 });

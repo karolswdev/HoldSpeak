@@ -289,8 +289,9 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
   ];
   const categories = [{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}];
   const changeCategory = (next: string) => { inspect(false); setTab(next); };
+  const libraryToolbar = {scopes:[{id:"library",kind:"cycle" as const,label:"Library",value:tab,options:categories,onChange:changeCategory}]};
   const category = <CycleGadget label="Library" value={tab} onChange={changeCategory} options={categories} />;
-  const list = <ListView label="Model library" wholeRows toolbar={{scopes:[{id:"library",kind:"cycle",label:"Library",value:tab,options:categories,onChange:changeCategory}]}} ordered rows={engines.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
+  const list = <ListView label="Model library" wholeRows toolbar={ctrl.add.open ? undefined : libraryToolbar} ordered rows={engines.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
     cells: { where: engine.kind === "agent" || engine.kind === "local" || engine.kind === "preset" ? "This Mac" : engine.host },
     state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
   }))} columns={[{ key: "name", word: "Engine", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
@@ -305,6 +306,11 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
   }, [onClose]);
   useEffect(() => { onBackChange?.(close); return () => onBackChange?.(null); }, [close, onBackChange]);
   const normal = !ctrl.add.open && tab === "engines";
+  const speechOpen = !ctrl.add.open && tab === "speech";
+  const speechList = <ListView label="Phone speech" wholeRows ordered toolbar={libraryToolbar} empty={models.reading ? "Reading speech models…" : "Speech models not read"} rows={(models.rows ?? []).map((model) => ({ id: model.id, kind: "model", name: model.label,
+          cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
+        }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "licence", word: "Licence", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
+          selectedId={speechPicked} onSelect={pickSpeech} verbs={[verbs[0], { id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} />;
   const checkFailure = ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null;
   const details = inspecting && selected ? <InspectorForm key={selected.key} facts={{
     name: "Engine details", rows: [{ label: "Name", value: selected.name }], "data-feedback-redact": true,
@@ -316,9 +322,10 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
       {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</GadgetRow> : null}
     {ctrl.failedDownloads[selected.key] ? <GadgetRow label="Download"><span role="alert">{ctrl.failedDownloads[selected.key]}</span></GadgetRow> : null}
   </InspectorForm> : null;
-  return <PreferencePane role={normal ? "region" : undefined} label="Model library" testId="settings-engines-library">
-    {normal ? <>
-      <ListPane label="Engine inspector" list={<>{checkFailure}{list}</>}>{details}</ListPane>
+  return <PreferencePane role={normal || speechOpen ? "region" : undefined} label="Model library" testId="settings-engines-library">
+    {normal || speechOpen ? <>
+      {speechOpen ? <InspectorForm><GadgetRow label="Speech to text"><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></GadgetRow></InspectorForm> : null}
+      <ListPane label={speechOpen ? "Phone speech" : "Engine inspector"} list={<>{checkFailure}{speechOpen ? speechList : list}</>}>{normal ? details : null}</ListPane>
       <InspectorActions completion={{done: close}} />
     </> : <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : "Model library"} onClose={close}>
     <InspectorForm completion={checking ? {
@@ -329,14 +336,8 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
       {checkFailure}
     </>}>
       {!ctrl.add.open ? <GadgetRow label="Library">{category}</GadgetRow> : null}
-      {tab === "engines" ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
-      : tab === "speech" ? <>
-        <GadgetRow label="Speech to text"><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></GadgetRow>
-        <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
-          cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
-        }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "licence", word: "Licence", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
-          selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}</GadgetRow>
-      </> : <GadgetRow label="Search"><MeaningSearchRow form /></GadgetRow>}
+      {ctrl.add.open ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
+      : <GadgetRow label="Search"><MeaningSearchRow form /></GadgetRow>}
     </InspectorForm>
     </PaneInspector>}
   </PreferencePane>;
