@@ -1,11 +1,28 @@
 /** Ask's local composition of the shared selection, question and reading pieces.
  * The older composer exports in askFace still serve Memory and the Room. */
-import { useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
-import { objectSprite, ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, Disclosure, faceTimeWords } from "../surface";
+import { VerbToolbar, listVerbEntries, type ListVerb, type ObjectListRow, objectSprite, ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, Disclosure, faceTimeWords } from "../surface";
+import { useWindowId } from "./window/windowIdContext";
+import { clearListMenu, publishListMenu, useListMenu } from "./window/listMenu";
 import { spriteUrl } from "../sprites";
 import { agentWordsPlain } from "./AgentWords";
 import { aboutMatches, type AboutCandidate } from "./about/AboutPicker";
+
+/** The pane owns its verbs even when Recent has no rows. A focused inner
+ * list keeps its own app menu until it leaves, as in the object windows. */
+export function AskActions({ verbs, selection }: { verbs: readonly ListVerb[]; selection: ObjectListRow | null }) {
+  const windowId = useWindowId(), owner = useId(), menu = useListMenu(windowId);
+  const bound = useMemo(() => verbs.map(verb => ({ ...verb,
+    enabled: () => verb.enabled?.(selection) ?? Boolean(selection), run: () => verb.run(selection),
+  })), [verbs, selection]);
+  const entries = useMemo(() => listVerbEntries(bound, null), [bound]);
+  const published = useRef<typeof entries | null>(null);
+  const publish = () => { if (windowId) { published.current = entries; publishListMenu(windowId, owner, entries); } };
+  useEffect(() => { if ((!menu.length || menu === published.current) && menu !== entries) publish(); }, [windowId, owner, entries, menu]);
+  useEffect(() => () => { if (windowId) clearListMenu(windowId, owner); }, [windowId, owner]);
+  return <div onFocusCapture={publish}><VerbToolbar label="Recent" verbs={bound} testId="ask-actions" /></div>;
+}
 
 export const ASK_SPRITE = spriteUrl("thread", "ask");
 export interface AskReferenceRowData {

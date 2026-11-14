@@ -132,8 +132,9 @@ describe("Betterment Q8: Add to note, in Ask opened from a note", () => {
     window.addEventListener(NOTE_GREW_EVENT, onGrew);
     try {
       await askFromNote();
-      // The answer verb is declared in Ask's selection toolbar.
-      fireEvent.click(screen.getByRole("button", { name: "Add to note" }));
+      // The same declared answer verb is under Actions.
+      fireEvent.click(within(screen.getByTestId("ask-actions")).getByRole("button", { name: "Actions ▾" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Add to note" }));
 
       const added = await screen.findByTestId("ask-added");
       expect(added).toHaveTextContent(`Added to ${NOTE.title}`);
@@ -142,14 +143,18 @@ describe("Betterment Q8: Add to note, in Ask opened from a note", () => {
       // The write is the recorded one: the note's body, a blank line, the answer.
       expect(patches()[0].body).toEqual(NOTE.add.request);
       expect(grew).toEqual([NOTE.note_id]);
-      expect(screen.queryByRole("button", { name: "Add to note" })).toBeNull();
+      fireEvent.click(within(screen.getByTestId("ask-actions")).getByRole("button", { name: "Actions ▾" }));
+      expect(screen.queryByRole("menuitem", { name: "Add to note" })).toBeNull();
+      expect(screen.getByRole("menuitem", { name: "Undo add to note" })).toBeInTheDocument();
+      fireEvent.click(within(screen.getByTestId("ask-actions")).getByRole("button", { name: "Actions ▾" }));
 
       fireEvent.click(within(added).getByRole("button", { name: "Undo" }));
       await waitFor(() => expect(screen.queryByTestId("ask-added")).toBeNull());
       expect(patches()).toHaveLength(2);
       expect(patches()[1].body).toEqual(NOTE.undo.request);
       expect(grew).toEqual([NOTE.note_id, NOTE.note_id]);
-      expect(screen.getByRole("button", { name: "Add to note" })).toBeInTheDocument();
+      fireEvent.click(within(screen.getByTestId("ask-actions")).getByRole("button", { name: "Actions ▾" }));
+      expect(screen.getByRole("menuitem", { name: "Add to note" })).toBeInTheDocument();
     } finally {
       window.removeEventListener(NOTE_GREW_EVENT, onGrew);
     }
