@@ -3,15 +3,16 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { openSurfaceOr } from "../../desk/shell";
 import { useCompactViewport } from "../../desk/useCompactViewport";
 import { Button } from "../../components/signal/Signal";
-import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, ListPane, ListView, PreferencePane, InspectorActions, SegmentedTabs, type ListVerb } from "../../desk/surface";
+import { CheckGadget, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, GadgetGroup, CycleGadget, ListPane, ListView, PreferencePane, InspectorActions, SegmentedTabs, type ListVerb } from "../../desk/surface";
 import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { Token } from "../../desk/surface/Token";
-import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
+import { endpointHostPort } from "../concierge/endpointDraft";
 import { MeaningSearchRow } from "../concierge/MeaningSearchRow";
 import { speechStateWord, licenceWords, useSpeechModels } from "./PhoneSpeech";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
-import { agentChip, costTokens, enginePlace, hostLabel, checkedWords, limitNoticeWords, type BoardEngine } from "./model";
+import { costTokens, enginePlace, hostLabel, limitNoticeWords, type BoardEngine } from "./model";
 import { stateWord } from "./stateWord";
+import { stateWords } from "../../desk/surface/words";
 import type { RunsOnController, AddKind } from "./useRunsOn";
 import type { ServicePreset, ServiceTile } from "./api";
 
@@ -20,20 +21,17 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
   const host = endpointHostPort(a.url);
   return (
     <div className="surface-inspector-body" data-feedback-redact="true" data-testid="concierge-add-engine-row">
-      {service ? null : (
-        <StringGadget
-          label="Server address"
-          caption
-          value={a.url}
-          onChange={a.setUrl}
-          placeholder="http://<host>:<port>/v1"
-          autoFocus
-        />
-      )}
-      <span className="surface-pane-group" data-testid="concierge-add-key">
+      <GadgetGroup>
+      {service ? null : <GadgetRow label="Server address" controlWidth="full"><PaneActions>
+        <StringGadget label="Server address" value={a.url} onChange={a.setUrl}
+          placeholder="http://<host>:<port>/v1" autoFocus />
+        <Button dense variant="secondary" data-testid="runson-kind-find-lan"
+          onClick={() => void ctrl.findOnLan()} disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"}
+          loading={ctrl.lanDiscovery === "CHECKING"}>Find on LAN</Button>
+      </PaneActions></GadgetRow>}
+      <GadgetRow label={service ? `${service.name} key` : "Key"} controlWidth="full"><span className="surface-pane-group" data-testid="concierge-add-key">
         <StringGadget
           label={service ? `${service.name} key` : "Key"}
-          caption
           type="password"
           mic={false}
           value={a.key}
@@ -44,12 +42,13 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
             if (event.key === "Enter" && a.url.trim()) void a.check();
           }}
         />
-      </span>
+      </span></GadgetRow>
       {service ? null : (
-        <span data-testid="concierge-add-my-server">
+        <GadgetRow label="" controlWidth="full"><span data-testid="concierge-add-my-server">
           <CheckGadget variant="token" label="My server" checked={a.mine} onChange={a.setMine} />
-        </span>
+        </span></GadgetRow>
       )}
+      </GadgetGroup>
       {a.state === "READY" ? (
         <>
           <span className="surface-pane-actions">
@@ -212,7 +211,7 @@ function AddByKind({
       <SegmentedTabs label="Kind of engine" collapse="popup" placeholder="Choose a kind" value={a.kind ?? ""} tabs={KINDS.map(tile=>({id:tile.kind,label:tile.name}))} onChange={kind=>a.choose(kind as AddKind)}>
 
       {a.kind === "agent" ? <>
-        <ListPane label="Agent engines" minimumRows={1} list={<ListView label="Agent engines" wholeRows rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: agent.vendor }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
+        <ListPane label="Agent engines" minimumRows={1} list={<ListView label="Agent engines" wholeRows rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: stateWords(agent.vendor) }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
           columns={[{ key: "name", word: "Agent", priority: 100 }, { key: "vendor", word: "Prompts go to", priority: 20, track: "140px" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
           selectedId={picked} onSelect={pick} verbs={[{ id: "add", label: "Add", enabled: (row) => !ctrl.busy && Boolean(foundAgents.find((engine) => engine.agentPreset === row?.id)) && !agents.find((agent) => agent.preset === row?.id)?.added,
             run: (row) => { const found = foundAgents.find((engine) => engine.agentPreset === row?.id); if (found) void ctrl.useFound(found.key); } }]} />} />
@@ -226,23 +225,7 @@ function AddByKind({
         </>
       ) : null}
 
-      {a.kind === "lan" ? (
-        <>
-          <span className="surface-pane-actions">
-            <Button
-              dense
-              variant="secondary"
-              data-testid="runson-kind-find-lan"
-              onClick={() => void ctrl.findOnLan()}
-              disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"}
-              loading={ctrl.lanDiscovery === "CHECKING"}
-            >
-              Find on LAN
-            </Button>
-          </span>
-          <AddEngineRow ctrl={ctrl} />
-        </>
-      ) : null}
+      {a.kind === "lan" ? <AddEngineRow ctrl={ctrl} /> : null}
 
       {a.kind === "local" ? <div className="surface-inspector-body" data-testid="runson-local-models"><ListPane label="Local models" minimumRows={1} list={local} /></div> : null}
 
@@ -315,7 +298,7 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
   const details = inspecting && selected ? <InspectorForm key={selected.key} facts={{
     name: "Engine details", rows: [{ label: "Name", value: selected.name }], "data-feedback-redact": true,
   }}>
-    <GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
+    <GadgetRow label="Prompts go to">{selected.baseUrl || (selected.vendor ? stateWords(selected.vendor) : "") || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
     {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
     {selected.limitNotice ? <GadgetRow label="Usage">{limitNoticeWords(selected.limitNotice)}</GadgetRow> : null}
     {selected.agentPreset && !selected.found ? <GadgetRow label="Spend limit"><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
@@ -330,9 +313,9 @@ export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnCon
     </> : <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : "Model library"} onClose={close}>
     <InspectorForm completion={checking ? {
       cancel: ctrl.add.close,
+      leading: checkHost ? <span data-testid="concierge-add-egress">Prompts go to {ctrl.detection?.services?.find(service => service.id === ctrl.add.service)?.name || checkHost}</span> : undefined,
       primary: { label: "Check", testId: "concierge-add-check", busy: ctrl.add.state === "CHECKING", disabled: !ctrl.add.url.trim(), run: () => void ctrl.add.check() },
     } : undefined} notice={<>
-      {checkHost ? <PaneActions><span data-testid="concierge-add-egress"><EgressChip label={checkHost} scope={isLanAddress(ctrl.add.url) ? "local" : "cloud"} /></span></PaneActions> : null}
       {checkFailure}
     </>}>
       {!ctrl.add.open ? <GadgetRow label="Library">{category}</GadgetRow> : null}

@@ -153,6 +153,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         loading_rows = section.locator("[data-testid^=settings-job-]").evaluate_all("els => els.map(el => el.getBoundingClientRect().height)")
                         fit = loading.evaluate("el => ({control:el.getBoundingClientRect().height,row:el.closest('[role=row]').getBoundingClientRect().height})")
                         page.screenshot(path=str(lane_shots / f"9-engines-reading-{900 if width == 1440 else 393}.png"))
+                        polish = root / ".tmp/evidence-shots/send-engines-r4-14"
+                        polish.mkdir(parents=True, exist_ok=True)
+                        page.screenshot(path=str(polish / f"engines-reading-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
                         assert fit["control"] <= fit["row"], fit
                         holding_engines[0] = False
                         for route, key in held_editors:
@@ -165,10 +168,23 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         if state.startswith("meetings-"):
                             state = f"settings-{state}"
                         _settle(page)
-                        if pane == "engines" or pane == "calls" and state in {"calls-calls", "calls-passphrase"}:
-                            polish = root / ".tmp/evidence-shots/send-engines14r3"
+                        if pane in ("engines", "calls"):
+                            polish = root / ".tmp/evidence-shots/send-engines-r4-14"
                             polish.mkdir(parents=True, exist_ok=True)
                             page.screenshot(path=str(polish / f"{state}-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
+                        if state == "engines-library-inspect":
+                            row = section.get_by_text("Prompts go to", exact=True).locator("..")
+                            fit = row.evaluate("""row => {
+                                const box=row.getBoundingClientRect();let top=0,bottom=innerHeight;
+                                for(let el=row.parentElement;el;el=el.parentElement){
+                                    if(/auto|scroll|hidden|clip/.test(getComputedStyle(el).overflowY)){
+                                        const b=el.getBoundingClientRect();top=Math.max(top,b.top);bottom=Math.min(bottom,b.bottom);
+                                    }
+                                }
+                                return {top:box.top,bottom:box.bottom,clipTop:top,clipBottom:bottom};
+                            }""")
+                            if os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after" and (fit["top"] < fit["clipTop"] - 1 or fit["bottom"] > fit["clipBottom"] + 1):
+                                grammar_faults.append(f"{state}/{width}: prompt destination cut: {fit}")
                         _bounded(window)
                         if pane == "engines":
                             metrics = root / ".tmp/evidence-shots/send-engines-r3-metrics"
@@ -187,7 +203,21 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 if width == 1440:
                                     assert fit["height"] >= fit["floor"] - 1, fit
                                 assert not fit["partial"], fit
+                            if state == "engines-add-service-form":
+                                expect(section.locator(".gadget-chip-egress")).to_have_count(0)
+                                expect(section.get_by_test_id("concierge-add-egress")).to_have_text("Prompts go to OpenAI")
+                            if state == "engines-add-agent":
+                                agents = section.get_by_role("grid", name="Agent engines", exact=True)
+                                expect(agents.get_by_text("Anthropic", exact=True)).to_be_visible()
+                                expect(agents.get_by_text("OpenAI", exact=True)).to_be_visible()
                             if state == "engines-add-lan":
+                                address = section.get_by_role("textbox", name="Server address", exact=True)
+                                find = section.get_by_test_id("runson-kind-find-lan")
+                                assert find.bounding_box()["x"] >= address.bounding_box()["x"] - 1
+                                field_box, verb_box = address.bounding_box(), find.bounding_box()
+                                key_label = section.get_by_text("Key", exact=True).bounding_box()
+                                assert abs(field_box["y"] - verb_box["y"]) <= 2, (field_box, verb_box)
+                                assert field_box["y"] + field_box["height"] < key_label["y"], (field_box, key_label)
                                 expect(section.get_by_role("checkbox", name="My server", exact=True).locator("..")).to_be_in_viewport(ratio=1)
                                 expect(section.get_by_test_id("runson-kind-find-lan")).to_be_in_viewport(ratio=1)
                             if state == "engines-library-speech":
@@ -402,7 +432,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 shot("engines-library-inspect")
                                 library.get_by_role("button", name="Done", exact=True).click()
                                 library.get_by_role("button", name="Add an engine", exact=True).click()
-                                if width == 393 or os.environ.get("SEND_GRAMMAR_PHASE") == "before":
+                                if width == 393:
                                     expect(library.get_by_role("combobox", name="Kind of engine", exact=True)).to_be_in_viewport(ratio=1)
                                 shot("engines-add")
                                 for kind in ("agent", "service", "lan", "local", "mesh"):
@@ -412,6 +442,11 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                         library.locator(f'[role="tab"][data-tab="{kind}"]').click()
                                     shot(f"engines-add-{kind}")
                                     if kind == "service":
+                                        service_choice = library.get_by_role("combobox", name="Service", exact=True)
+                                        service_choice.click()
+                                        expect(page.get_by_role("listbox", name="Service", exact=True)).to_be_visible()
+                                        shot("engines-add-service-chooser")
+                                        service_choice.press("Escape")
                                         choose_toolbar(library, "Service", "openai")
                                         shot("engines-add-service-form")
                                     if kind == "local":

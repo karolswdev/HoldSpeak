@@ -25,7 +25,6 @@ import type { CallStep, CallStepId, CallsSettings, CallsStatus } from "./types";
 import { LineSettingsPane } from "./LineSettings";
 import { PhoneSettingsPane } from "./PhoneSettings";
 import {
-  StateChip,
   PreferencePane,
   PreferenceWell,
   SegmentedTabs,
@@ -336,12 +335,11 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
               <GadgetRow label="Calls" controlWidth="standard">
                 <CheckGadget
                   label="Calls on"
-                  variant="default"
+                  variant="state"
                   checked={Boolean(settings?.enabled)}
                   disabled={absent || busy === "enabled"}
                   onChange={(next) => void write("enabled", next)}
                 />
-                <StateChip state={settings?.enabled ? "success" : "idle"} label={settings?.enabled ? "On" : "Off"} />
               </GadgetRow>
               <GadgetRow label="Engine" controlWidth="standard">
                 <div className="surface-pane-group" data-testid="calls-engine">
