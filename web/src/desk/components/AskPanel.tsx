@@ -1174,7 +1174,7 @@ export function AskPanel() {
     ...(running ? [{ id: "stop", label: "Stop", enabled: () => true, run: stop }] : []),
     { id: "new", label: "New ask", key: "Mod+n", enabled: () => true, run: () => { startNew(); setAnswerKey(""); setPickedRecent(null); setRailSheet(false); promptRef.current?.focus(); } },
     { id: "about", label: "About", title: about.length ? about.map(row => row.title).join(", ") : "My whole desk", testId: "ask-context", enabled: () => true, run: () => { scopeAnchor.current = document.querySelector('[data-testid="ask-actions"]'); setScopeOpen(true); } },
-    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", toolbar: false, enabled: () => true, run: returnToSource }] : []),
+    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", enabled: () => true, run: returnToSource }] : []),
     ...(activeTurn ? [{ id: "again", toolbar: !running, label: "Ask again", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void askQuestion(activeTurn.question); } },
     { id: "save", toolbar: !running, label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
       run: () => { if (activeTurn) { if (saved[activeTurn.key]) openRef(saved[activeTurn.key], { projectReturn: activeProjectReturn }); else void saveAsNote(activeTurn); } } },
@@ -1193,7 +1193,8 @@ export function AskPanel() {
       enabled: () => true, run: engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine },
     ...(turns.length > 1 ? [{ id: "answer", toolbar: false, label: `Answer: ${turns.findIndex(turn => turn.key === activeTurn?.key) + 1}`, enabled: () => true, run: () => {},
       items: turns.map((turn, index) => ({ id: turn.key, label: `${index + 1}. ${turn.question}`, enabled: () => true, run: () => setAnswerKey(turn.key) })) }] : []),
-    { id: "recent", toolbar: false, label: "Recent", enabled: () => true, run: toggleRail },
+    // At 393 the rail is a sheet: Recent is the only way to an earlier ask, so it stays in the row.
+    { id: "recent", toolbar: compact && railRows.length > 0, label: "Recent", enabled: () => true, run: toggleRail },
   ];
   const selectedRecent = pickedRecent ?? (adoptedRef.current ? `pending:${adoptedRef.current}` : threadId);
   const recentRows = railRows.map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: objectSprite("thread", row.id, "rest", 20),

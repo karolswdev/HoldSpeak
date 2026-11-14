@@ -277,7 +277,7 @@ def _titlebar_fails(m: dict[str, Any], width: int) -> dict[str, Any]:
     if m["gadgets_not_library"] or m["gadgets_not_owned"]:
         fails["T3 gadgets are library Buttons and own their centres"] = {
             "not_library": m["gadgets_not_library"], "not_owned": m["gadgets_not_owned"]}
-    want_h = 44 if width <= 720 else 58  # D Mast, owner choice 2026-11-12
+    want_h = 44 if width <= 720 else 40  # the Mast is 40 px, owner 2026-11-14 (was 58)
     bad_h = [w for w in m["windows"] if abs(w["bar_h"] - want_h) > 0.5]
     if m["small_text"] or bad_h or m["gadgets_small"]:
         fails["T4 12 px floor, bar height, 44 px gadgets at 393"] = {
@@ -1043,7 +1043,7 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                     assert facts["border"] == ("0px" if facts["sheet"] else "1px"), facts
                     assert float(facts["radius"].replace('px','')) >= 6, facts
                     assert "linear-gradient" in facts["headImage"], facts
-                    assert facts["headHeight"] == (44 if width == 393 else 58), facts
+                    assert facts["headHeight"] == (44 if width == 393 else 40), facts
                     assert frame.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
                     controls = frame.locator(".desk-pullout-head button")
                     for control in controls.all():

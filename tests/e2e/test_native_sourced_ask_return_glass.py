@@ -322,6 +322,9 @@ def test_selected_note_ask_save_and_return(
             assert NOTE_ID in json.dumps(kept) and ANSWER in json.dumps(kept), kept
             before = {row["id"] for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
             _ask_verb(ask, "Save as note").click()
+            # The save is a request: the verb changes its word when it lands. Looking
+            # for "Open note" before that opened Actions for a word that is in the row.
+            expect(ask.get_by_role("button", name="Save as note", exact=True)).to_be_hidden()
             _visible_before_scroll(ask, "Open note")
             saved = [row for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"] if row["id"] not in before]
             assert len(saved) == 1, saved
@@ -503,6 +506,9 @@ def test_selected_note_ask_save_and_return(
             expect(ask.get_by_test_id("ask-turn")).to_contain_text(display_answer)
             before_display = {row["id"] for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
             _ask_verb(ask, "Save as note").click()
+            # The save is a request: the verb changes its word when it lands. Looking
+            # for "Open note" before that opened Actions for a word that is in the row.
+            expect(ask.get_by_role("button", name="Save as note", exact=True)).to_be_hidden()
             _visible_before_scroll(ask, "Open note")
             display_notes = [row for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]
                              if row["id"] not in before_display]
