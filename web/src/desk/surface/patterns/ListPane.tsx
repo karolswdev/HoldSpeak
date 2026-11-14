@@ -10,6 +10,7 @@ import {
 import "./list-pane.css";
 import { PaneNoticeContext } from "./PreferencePane";
 import { hasWords } from "../content";
+import { scheduleRowLayout, cancelRowLayout } from "../objects/rowLayout";
 
 export const ListPaneDepth = createContext(0);
 
@@ -169,23 +170,16 @@ export function ListPane({
           const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + ruleHeight;
           minimum = Math.max(minimum, base + picked.getBoundingClientRect().height + group.getBoundingClientRect().height);
         }
-        pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
-        seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
+        const value = Math.ceil(minimum) + "px";
+        return () => {
+          if (pane?.style.getPropertyValue("--surface-list-min") !== value) pane?.style.setProperty("--surface-list-min", value);
+          if (seat.style.getPropertyValue("--surface-list-min") !== value) seat.style.setProperty("--surface-list-min", value);
+        };
       }
-      const row = seat?.querySelector<HTMLElement>(
-        '[data-object-id][aria-selected="true"]',
-      );
-      const well = row?.closest<HTMLElement>(".object-list-rows");
-      if (!row || !well) return;
-      const r = row.getBoundingClientRect(),
-        w = well.getBoundingClientRect();
-      const group = row.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
-      const top = w.top + (group?.getBoundingClientRect().height ?? 0);
-      if (r.bottom > w.bottom) well.scrollTop += r.bottom - w.bottom;
-      else if (r.top < top) well.scrollTop -= top - r.top;
     };
-    const observer = new ResizeObserver(update);
-    const mutations = new MutationObserver(update);
+    const schedule = () => scheduleRowLayout(update);
+    const observer = new ResizeObserver(schedule);
+    const mutations = new MutationObserver(schedule);
     observer.observe(ref.current);
     if (ref.current.parentElement) observer.observe(ref.current.parentElement);
     mutations.observe(ref.current.parentElement ?? ref.current, {
@@ -194,8 +188,9 @@ export function ListPane({
       attributes: true,
       attributeFilter: ["aria-selected"],
     });
-    update();
+    schedule();
     return () => {
+      cancelRowLayout(update);
       observer.disconnect();
       mutations.disconnect();
     };

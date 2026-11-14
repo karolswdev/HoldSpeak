@@ -98,6 +98,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 win = page.locator("#surface-project-memory")
+                win.get_by_test_id("room-body").wait_for()
                 expect(win.get_by_role("grid", name="Open", exact=True)).to_be_attached()
                 _settle(page)
                 return win

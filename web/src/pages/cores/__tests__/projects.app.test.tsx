@@ -136,7 +136,7 @@ describe("Projects selection list", () => {
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     expect(within(vendor).getByTestId("projects-not-read")).toHaveTextContent("Not read");
     fireEvent.click(vendor);
-    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Not read");
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Project facts not read");
     failed = false; fireEvent.keyDown(vendor, { key: "r" }); await settle();
     expect(vendor).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("projects-next")).toBeNull();
@@ -154,7 +154,8 @@ describe("Projects selection list", () => {
     expect(within(rows()[0]).getByTestId("projects-state")).toHaveTextContent("At risk");
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     fireEvent.click(vendor);
-    expect(screen.getByTestId("projects-next")).toHaveTextContent("Not read");
+    expect(screen.queryByTestId("projects-next")).toBeNull();
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Project facts not read");
     const state = within(screen.getByTestId("projects-pane")).getByText("State", { selector: ".gadget-row-label" });
     expect(state.closest(".gadget-row")).toHaveTextContent("On track");
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
@@ -186,15 +187,15 @@ describe("Projects selection list", () => {
   expect(screen.getByTestId("projects-pane")).toHaveTextContent("Vendor review");
  });
 
- it("keeps the read Room facts for a selected project, including an honest missing meeting", async () => {
+ it("keeps the read Room facts for a selected project, without rows for unknown facts", async () => {
   seed(); render(<ProjectsCore />); await settle();
   fireEvent.click(rows()[0]);
   const pane = screen.getByTestId("projects-pane");
-  for (const label of ["State", "Sources", "Last update", "Open items", "Next meeting"])
+  for (const label of ["State", "Sources", "Last update", "Open items"])
     expect(within(pane).getByText(label, {selector:".gadget-row-label"})).toBeVisible();
   expect(within(pane).getByText("No sources")).toBeVisible();
   expect(within(pane).getByText("1 open item")).toBeVisible();
-  expect(within(pane).getByText("Not supplied")).toBeVisible();
+  expect(within(pane).queryByText("Next meeting", {selector:".gadget-row-label"})).toBeNull();
   expect(pane).toHaveTextContent("Update drafted");
   fireEvent.click(rows()[1]);
   expect(pane).toHaveTextContent("New");
@@ -218,20 +219,20 @@ describe("Projects selection list", () => {
   fireEvent.click(rows()[0]);
   expect(screen.getByTestId("projects-pane")).toHaveTextContent("No open items");
   fireEvent.click(rows()[1]);
-  const label=within(screen.getByTestId("projects-pane")).getByText("Open items",{selector:".gadget-row-label"});
-  expect(label.closest('.gadget-row')).toHaveTextContent("Not supplied");
+  expect(within(screen.getByTestId("projects-pane")).queryByText("Open items",{selector:".gadget-row-label"})).toBeNull();
  });
 
- it("keeps an unavailable source count distinct from zero and retries it", async () => {
+ it.each([["sources", "Sources", "No sources"], ["items", "Open items", "No open items"]])("omits an unavailable %s count and keeps its retry", async (field, labelWord, emptyWord) => {
   seed();let failed=true;
   apiFetch.mockImplementation((path: string) => {
     const raw=structuredClone(gets[path]) as Record<string,unknown>;
-    if(path===`/api/projects/${WIRE.vendor}/room` && failed) raw.sources={state:"degraded",error_code:"project_store_unavailable"};
+    if(path===`/api/projects/${WIRE.vendor}/room` && failed) raw[field]={state:"degraded",error_code:"project_store_unavailable"};
     return Promise.resolve(raw);
   });
   render(<ProjectsCore />);await settle();fireEvent.click(rows().find(row=>row.textContent?.includes("Vendor review"))!);
-  const label=within(screen.getByTestId("projects-pane")).getByText("Sources",{selector:".gadget-row-label"});
-  expect(label.closest('.gadget-row')).toHaveTextContent("Not read");
+  expect(within(screen.getByTestId("projects-pane")).queryByText(labelWord,{selector:".gadget-row-label"})).toBeNull();
+  expect(screen.getByTestId("projects-pane")).toHaveTextContent("Project facts not read");
   failed=false;fireEvent.click(screen.getByRole("button",{name:"Retry"}));await settle();
-  expect(label.closest('.gadget-row')).toHaveTextContent("No sources");
+  const label=within(screen.getByTestId("projects-pane")).getByText(labelWord,{selector:".gadget-row-label"});
+  expect(label.closest('.gadget-row')).toHaveTextContent(emptyWord);
  });

@@ -5,7 +5,7 @@ import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { ListApp, useListApp, InspectorFacts, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ListApp, useListApp, InspectorFacts, ActionNotice, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { wireDate } from "../../desk/surface/format";
 import { planItemOpen, decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
@@ -104,7 +104,7 @@ export function ProjectsCore(_props: CoreProps) {
     } catch { /* Keep the project and its Retry when a Room is not read. */ }
     const health = listHealth(room), update = updateWords(newest);
     const dateRead = room?.target.state === "ok" && room?.items.state === "ok", updateRead = room?.updates.state === "ok";
-    const unread = !health || !dateRead || !updateRead || room?.sources.state !== "ok" || room?.meetings.state !== "ok";
+    const unread = !health || !dateRead || !updateRead || room?.sources.state !== "ok" || room?.items.state !== "ok" || room?.meetings.state !== "ok";
     const attention = health?.tone === "fail" ? wordOf(health) : unread ? "Not read" : update?.fresh ? "New update" : "";
     return { ...project, room, openItems, health, attention, unread, reason: health?.reason ? quietReason(health.reason) : null,
       dateRead, updateRead, next: room ? nextDate(room) : null, update };
@@ -146,15 +146,14 @@ export function ProjectsCore(_props: CoreProps) {
       shown && { text: "1 selected" },
       needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
     ]} pane={() =>
-      shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} rows={[
-        { label: "State", value: shown.health ? wordOf(shown.health) : "Not read" },
-        { label: "Sources", value: sources?.state === "ok" ? sources.count ? countWords(sources.count, "source") : "No sources" : "Not read" },
-        { label: "Open items", value: shown.openItems == null ? shown.room?.items.state === "ok" ? "Not supplied" : "Not read" : shown.openItems ? countWords(shown.openItems, "open item") : "No open items" },
-        { label: "Next meeting", value: shown.room?.meetings.state === "ok" ? "Not supplied" : "Not read" },
+      shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} notice={shown.unread ? <ActionNotice tone="danger">Project facts not read</ActionNotice> : undefined} rows={[
+        ...(shown.health ? [{ label: "State", value: wordOf(shown.health) }] : []),
+        ...(sources?.state === "ok" ? [{ label: "Sources", value: sources.count ? countWords(sources.count, "source") : "No sources" }] : []),
+        ...(shown.openItems != null ? [{ label: "Open items", value: shown.openItems ? countWords(shown.openItems, "open item") : "No open items" }] : []),
         ...(shown.reason ? [{ label: "Reason", value: <span data-testid="projects-reason">{shown.reason}</span> }] : []),
-        ...(shown.next || !shown.dateRead ? [{ label: "Next date", value: <span data-testid="projects-next">{shown.next?.words ?? "Not read"}</span> }] : []),
-        { label: "Last update", value: <span data-testid={shown.update || !shown.updateRead ? "projects-update" : undefined}>{shown.update?.words ?? (shown.updateRead ? "No updates" : "Not read")}
-          {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> },
+        ...(shown.next ? [{ label: "Next date", value: <span data-testid="projects-next">{shown.next.words}</span> }] : []),
+        ...(shown.updateRead ? [{ label: "Last update", value: <span data-testid={shown.update || !shown.updateRead ? "projects-update" : undefined}>{shown.update?.words ?? "No updates"}
+          {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> }] : []),
       ]} /> : null}>
     <ShowMe app="open-projects" />
   </ListApp>;

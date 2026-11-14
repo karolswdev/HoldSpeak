@@ -3,14 +3,16 @@ WHOLE_ROWS = r'''el => {
   const result=[];
   for(const well of el.querySelectorAll('.object-list-rows')) {
     const b=well.getBoundingClientRect(); if(!b.width||!b.height)continue;
-    const top=b.top+well.clientTop,bottom=top+well.clientHeight;
+    // Overflow can paint through a bottom border. Check the painted outer
+    // edge too, rather than hiding a one-pixel next row in clientHeight.
+    const top=b.top+well.clientTop,bottom=b.bottom;
     const rows=[...well.querySelectorAll('.object-list-row')].map(row=>{const r=row.getBoundingClientRect();return {id:row.dataset.objectId,top:r.top,bottom:r.bottom,selected:row.getAttribute('aria-selected')==='true'};});
     const headings=[...well.querySelectorAll('.object-list-group-label')].map(el=>el.getBoundingClientRect());
     const covered=Math.max(0,...headings.filter(r=>r.top<=top+1&&r.bottom>top).map(r=>r.bottom-top));
-    const visible=rows.filter(row=>row.bottom>top+covered+1&&row.top<bottom-1);
-    result.push({label:well.closest('[role=grid]')?.getAttribute('aria-label'),top,bottom,whole:visible.filter(row=>row.top>=top+covered-1&&row.bottom<=bottom+1).length,
-      partial:visible.filter(row=>row.top<top+covered-1||row.bottom>bottom+1),selected:rows.filter(row=>row.selected),
-      selectedWhole:rows.filter(row=>row.selected).every(row=>row.top>=top+covered-1&&row.bottom<=bottom+1)});
+    const visible=rows.filter(row=>row.bottom>top+covered+.1&&row.top<bottom-.1);
+    result.push({label:well.closest('[role=grid]')?.getAttribute('aria-label'),top,bottom,whole:visible.filter(row=>row.top>=top+covered-.1&&row.bottom<=bottom+.1).length,
+      partial:visible.filter(row=>row.top<top+covered-.1||row.bottom>bottom+.1),selected:rows.filter(row=>row.selected),
+      selectedWhole:rows.filter(row=>row.selected).every(row=>row.top>=top+covered-.1&&row.bottom<=bottom+.1)});
   }
   return result;
 }'''

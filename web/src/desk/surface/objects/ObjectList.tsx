@@ -45,6 +45,7 @@ import { Meter, type MeterProps } from "../live/Meter";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetLabelContext, SelectionFieldContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
+import { useWholeRows } from "./wholeRows";
 import { listSprite } from "../../sprites";
 import { stateTone, Toolbar, DotWord, VERB_OVERFLOW_WORD } from "../kit";
 import { useStripFit } from "../stripMenu";
@@ -243,7 +244,7 @@ export interface ObjectListProps {
   verbs?: readonly ListVerb[];
   /** A row menu can use a subset of the same declared verbs. */
   rowVerbs?: readonly ListVerb[];
-  /** End a bounded well on whole rows; on by default for selection lists. */
+  /** End a bounded well on whole rows; on by default for every list. */
   wholeRows?: boolean;
   /** The object window draws the published selection entries in its toolbar. */
   externalToolbar?: boolean;
@@ -287,7 +288,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
-  rowVerbs, wholeRows = selection,
+  rowVerbs, wholeRows = true,
   toolbar, externalToolbar,
   defaultVerb,
   ordered = false,
@@ -308,61 +309,7 @@ export function ObjectList({
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   useRovingRows(bodyRef, { selector: selection ? ".object-list-row" : ".object-list-open" });
-  useLayoutEffect(() => {
-    const list = listRef.current, well = bodyRef.current;
-    if (!wholeRows || !list || !well) return;
-    let frame = 0, reveal = true;
-    const fit = () => {
-      const siblings = [...list.children].filter(child => child !== well && getComputedStyle(child).display !== "none" && !["absolute", "fixed"].includes(getComputedStyle(child).position));
-      const style = getComputedStyle(list);
-      const chrome = siblings.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0)
-        + (parseFloat(style.rowGap) || 0) * siblings.length + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-      const border = Math.max(0, well.offsetHeight - well.clientHeight);
-      const budget = Math.max(0, list.clientHeight - chrome - border);
-      const top = well.getBoundingClientRect().top + well.clientTop;
-      const rows = [...well.querySelectorAll<HTMLElement>(".object-list-row, .object-list-group > .kit-toolbar")].map(node => {
-        const box = node.getBoundingClientRect();
-        const heading = node.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label")?.getBoundingClientRect().height ?? 0;
-        const start = box.top - top + well.scrollTop;
-        return {node, start, end: start + box.height, anchor: Math.max(0, start - heading), heading};
-      });
-      if (!rows.length || !budget) return;
-      // A sticky group heading owns the top of its well. Start a row below it,
-      // then end at the last complete row that fits the remaining seat.
-      let anchor = rows.filter(row => row.anchor <= well.scrollTop + .5).at(-1)?.anchor ?? 0;
-      // A shrinking well may have been clamped to its last row. Fill back
-      // from the tail before following the selection, rather than preserving
-      // that stale scroll position and leaving complete rows of space blank.
-      const tail = rows.at(-1);
-      if (tail) anchor = Math.min(anchor, rows.find(row => row.anchor >= tail.end - budget - .5)?.anchor ?? tail.anchor);
-      const picked = rows.find(row => row.node.getAttribute("aria-selected") === "true");
-      const followsPick = reveal || Boolean(picked && picked.end > well.scrollTop && picked.start < well.scrollTop + well.clientHeight);
-      if (followsPick && picked && (picked.start < anchor + picked.heading - .5 || picked.end > anchor + budget + .5)) {
-        anchor = rows.find(row => row.anchor >= picked.end - budget - .5 && row.anchor <= picked.anchor + .5)?.anchor ?? picked.anchor;
-      }
-      reveal = false;
-      const last = rows.filter(row => row.end <= anchor + budget + .5 && row.end > anchor).at(-1);
-      well.style.flex = "none";
-      well.style.height = `${last ? Math.min(budget, last.end - anchor) + border : 0}px`;
-      well.scrollTop = anchor;
-    };
-    const schedule = (follow = false) => {
-      reveal ||= follow;
-      cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);
-    };
-    const resized = () => schedule(true), scrolled = () => schedule();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resized);
-    observer?.observe(list);
-    for (const child of list.children) if (child !== well) observer?.observe(child);
-    const mutations = new MutationObserver(changes => schedule(changes.some(change => change.attributeName === "aria-selected")));
-    mutations.observe(list, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["aria-selected", "data-detail"]});
-    well.addEventListener("scrollend", scrolled);
-    let active = true;
-    document.fonts?.addEventListener("loadingdone", resized);
-    void document.fonts?.ready.then(() => {if (active) schedule(true);});
-    fit();
-    return () => {active = false; observer?.disconnect(); mutations.disconnect(); document.fonts?.removeEventListener("loadingdone", resized); well.removeEventListener("scrollend", scrolled); cancelAnimationFrame(frame); well.style.flex = ""; well.style.height = "";};
-  }, [wholeRows]);
+  useWholeRows(listRef, bodyRef, wholeRows);
   const [localSelected, setLocalSelected] = useState<string | null>(null);
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;
@@ -682,6 +629,7 @@ export function ObjectList({
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
       className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
       data-list-layout={selection ? layoutId : undefined}
+      data-whole-rows={wholeRows || undefined}
       data-empty={(!rows.length && !groups?.some(group => group.more && typeof group.count === "number" && group.count > 0)) || undefined}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}

@@ -587,7 +587,7 @@
 .surface-pane-inspector:has(> .surface-tab-panel > .surface-inspector-form) { gap: 4px; }
 
 /* Short recaps keep facts directly after the rows; long lists still yield. */
-.surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: 0; }
+.surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: var(--object-list-row-floor, 0px); }
 
 /* Questions keep their answers with their last line. Programmatic focus
    has the same visible ring after a pointer opens the question. */

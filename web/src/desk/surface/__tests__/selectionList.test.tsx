@@ -366,7 +366,7 @@ it("rejects a heading or arbitrary app layout inside an inspector form", () => {
   error.mockRestore();
 });
 
-it("reserves the header and three rows when inspection opens", () => {
+it("reserves the header and three rows when inspection opens", async () => {
   const measure = vi
     .spyOn(HTMLElement.prototype, "getBoundingClientRect")
     .mockImplementation(function (this: HTMLElement) {
@@ -411,18 +411,18 @@ it("reserves the header and three rows when inspection opens", () => {
       <PaneInspector label="Calendar" rows={[]} onClose={() => {}} />
     </ListPane>,
   );
-  expect(
+  await waitFor(() => expect(
     parseFloat(
       (
         container.querySelector(".surface-list-pane-list") as HTMLElement
       ).style.getPropertyValue("--surface-list-min"),
     ),
-  ).toBeGreaterThanOrEqual(104);
+  ).toBeGreaterThanOrEqual(104));
   measure.mockRestore();
   vi.unstubAllGlobals();
 });
 
-it("yields list rows before cutting the selected fact rows", () => {
+it("yields list rows before cutting the selected fact rows", async () => {
   const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
     const row = this.classList.contains("object-list-row");
     const pane = this.classList.contains("surface-list-pane");
@@ -440,9 +440,11 @@ it("yields list rows before cutting the selected fact rows", () => {
   const { container, unmount } = render(<ListPane label="Selected source" list={<ListView headerless label="Sources" rows={[{id:"home",kind:"calendar",name:"Home"}]} />}>
     <InspectorFacts header={false} name="Home" rows={[{label:"Account",value:"Personal"}]} />
   </ListPane>);
-  const floor = parseFloat((container.querySelector(".surface-list-pane-list") as HTMLElement).style.getPropertyValue("--surface-list-min"));
-  expect(floor + 150).toBeLessThanOrEqual(300);
-  expect(floor).toBeGreaterThanOrEqual(46);
+  await waitFor(() => {
+    const floor = parseFloat((container.querySelector(".surface-list-pane-list") as HTMLElement).style.getPropertyValue("--surface-list-min"));
+    expect(floor + 150).toBeLessThanOrEqual(300);
+    expect(floor).toBeGreaterThanOrEqual(46);
+  });
   unmount(); measure.mockRestore(); scroll.mockRestore(); vi.unstubAllGlobals();
 });
 

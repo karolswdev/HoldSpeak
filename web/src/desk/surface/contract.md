@@ -204,7 +204,10 @@ existing material and layout. They add no schema, form state, or save behavior.
 - `GadgetDivider()`: an exported semantic `hr` with the native etched rule.
   Use it between related rows within one sheet.
 - `CheckGadget.variant="state"`: the same real checkbox and square well plus
-  a visible On/Off word in its label. The native input covers the whole label,
+  a `Lamp` and a visible On/Off word in the body face. This is the one switch
+  with a state word: use `CheckGadget variant="state" label="Automatic starts"`
+  rather than composing a checkbox and `StateChip`. Outside a `GadgetRow` its
+  label is visible; within a row the row supplies that visible label. The native input covers the whole label,
   including decorations and word; at a narrow width the target is at least
   44 px high. The word is `aria-hidden` so the native checkbox retains one
   accessible name. Focus, disabled state, keyboard operation, and change
@@ -2222,9 +2225,9 @@ answer verbs of a question it shows. App callers still own that declaration.
   yield rows (Calls numbers declares one); normal lists keep four. A short
   `fit="rows"` form does not grow to
   take the space of a list below it. More rows
-  leave a partly visible next row as the scroll cue. A short list ends at
+  scroll inside a well that ends on a complete row. A short list ends at
   its last row. Inspectors scroll within the remaining well. An open form can use more
-  of that well; its list leaves a partial row when it must yield to whole fields.
+  of that well; its list yields complete rows before fields or completion are cut.
 - `VerbRow` measures mounted Buttons and emits container rules from the same
   `fitStrip` algorithm used by selection toolbars. Resizing does not remount
   or move a control. A folded verb returns focus to Actions; a menu act
@@ -2346,3 +2349,18 @@ keep the selected row whole. Group Load more verbs retain their whole seats.
 `Lamp` in the body face, and shows its label when no GadgetRow already names it.
 A path-led inspector heading breaks at path separators; a basename keeps its
 extension. Full names remain available through the existing title and aria name.
+
+### Whole list rows
+
+`ObjectList` / `ListView` has `wholeRows` on by default, including dense lists.
+The well takes every complete row its allocated seat holds. Its remainder is
+below the well on the surface ground, smaller than one row. Group headings
+and borders count once. `ListPane` reserves a seat; it never writes scrollTop.
+Seat and well measurements share `rowLayout`: one requestAnimationFrame reads
+all queued geometry before any writes. Resize and content changes schedule a
+frame; a native scroll defers fitting until scrollend. Focus and selection
+reveal their row without pulling an old selection back after a manual scroll.
+
+An `InspectorBody fit="rows"` list uses that same fitter's measured first-row
+floor, so its well cannot paint through the facts which follow it. A bounded
+window can yield its list floor; an intrinsic pop-up keeps its row floor.

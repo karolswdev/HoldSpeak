@@ -176,6 +176,7 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
                 page.reload(wait_until='load')
                 _normal_chair(page)
                 win = page.locator(f'[id="{window_id}"]')
+                win.locator(".object-list-row[data-object-id]").first.wait_for(state="attached")
                 expect(win.get_by_test_id(count_id)).to_have_count(50)
                 for state in ['list', 'selected']:
                     if state == 'selected': win.get_by_test_id(count_id).first.click()

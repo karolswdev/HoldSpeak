@@ -64,7 +64,7 @@
 /* Intrinsic hosts, such as a source pop-up, must include their list rows. */
 .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: var(--surface-list-min, 160px); }
 /* A window pane has a bounded seat; its unselected list yields below tabs. */
-.surface-preference-pane > .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: 0; }
+.desk-surface-body .surface-preference-pane > .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: 0; }
 /* Plain setup and state panes receive the same inset as an inspector.
    Object inspectors and nested panes already own that seat. */
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview:not(:has(> .surface-pane-inspector, > .surface-inspector-body > .surface-pane-inspector, > .surface-pane-views, > .surface-list-pane, > .surface-step-track)) { padding: var(--space-3); box-sizing: border-box; }
