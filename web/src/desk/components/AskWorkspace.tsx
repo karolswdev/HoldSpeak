@@ -4,6 +4,7 @@ import { useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, faceTimeWords } from "../surface";
 import { spriteUrl } from "../sprites";
+import { nameIsFile } from "../surface/objects/fitName";
 import { agentWordsPlain } from "./AgentWords";
 import { aboutMatches, type AboutCandidate } from "./about/AboutPicker";
 
@@ -39,7 +40,7 @@ export function AskScope({ rows, candidates, onPick, onRemove, onOpenRow, contro
       <PreferencePane label="About" testId="ask-scope-menu">
         <StringGadget label="Find a meeting, note, person" placeholder="Find a source" value={query} onChange={setQuery} />
         <ListPane label="About" list={<ListView label="About" ordered columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
-          rows={choices.map(row => ({ id: row.ref, kind: row.kind, name: row.label, detail: rows.some(known => known.ref === row.ref) ? "Chosen" : undefined }))}
+          rows={choices.map(row => ({ id: row.ref, kind: row.kind, name: row.label, sprite: nameIsFile(row.label) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: rows.some(known => known.ref === row.ref) ? "Chosen" : undefined }))}
           defaultVerb="choose" verbs={[
             { id: "choose", label: "Choose", run: row => { if (row) choose(row.id); } },
             { id: "remove", label: "Remove", enabled: row => Boolean(row && rows.some(known => known.ref === row.id)), run: row => { const known = rows.find(known => known.ref === row?.id); if (known) onRemove(known); } },
@@ -79,8 +80,11 @@ export function AskNotAnswered({ reason, words, verb }: { reason: string; words:
 export function AskSources({ rows }: { rows: readonly AskReferenceRowData[] }) {
   const [picked, setPicked] = useState<string | null>(null);
   if (!rows.length) return null;
-  return <PaneGroup label="" grow={false}><div data-testid="ask-looked-at" data-feedback-redact="true"><ListView label="Sources" ordered
+  const list = <ListView label="Sources" ordered
     columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }]}
-    rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, detail: row.meta }))} selectedId={picked} onSelect={setPicked} externalToolbar={!picked}
-    defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} /></div></PaneGroup>;
+    rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: row.meta }))} selectedId={picked} onSelect={setPicked}
+    defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />;
+  return rows.length === 1
+    ? <PaneGroup label="" grow={false}><div data-testid="ask-looked-at" data-feedback-redact="true">{list}</div></PaneGroup>
+    : <PreferencePane label="Sources" testId="ask-looked-at" data-feedback-redact="true"><ListPane label="Sources" minimumRows={1} list={list} /></PreferencePane>;
 }

@@ -98,6 +98,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     thread, durable editor and rendered Firefox layout all use product code.
     """
     import json
+    import os
     import re
     import threading
     from http.server import ThreadingHTTPServer
@@ -145,7 +146,8 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     threading.Thread(target=model.serve_forever, daemon=True).start()
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask13/r2")
+    shots = evidence_dir("ask14")
+    stage = os.environ.get("ASK_GLASS_STAGE", "after")
     try:
         with sync_playwright() as pw:
             browser = pw.firefox.launch(headless=True)
@@ -177,11 +179,11 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 editor = window.get_by_role("textbox", name="Ask about your work", exact=True)
                 editor.wait_for()
                 _settle(page)
-                page.screenshot(path=str(shots / f"empty-{900 if width == 1440 else 393}.png"))
+                page.screenshot(path=str(shots / f"checks-empty-{stage}-{900 if width == 1440 else 393}.png"))
                 if width == 393:
                     window.get_by_role("button", name="Back from Ask", exact=True).click()
                     expect(window.get_by_text("No recent asks", exact=True)).to_be_visible()
-                    page.screenshot(path=str(shots / "empty-recent-393.png"))
+                    page.screenshot(path=str(shots / f"checks-empty-recent-{stage}-393.png"))
                     window.get_by_role("button", name="Back from Ask", exact=True).click()
                 facts = window.evaluate("""el => {
                   const rect = el.getBoundingClientRect();
@@ -220,7 +222,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 editor.press("Enter")
                 expect(editor).to_have_value(draft)
                 assert len(requests) == 1
-                page.screenshot(path=str(shots / f"asking-{900 if width == 1440 else 393}.png"))
+                page.screenshot(path=str(shots / f"checks-asking-{stage}-{900 if width == 1440 else 393}.png"))
                 with page.expect_response(lambda response: response.url.endswith("/api/ask")
                                           and response.request.method == "POST") as finished:
                     release.set()
@@ -240,7 +242,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 reading = window.locator(".surface-object-reading").first
                 reading.evaluate("el => el.scrollTop = 0")
                 page.wait_for_timeout(100)
-                page.screenshot(path=str(shots / f"answer-{900 if width == 1440 else 393}.png"))
+                page.screenshot(path=str(shots / f"checks-answer-{stage}-{900 if width == 1440 else 393}.png"))
                 measure = window.locator("[data-testid=ask-turn] .reading-document").evaluate("""el => {
                   const style=getComputedStyle(el), box=el.getBoundingClientRect();
                   return {font:parseFloat(style.fontSize), line:parseFloat(style.lineHeight), width:box.width};
@@ -269,7 +271,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 reading.evaluate("el => el.scrollTop = el.scrollHeight")
                 actions = window.get_by_test_id("ask-actions")
                 expect(actions).to_be_in_viewport(ratio=1)
-                page.screenshot(path=str(shots / f"answer-tail-{900 if width == 1440 else 393}.png"))
+                page.screenshot(path=str(shots / f"checks-answer-tail-{stage}-{900 if width == 1440 else 393}.png"))
                 expect(editor).to_be_in_viewport()
                 expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
                 assert not errors, errors
@@ -291,6 +293,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     replies replay the checked-in producer tapes; this test claims rendering.
     """
     import json
+    import os
     import re
     from playwright.sync_api import expect, sync_playwright
     from tests._evidence import evidence_dir
@@ -302,7 +305,8 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     hold, thread, tools = tapes["ask.hold"], tapes["ask.thread"], tapes["ask.tools"]
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("held-call-details13")
+    shots = evidence_dir("ask14")
+    stage = os.environ.get("ASK_GLASS_STAGE", "after")
     pending, decisions = [], []
     note_fail = [True]
     try:
@@ -347,7 +351,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
 
             def shot(state):
                 _settle(page)
-                page.screenshot(path=str(shots / f"{state}-{900 if width == 1440 else 393}.png"))
+                page.screenshot(path=str(shots / f"checks-{state}-{stage}-{900 if width == 1440 else 393}.png"))
                 expect(win.locator(".surface-mast-title")).to_have_count(1)
                 if width == 1440:
                     box = win.bounding_box()
@@ -356,7 +360,8 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 toolbar = win.get_by_test_id("ask-actions")
                 assert toolbar.evaluate("el => {const r=el.getBoundingClientRect(); const buttons=[...el.querySelectorAll(':scope > .kit-toolbar-verbs button')].filter(b=>b.getBoundingClientRect().width && !b.closest('[inert]'));return buttons.every(b=>{const x=b.getBoundingClientRect();return x.top>=r.top && x.bottom<=r.bottom && Math.abs(x.top-buttons[0].getBoundingClientRect().top)<2;});}")
                 sources = win.get_by_test_id("ask-looked-at")
-                if sources.count() and sources.is_visible():
+                if sources.count() and win.get_by_test_id("ask-reading").is_visible():
+                    expect(sources).to_be_visible()
                     assert sources.evaluate("el => {const r=el.getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('[data-object-id], button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -366,7 +371,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 if target.count() and target.is_visible():
                     return target
                 win.get_by_test_id("ask-actions").get_by_role("button", name="Actions ▾", exact=True).click()
-                page.screenshot(path=str(shots / f"actions-open-{900 if width == 1440 else 393}.png"))
+                page.screenshot(path=str(shots / f"checks-actions-open-{stage}-{900 if width == 1440 else 393}.png"))
                 return page.get_by_role("menuitem", name=name, exact=True)
 
             shot("empty-seeded")
@@ -375,7 +380,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 verb("Recent").click()
             row = win.get_by_role("grid", name="Recent", exact=True).get_by_role("row", name=re.compile("What do I owe Mira"))
             row.click()
-            shot("recent-selected") if width == 1440 else page.screenshot(path=str(shots / "recent-selected-393.png"))
+            shot("recent-selected") if width == 1440 else page.screenshot(path=str(shots / f"checks-recent-selected-{stage}-393.png"))
             row.press("Enter")
             expect(win.get_by_test_id("ask-turn")).to_have_count(2)
             shot("thread-open")
@@ -411,10 +416,16 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             expect(win.get_by_role("button", name="Retry", exact=True)).to_be_visible()
             shot("save-failed")
             assert reading.evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3')?.getBoundingClientRect();return !head || head.top>=r.top-1;}")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("save-failed-tail")
+            assert reading.evaluate("el => {const r=el.getBoundingClientRect(), tail=el.querySelector('article:last-child .reading-document')?.lastElementChild?.getBoundingClientRect();return tail && tail.bottom<=r.bottom+1;}")
             note_fail[0] = False
             win.get_by_role("button", name="Retry", exact=True).click()
             expect(win.get_by_text("Saved to your desk", exact=True)).to_be_visible()
             shot("saved")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("saved-tail")
+            assert reading.evaluate("el => {const r=el.getBoundingClientRect(), tail=el.querySelector('article:last-child')?.lastElementChild?.getBoundingClientRect();return tail && tail.top>=r.top-1 && tail.bottom<=r.bottom+1;}")
             verb("New ask").click()
             editor.fill("What do I owe Mira this week?")
             editor.press("Enter")
@@ -433,6 +444,12 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             question.get_by_role("button", name="Allow once", exact=True).click()
             expect(question.get_by_text("Answer not sent. Try again.", exact=True)).to_be_visible()
             shot("held-failed")
+            for name in ["Deny", "Allow once"]:
+                bounds = question.get_by_role("button", name=name, exact=True).evaluate("""el => {
+                  const r=el.getBoundingClientRect(), well=el.closest('.surface-object-reading').getBoundingClientRect();
+                  return {inside:r.top>=well.top && r.bottom<=well.bottom, button:r.toJSON(), well:well.toJSON()};
+                }""")
+                assert bounds["inside"], bounds
             question.get_by_role("button", name="Deny", exact=True).click()
             expect(win.get_by_test_id("ask-hold")).to_have_count(0)
             assert decisions == [{"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "approve", "binding": hold["hold"]["holds"][0]["binding"]}, {"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "deny", "binding": hold["hold"]["holds"][0]["binding"]}]
@@ -442,6 +459,9 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             verb("Show grounding").click()
             win.get_by_test_id("ask-claims").scroll_into_view_if_needed()
             shot("grounding")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("grounding-tail")
+            assert win.get_by_test_id("ask-claims").locator("[data-object-id]").last.evaluate("el => {const r=el.getBoundingClientRect(), well=el.closest('.surface-object-reading').getBoundingClientRect();return r.top>=well.top && r.bottom<=well.bottom;}")
             verb("New ask").click()
             editor.fill("What needs attention?")
             editor.press("Enter")
@@ -449,6 +469,158 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             pending.pop().fulfill(status=tapes["ask.no-engine"]["status"], json=tapes["ask.no-engine"]["refusal"])
             expect(win.get_by_test_id("ask-not-answered")).to_be_visible()
             shot("no-engine")
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatch, width):
+    """Large collections use real stored names; held facts use the live projector.
+
+    Only the model answer is replayed. No held call is executed or sent.
+    """
+    import json
+    import os
+    import re
+    from playwright.sync_api import expect, sync_playwright
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.primitive_service import PrimitiveService
+    from holdspeak.services.thread_service import ThreadService
+    from holdspeak.services.thread_tools import ToolCallHandle
+    from holdspeak.services.held_tool_details import held_call_details
+    from tests._evidence import evidence_dir
+    from .glass_infra import _settle, clear_hub_windows
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    db = get_database()
+    owner = Principal(PrincipalKind.OWNER, "ask-glass")
+    primitives = PrimitiveService(db)
+    # Sentence names, path- and code-led names, and an unbroken identifier.
+    names = [f"{lead} — keep the approved deployment available while the architecture review checks the recovery point, migration result, retained draft and next owner action for the platform team {n:02d}"
+             for n, lead in enumerate(["web/src/desk/components/AskWorkspace.tsx", "`held_call_details`", "architecture_review_checkpoint_" + "a" * 96] * 17)][:50]
+    notes = [primitives.create_note(owner, note_id=f"ask-long-{n}", title=name, body_markdown="Keep the recovery point until the review is complete.") for n, name in enumerate(names)]
+    for name in names:
+        db.threads.create_thread(title=name)
+    recent = ThreadService(db, broadcast=lambda *_: None).list_threads()
+    wire = Path(__file__).resolve().parents[2] / "web/src/test/wire"
+    tools = json.loads((wire / "ask.tools.wire.json").read_text())
+    # These names and ids come from the same real note producer as the desk.
+    answer = {**tools["answer"], "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
+    shots = evidence_dir("ask14")
+    stage = os.environ.get("ASK_GLASS_STAGE", "after")
+    pending, recent_requests = [], []
+    delay_recent = [False]
+    invocation = "ask_" + "c" * 32
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.set_default_timeout(20_000)
+            errors = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.add_init_script("crypto.randomUUID = () => 'cccccccc-cccc-cccc-cccc-cccccccccccc'")
+            page.route("**/api/threads", lambda route: recent_requests.append(route) if delay_recent[0] else route.fulfill(json={"threads": []}))
+            page.route("**/api/ask", lambda route: pending.append(route))
+            page.route("**/api/ask/engine", lambda route: route.fulfill(json=tools["engine"]))
+            page.route("**/api/inference/assignments", lambda route: route.fulfill(json=tools["assignments"]))
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            clear_hub_windows(page, TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            delay_recent[0] = True
+            page.keyboard.press("Control+KeyI")
+            win = page.locator("[id=ask][data-layer=window]")
+            editor = win.get_by_role("textbox", name="Ask about your work", exact=True)
+            editor.wait_for()
+
+            def shot(state):
+                _settle(page)
+                page.screenshot(path=str(shots / f"{state}-{stage}-{900 if width == 1440 else 393}.png"))
+                assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert not errors, errors
+
+            def verb(name):
+                bar = win.get_by_test_id("ask-actions")
+                target = bar.get_by_role("button", name=name, exact=True)
+                if target.count() and target.is_visible():
+                    return target
+                bar.get_by_role("button", name="Actions ▾", exact=True).click()
+                return page.get_by_role("menuitem", name=name, exact=True)
+
+            if width == 393:
+                verb("Recent").click()
+            shot("1-recent-reading")
+            assert recent_requests
+            recent_requests.pop().fulfill(json={"threads": []})
+            expect(win.get_by_text("No recent asks", exact=True)).to_be_visible()
+            shot("1-recent-empty")
+            if width == 393:
+                win.get_by_role("button", name="Back from Ask", exact=True).click()
+            shot("2-empty")
+            editor.fill("Check the recovery point")
+            editor.press("Enter")
+            expect(win.get_by_test_id("run-line")).to_be_visible()
+            if width == 393:
+                verb("Recent").click()
+            expect(win.get_by_role("row", name=re.compile("Check the recovery point"))).to_be_visible()
+            shot("1-first-ask")
+            if width == 393:
+                win.get_by_role("button", name="Back from Ask", exact=True).click()
+
+            for tool, args, state in [
+                ("thread.set_status", {"thread_id": "ask-facts", "text": "Reading sources"}, "9-held-undeclared"),
+                ("door.add_item", {"task": "Review the platform recovery point", "owner": "Me", "due": "2026-11-20"}, "9-held-task"),
+            ]:
+                handle = ToolCallHandle(call_id=state, thread_id="ask-facts", turn_operation_id=invocation,
+                                        name=tool, args=args, tool_class="effect_proposal", sensitive=False,
+                                        state="awaiting_decision", principal=owner)
+                details = held_call_details(handle, owner)
+                if state == "9-held-undeclared":
+                    assert details["facts"] == [{"label": "Write details", "value": "not described"}]
+                server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [details]})
+                question = win.get_by_test_id("ask-hold")
+                expect(question).to_be_visible()
+                for fact in details["facts"]:
+                    expect(question.get_by_text(fact["label"], exact=True)).to_be_visible()
+                    expect(question.get_by_text(fact["value"], exact=True)).to_be_visible()
+                shot(state)
+            send = json.loads((wire.parents[1] / "desk/calls/__fixtures__/calls.face.json").read_text())["held"]["hold"]
+            server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [send]})
+            expect(win.get_by_test_id("ask-hold").get_by_text("the team", exact=True)).to_be_visible()
+            shot("9-held-send")
+            pending.pop().fulfill(json=answer)
+            expect(win.get_by_test_id("ask-turn")).to_be_visible()
+            shot("3-many-sources")
+            expect(editor).to_be_in_viewport()
+            assert win.locator(".surface-object-reading").evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3').getBoundingClientRect(); return head.top>=r.top && head.bottom<=r.bottom;}")
+            sources = win.get_by_test_id("ask-looked-at")
+            assert sources.locator("[data-object-id]").count() == len(notes)
+            sources.locator("[data-object-id]").last.click()
+            expect(sources.get_by_role("button", name="Open source", exact=True)).to_be_enabled()
+            expect(editor).to_be_in_viewport()
+            shot("3-last-source")
+            # The completed answer refreshes Recent through its normal read.
+            assert recent_requests
+            recent_requests.pop().fulfill(json={"threads": recent})
+            if width == 393:
+                verb("Recent").click()
+            expect(win.get_by_role("grid", name="Recent", exact=True).locator("[data-object-id]")).to_have_count(len(recent))
+            shot("2-recent-long")
+            if width == 393:
+                win.get_by_role("button", name="Back from Ask", exact=True).click()
+            verb("New ask").click()
+            page.evaluate("source => window.dispatchEvent(new CustomEvent('holdspeak:ask-selection', {detail: source}))", {
+                "noteRef": "note:ask-long-0", "text": "Keep the recovery point until the review is complete.",
+                "body": "Keep the recovery point until the review is complete.", "range": {"from": 0, "to": 52, "text": "Keep the recovery point until the review is complete."},
+                "windowId": "pullout:note:ask-long-0", "scrollTop": 0,
+                "source": {"id": "ask-long-0", "kind": "note", "title": names[0], "ref": "note:ask-long-0"},
+            })
+            expect(win.get_by_test_id("ask-selected-passage")).to_be_visible()
+            shot("2-source-quote")
             browser.close()
     finally:
         server.stop()
