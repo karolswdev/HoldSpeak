@@ -242,7 +242,7 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
   const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,
     disabled:blocked || completion.primary.disabled, run:() => {if (!blocked) completion.primary.run();}}} : completion;
   return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={confirming ? undefined : { ...guarded, leading,
-    state:<>{confirmation}{editFailed ? <DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord> : blocked ? <DotWord tone="fail">{CREDENTIAL_WORD}</DotWord> : null}</> }} notice={notice}>
+    state:<>{confirmation}{editFailed || blocked ? <><br /><DotWord tone="fail">{editFailed ? EDIT_FAILED_WORD : CREDENTIAL_WORD}</DotWord></> : null}</> }} notice={notice}>
     <GadgetRow label="Destination"><CycleGadget label="Destination" roster value={destination?.id ?? ""} disabled={!onDestination}
       options={[{value:"",label:"Choose a destination"}, ...(destinations ?? (destination ? [destination] : [])).map(d => ({value:d.id,label:safeSendText(d.name)}))]}
       onChange={id => onDestination?.(id)} />
