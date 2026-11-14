@@ -1,5 +1,5 @@
 /** Every answer is recorded from the isolated Activity hub rig. */
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import tape from "./fixtures/activity-grammar.json";
 import { ActivityCore } from "../ActivityCore";
@@ -125,4 +125,17 @@ it("distinguishes repeated page titles by the hub's saved URLs",async()=>{
     expect(row.querySelector('.object-list-selection-name')).toHaveAttribute('title',page.url);
     expect(row).toHaveTextContent("Seen");
   }
+});
+
+it("gives a candidate the meeting object and preserves a connector's origin and absent run",async()=>{
+  const {objectSprite}=await import("../../../desk/surface");
+  await ready();view("Candidates");
+  const candidate=await screen.findByTestId("activity-row");fireEvent.click(candidate);
+  const image=document.querySelector<HTMLImageElement>(".surface-inspector-object img");
+  expect(image).not.toBeNull();
+  expect(image).toHaveAttribute("src",objectSprite("meeting",candidate.dataset.objectId!,"rest",32));
+  view("Connectors");fireEvent.click((await screen.findAllByTestId("activity-row"))[0]);
+  const facts=within(document.querySelector(".surface-inspector-facts") as HTMLElement);
+  expect(facts.getByText("First party")).toBeVisible();
+  expect(facts.getByText("Never ran")).toBeVisible();
 });

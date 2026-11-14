@@ -90,7 +90,7 @@ export function RecordingsCore(_props: CoreProps) {
     ], run: () => undefined },
   ];
   const needsYou = rows.filter((row) => row.state === "failed").length;
-  return <ListApp app={data} label="Recordings"
+  return <ListApp app={data} label="Recordings" listShare={.6}
     ids={{ windowTestId: "recordings-window", listTestId: "recordings-list", paneTestId: "recordings-document", toolbarTestId: "recordings-toolbar", statusTestId: "recordings-status" }}
     words={{ find: "Find a recording", empty: "No recordings yet", noMatch: "No recordings found", select: "Select a recording." }}
     onSelect={() => { setPanel(null); setNotice(""); }}

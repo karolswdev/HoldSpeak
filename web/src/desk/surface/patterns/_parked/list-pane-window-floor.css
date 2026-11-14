@@ -1,0 +1,2 @@
+/* Parked: only a bounded window can yield this floor; a pop-up needs its intrinsic rows. */
+.surface-preference-pane > .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: 0; }

@@ -119,7 +119,7 @@ export function AutomationsCore(_props: CoreProps) {
         {label:"With",value:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",value:<PutValue target={selected.output_target} />}]),
         {label:"Last run",value:lastRun(selected,false)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
-      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"Starts",control:<CheckGadget variant="state" label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
+      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"Automatic starts",control:<CheckGadget variant="state" label="Automatic starts" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
     </> : null}
     status={[
       app.loading && !app.page ? {key:"loading",lamp:"info",text:"Loading automations…"} : null,

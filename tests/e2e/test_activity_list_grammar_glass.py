@@ -1,6 +1,5 @@
 """Activity over real isolated-hub records, with long names and explicit writes."""
 import json
-import mimetypes
 import os
 import re
 from datetime import datetime, timezone
@@ -9,8 +8,9 @@ import pytest
 from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .test_desk_sweep import _seed_finished_receipts
 from .test_programs_group_polish_glass import LONG_NAME
+from .programs_group_rows_rig import row_faults
 ROOT=Path(__file__).resolve().parents[2]
-OUT=ROOT/'.tmp/evidence-shots/programs-group14-r2'
+OUT=ROOT/'.tmp/evidence-shots/programs-group14-r3'
 TOKEN='activity-list-grammar'
 
 @pytest.mark.parametrize('width',[1440,393])
@@ -20,14 +20,10 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
     _ensure_build();OUT.mkdir(parents=True,exist_ok=True)
     server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
     from holdspeak.db import get_database
-    db=get_database();phase=os.environ.get('POLISH_PHASE','after')
+    db=get_database();phase=os.environ.get('POLISH_PHASE','after');faults=[];tab_geometry={}
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch();page=browser.new_page(viewport={'width':width,'height':900 if width==1440 else 852},reduced_motion='reduce')
-            if phase=='before':
-                frozen=ROOT/'.tmp/programs-group14/r2/held-built'
-                page.route('**/_built/**',lambda route:route.fulfill(path=str(frozen/route.request.url.split('/_built/',1)[1]),content_type=mimetypes.guess_type(route.request.url)[0] or 'application/octet-stream'))
-                page.route(re.compile(r'^'+re.escape(base)+r'/(?:\?.*)?$'),lambda route:route.fulfill(path=str(frozen/'index.html'),content_type='text/html'))
             page.goto(f'{base}/?token={TOKEN}',wait_until='load')
             _api(page,'PUT','/api/setup/onboarding',{'disposition':'completed'},token=TOKEN)
             project=_api(page,'POST','/api/projects',{'name':'Architecture change'},token=TOKEN)['project']['id']
@@ -51,7 +47,11 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             if width==1440:_api(page,'POST','/api/desk/windows/surface-activity/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
             page.reload(wait_until='load');_normal_chair(page);win=page.locator('#surface-activity')
             def shot(state):
-                _settle(page);page.screenshot(path=str(OUT/f'activity-{state}-{900 if width==1440 else 393}-{phase}.png'))
+                _settle(page);faults.extend(row_faults(win,('activity',state)))
+                tabs=win.locator('.surface-segmented-tabs').evaluate('''el=>[...el.querySelectorAll(':scope > button')].map(button=>{const range=document.createRange();range.selectNodeContents(button);const ink=range.getBoundingClientRect(),box=button.getBoundingClientRect(),seat=el.getBoundingClientRect();return {word:button.textContent,ink:ink.toJSON(),box:box.toJSON(),whole:ink.left>=box.left-1&&ink.right<=box.right+1&&box.left>=seat.left-1&&box.right<=seat.right+1};})''')
+                tab_geometry[state]=tabs
+                if any(not tab['whole'] for tab in tabs):faults.append(('tab words leave their seat',state,tabs))
+                page.screenshot(path=str(OUT/f'activity-{state}-{900 if width==1440 else 393}-{phase}.png'))
             def press(word):
                 button=win.get_by_role('button',name=word,exact=True)
                 if button.is_visible():button.click()
@@ -64,22 +64,6 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
                 else:
                     win.get_by_role('button',name='Activity views more',exact=True).click()
                     page.get_by_role('menuitem',name=word,exact=True).click()
-            if phase=='before':
-                expect(win.locator('[id^="activity-record-"]').first).to_be_attached();shot('records')
-                win.locator('[id^="activity-record-"]').first.click();shot('selected')
-                if win.get_by_role('tab',name='Rules',exact=True).is_visible():win.get_by_role('tab',name='Rules',exact=True).click()
-                else:
-                    win.locator('.desk-wings-menu').click();page.locator('[role^=menuitem]').filter(has_text=re.compile('^Rules$')).click()
-                shot('rules')
-                # The former gear combined candidates and connectors in its one face.
-                gear=win.get_by_role('button',name='Candidates and connectors',exact=True)
-                if gear.count():gear.click()
-                else:
-                    win.locator('.desk-wings-menu').click();page.locator('[role^=menuitem]').filter(has_text=re.compile('Candidates and connectors')).click()
-                shot('connectors')
-                assert not writes,writes
-                assert not win.locator('.desk-pullout-head .desk-wings').count(), 'Activity tabs remain in the Mast'
-                browser.close();return
             expect(win.get_by_role('grid',name='Activity',exact=True)).to_be_visible()
             expect(win.locator('[id="activity-record-1"]')).to_be_visible()
             assert win.get_by_test_id('activity-row').count() >= 50
@@ -95,8 +79,12 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             win.get_by_role('button',name='Cancel',exact=True).click()
             view('Candidates');expect(win.get_by_test_id('activity-row')).to_have_count(1);shot('candidates')
             win.get_by_test_id('activity-row').click();shot('candidate-selected')
+            if not win.locator('.surface-inspector-object img').count():faults.append('candidate has no meeting object')
             view('Connectors');expect(win.get_by_test_id('activity-row').first).to_be_visible();shot('connectors')
             win.get_by_test_id('activity-row').first.click();shot('connector-selected')
+            connector_facts=win.locator('.surface-inspector-facts').inner_text()
+            if 'First party' not in connector_facts:faults.append(('connector source words',connector_facts))
+            if 'Never ran' not in connector_facts:faults.append(('connector last run missing',connector_facts))
             # Record existing operation answers for the app press-through tests.
             connector=tape['gets']['/api/activity/enrichment/connectors']['connectors'][0]['id']
             tape['candidateStart']=_api_allow_error(page,'POST',f'/api/activity/meeting-candidates/{candidate.id}/start',{},token=TOKEN)
@@ -123,5 +111,7 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             if width==1440 and os.environ.get('HOLDSPEAK_RECORD_ACTIVITY')=='1':
                 folder=ROOT/'web/src/pages/cores/__tests__/fixtures';folder.mkdir(exist_ok=True)
                 (folder/'activity-grammar.json').write_text(json.dumps(tape,indent=2)+'\n')
+            (OUT/f'activity-tabs-{width}.json').write_text(json.dumps(tab_geometry,indent=2))
             browser.close()
+        assert not faults,faults
     finally:server.stop()

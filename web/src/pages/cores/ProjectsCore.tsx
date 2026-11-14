@@ -5,10 +5,10 @@ import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { ListApp, useListApp, InspectorFacts, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ListApp, useListApp, InspectorFacts, ActionNotice, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { wireDate } from "../../desk/surface/format";
-import { decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
+import { planItemOpen, decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
 import type { CoreProps } from "./core-types";
 type Update = { lifecycle: string; created_at: string; published_at?: string | null };
 
@@ -91,22 +91,29 @@ const wordOf = (health: ListHealth | null) => ({ BLOCKED: "Blocked", "AT RISK": 
 export function ProjectsCore(_props: CoreProps) {
   const projects = useDesk((s) => s.projects) ?? [];
   const read = useCallback(async () => ({ rows: (await Promise.all(projects.map(async project => {
-    let room: RoomSnapshot | null = null, newest: Update | null = null;
+    let room: RoomSnapshot | null = null, newest: Update | null = null, openItems: number | null = null;
     try {
       const raw = await apiFetch<Record<string, unknown>>(`/api/projects/${encodeURIComponent(project.id)}/room`);
-      room = decodeRoomSnapshot(raw); newest = ((raw.updates as { recent?: Update[] } | undefined)?.recent ?? [])[0] ?? null;
+      room = decodeRoomSnapshot(raw);
+      const items = raw.items as {state?: string; total?: number; focus?: {lifecycle?: string}[]} | undefined;
+      // The Room total includes closed items and its focus can be capped.
+      // Count open work only when every item and lifecycle was returned.
+      if (items?.state === "ok" && items.focus && items.focus.length === items.total && items.focus.every(item => typeof item.lifecycle === "string"))
+        openItems = items.focus.filter(item => planItemOpen(item.lifecycle!)).length;
+      newest = ((raw.updates as { recent?: Update[] } | undefined)?.recent ?? [])[0] ?? null;
     } catch { /* Keep the project and its Retry when a Room is not read. */ }
     const health = listHealth(room), update = updateWords(newest);
     const dateRead = room?.target.state === "ok" && room?.items.state === "ok", updateRead = room?.updates.state === "ok";
-    const unread = !health || !dateRead || !updateRead;
+    const unread = !health || !dateRead || !updateRead || room?.sources.state !== "ok" || room?.items.state !== "ok" || room?.meetings.state !== "ok";
     const attention = health?.tone === "fail" ? wordOf(health) : unread ? "Not read" : update?.fresh ? "New update" : "";
-    return { ...project, health, attention, unread, reason: health?.reason ? quietReason(health.reason) : null,
+    return { ...project, room, openItems, health, attention, unread, reason: health?.reason ? quietReason(health.reason) : null,
       dateRead, updateRead, next: room ? nextDate(room) : null, update };
   }))).sort((a, b) => (RANK[a.health?.word ?? ""] ?? 4) - (RANK[b.health?.word ?? ""] ?? 4)) }), [projects]);
   const app = useListApp({ read, keyOf: row => row.id, search: (row, query) => row.name.toLocaleLowerCase().includes(query) });
   useOnDeskChanged(app.reload, ROOM_CHANGE_KINDS);
   const rows = app.rows;
   const shown = app.selected;
+  const sources = shown?.room?.sources;
   const toRow = (row: typeof app.rows[number]): ObjectListRow => {
     return { id: row.id, name: row.name, kind: "project", nameTestId: "projects-open",
       state: row.attention ? { label: row.attention, tone: row.health?.tone === "fail" ? "fail" : "warn",
@@ -123,7 +130,7 @@ export function ProjectsCore(_props: CoreProps) {
   useWindowMast({ line: app.page ? countWords(rows.length, "project") ?? undefined : undefined, figures: [{ value: rows.filter(row => row.attention).length, label: "wait on you", tone: "ask" }] });
   const needsOwner = rows.filter((row) => row.attention).length;
   const withDate = app.visible.filter(row => row.next).length, withUpdate = app.visible.filter(row => row.update).length;
-  return <ListApp app={app} label="Projects"
+  return <ListApp app={app} label="Projects" listShare={.6}
     ids={{ windowTestId: "projects-window", listTestId: "projects-list", paneTestId: "projects-pane", toolbarTestId: "projects-toolbar", statusTestId: "projects-status", loadingTestId: "projects-loading" }}
     words={{ find: "Find a project", empty: "No projects yet", noMatch: "No projects match", select: "Select a project", failed: "Projects not loaded" }}
     list={{ columns: [
@@ -139,11 +146,13 @@ export function ProjectsCore(_props: CoreProps) {
       shown && { text: "1 selected" },
       needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
     ]} pane={() =>
-      shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} rows={[
-        ...(shown.attention ? [{ label: "State", value: shown.attention }] : []),
+      shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} notice={shown.unread ? <ActionNotice tone="danger">Project facts not read</ActionNotice> : undefined} rows={[
+        ...(shown.health ? [{ label: "State", value: wordOf(shown.health) }] : []),
+        ...(sources?.state === "ok" ? [{ label: "Sources", value: sources.count ? countWords(sources.count, "source") : "No sources" }] : []),
+        ...(shown.openItems != null ? [{ label: "Open items", value: shown.openItems ? countWords(shown.openItems, "open item") : "No open items" }] : []),
         ...(shown.reason ? [{ label: "Reason", value: <span data-testid="projects-reason">{shown.reason}</span> }] : []),
-        ...(shown.next || !shown.dateRead ? [{ label: "Next date", value: <span data-testid="projects-next">{shown.next?.words ?? "Not read"}</span> }] : []),
-        ...(shown.update || !shown.updateRead ? [{ label: "Newest update", value: <span data-testid="projects-update">{shown.update?.words ?? "Not read"}
+        ...(shown.next ? [{ label: "Next date", value: <span data-testid="projects-next">{shown.next.words}</span> }] : []),
+        ...(shown.updateRead ? [{ label: "Last update", value: <span data-testid={shown.update || !shown.updateRead ? "projects-update" : undefined}>{shown.update?.words ?? "No updates"}
           {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> }] : []),
       ]} /> : null}>
     <ShowMe app="open-projects" />

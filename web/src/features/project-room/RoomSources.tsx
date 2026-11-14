@@ -140,7 +140,6 @@ export function RoomSources({
               : "Never read",
       facts: [
         { label: "From", value: row.provider },
-        ...(row.provider === "jira" && row.scope.includes("|") ? [{ label: "Project name", value: "Not available" }] : []),
         { label: "Last read", value: wireDayClock(row.checkedAt) },
         {
           label: "State",

@@ -29,12 +29,12 @@ def _verb(page: Any, win: Any, word: str) -> None:
 
 
 def _view(page: Any, win: Any, word: str) -> None:
-    button = win.get_by_role("button", name="Project view", exact=True)
+    button = win.get_by_role("button", name=__import__("re").compile("^(Project|Update) view$"))
     if button.count() and button.first.is_visible():
         button.first.click()
     else:
         win.get_by_role("button", name="Actions ▾", exact=True).first.click()
-        page.get_by_role("menu").last.get_by_role("menuitem", name="Project view", exact=True).click()
+        page.get_by_role("menu").last.get_by_role("menuitem", name="View", exact=True).hover()
     page.get_by_role("menu").last.get_by_role("menuitem", name=word, exact=True).click()
 
 
@@ -98,6 +98,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 win = page.locator("#surface-project-memory")
+                win.get_by_test_id("room-body").wait_for()
                 expect(win.get_by_role("grid", name="Open", exact=True)).to_be_attached()
                 _settle(page)
                 return win
@@ -165,7 +166,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 shot(win, tab.lower())
                 if tab == "Sources":
                     win.get_by_role("row", name="Jira account", exact=False).click()
-                    expect(win.get_by_text("Not available", exact=True)).to_be_visible()
+                    expect(win.locator(".surface-inspector-facts").get_by_text("Project name", exact=True)).to_have_count(0)
                     shot(win, "source-account-selected")
                     _verb(page, win, "Remove")
                     expect(win.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
@@ -185,11 +186,11 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             shot(win, "update")
             _verb(page, win, "Cancel")
             for seat in ("claims", "sources"):
-                choose_toolbar(win,"View",seat, word=seat.capitalize())
+                _view(page,win,seat.capitalize())
                 first = win.locator(".object-list-row").first
                 if first.count(): first.click()
                 shot(win, "update-" + seat)
-            choose_toolbar(win,'View',"updates", word="Text")
+            _view(page,win,"Text")
             win.get_by_role("tab", name="Open", exact=True).click()
             for posture in ("Prepare", "Review", "Steward", "People", "Files", "History", "Pages", "Brief", "Cadence", "Recall"):
                 _view(page, win, posture)

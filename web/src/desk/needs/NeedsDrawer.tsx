@@ -395,7 +395,7 @@ export function NeedsDrawer() {
     verb={{label: armedNow.answer.label, busy: Boolean(busy), disabled: Boolean(busy), testId: "needs-confirm-answer", run: () => void run(armedNow.need, armedNow.answer)}} /> : null;
   const read = needs.room !== null || Object.keys(needs.errors).length > 0;
   const empty = !needs.complete || !coverage.complete ? <SurfaceState error="Some needs were not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState empty emptyLabel={show === "muted" ? "No muted items." : show === "later" ? "Nothing for later." : scope === "people" ? "Nothing waits on people here." : "Nothing needs you."} />;
-  return <div ref={rootRef} className="surface-tab-panel kit-face" style={{container: "surface / inline-size", minHeight: 440}} data-testid="needs-drawer" {...gesture} aria-busy={!read || undefined}>
+  return <div ref={rootRef} className="surface-tab-panel kit-face" style={{container: "surface / inline-size", minHeight: 440, gap: 0}} data-testid="needs-drawer" {...gesture} aria-busy={!read || undefined}>
     <SegmentedTabs label="Needs you" value={tab} onChange={changeTab} tabs={[{id: "waiting", label: "Waiting"}, {id: "answered", label: "Answered"}]}>
       {tab === "waiting" ? <ListPane label="Need reader" listTestId="needs-list" previewTestId="needs-preview" list={<>
         <ListView label="Needs you" ordered rows={shown.map(need => ({id: need.face.id, kind: need.face.kind, name: needName(need), state: {label: need.face.lamp.label.split(" · ")[0], tone: need.face.lamp.tone === "warn" ? "ask" : need.face.lamp.tone}, cells: {from: need.from}, when: need.when}))}
