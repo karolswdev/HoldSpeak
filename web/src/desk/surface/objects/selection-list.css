@@ -167,3 +167,8 @@
 
 /* A selected record keeps its group name while its own well scrolls. */
 .object-list-group-label { position: sticky; top: 0; z-index: 1; }
+
+/* A sortable caption owes the phone's Button target and its bottom rule. */
+@container surface (max-width: 520px) {
+  .object-list.object-list--selection:has(> .object-list-head .object-list-sort) { --material-list-head-height: calc(var(--desk-button-hit-size) + 2px); }
+}

@@ -2327,3 +2327,6 @@ strip. An optional collection overview takes only the height of its own rows. A 
 keeps the rest. On a compact selection bar, Find stays beside the verbs and the
 verbs yield to Actions. A fact with `paths` set can break at `/` before a filename breaks
 inside a word. A supplied compact Back label keeps the frame's chevron.
+
+A sortable selection header reserves the compact Button target plus its bottom
+rule. A plain caption keeps the standard material header height.
