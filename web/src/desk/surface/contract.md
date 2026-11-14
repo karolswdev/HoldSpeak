@@ -1657,7 +1657,14 @@ under More; groups within a tab use captions and one form well.
 when inspection opens, reserves the header plus at least three complete rows,
 and keeps the selected row in its scrolling well. The inspector takes the
 remaining height; its content scrolls independently and the pane itself never scrolls.
-A content refit keeps the owner's scroll position. A changed selection, row order or list seat brings the selection into view.
+ObjectList owns scrolling for standalone lists and ListPane. A content refit keeps the
+owner's scroll position. A changed selection, row order or list seat reveals the
+complete selected row with nearest-edge scrolling. Measured scroll padding reserves
+overlapping column and group headings. Proximity snap points land scrolling on row
+edges; a short paper tail keeps the final snap reachable without changing the pane's
+height. A fitting list shows every row whole; an overflowing list can show part of the
+next row at the bottom. listShare allocates the list and inspector widths; it does not
+change this scroll policy.
 `PaneInspector` says its `label` once. It takes `rows` plus a typed
 `completion`, or a stateful editor that returns `InspectorForm`. A form
 takes row data (`label`, `control`) or only `GadgetRow` children, including

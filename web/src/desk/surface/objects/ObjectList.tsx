@@ -476,13 +476,57 @@ export function ObjectList({
     : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
   const phoneTracks = columns.map((column) => columns.length <= 2 ? "minmax(0, 1fr)" : column.key === "name" ? "minmax(0, 1fr)" : column.key === "state" ? "104px" : "84px").join(" ");
   const has = (key: string) => columns.some((column) => column.key === key);
-  // Dense: the selected row stays in view (a restored or reopened row).
-  const scrollTo = selectedIds ? null : selectedId;
-  useEffect(() => {
-    if (!dense || !scrollTo) return;
-    const row = bodyRef.current?.querySelector<HTMLElement>(`[data-object-id="${CSS.escape(scrollTo)}"]`);
-    row?.scrollIntoView?.({ block: "nearest" });
-  }, [dense, scrollTo]);
+  // One scroll policy for a standalone list and a list inside ListPane.
+  // The column head is normally outside this well; only its overlap counts.
+  const scrollTo = selection ? pickedId : selectedIds ? null : selectedId;
+  const revealedSeat = useRef("");
+  useLayoutEffect(() => {
+    const well = bodyRef.current, list = listRef.current;
+    if (!well || !list) return;
+    const head = list.querySelector<HTMLElement>(":scope > .object-list-head");
+    const groups = [...well.querySelectorAll<HTMLElement>(".object-list-group-label")];
+    const rows = [...well.querySelectorAll<HTMLElement>(".object-list-row[data-object-id]")]
+      .filter(row => row.closest(".object-list-rows") === well);
+    const measure = (reveal = true) => {
+      if (!well.clientHeight || !well.clientWidth) { revealedSeat.current = ""; return; }
+      const box = well.getBoundingClientRect(), top = box.top + well.clientTop;
+      const group = groups.map(group => group.getBoundingClientRect())
+        .find(group => group.top <= top + 1 && group.bottom > top);
+      const padding = Math.max(0, (head?.getBoundingClientRect().bottom ?? top) - top)
+        + (group?.height ?? 0);
+      if (!reveal && well.style.getPropertyValue("--object-list-scroll-head") === `${Math.ceil(padding)}px`) return;
+      const set = (name: string, value: number) => {
+        const px = `${Math.ceil(value)}px`;
+        if (well.style.getPropertyValue(name) !== px) well.style.setProperty(name, px);
+      };
+      set("--object-list-scroll-head", padding);
+      // At the end, a little paper lets the last reachable snap point land
+      // on a row edge too. It changes no pane allocation and adds no row.
+      const contentEnd = Math.max(0, ...[...well.children]
+        .filter(child => !["absolute", "fixed"].includes(getComputedStyle(child).position))
+        .map(child => child.getBoundingClientRect().bottom - top + well.scrollTop));
+      const end = contentEnd - well.clientHeight;
+      const stops = rows.map(row => row.getBoundingClientRect().top - box.top - well.clientTop + well.scrollTop - padding);
+      const last = stops.find(stop => stop >= end - .5);
+      set("--object-list-scroll-tail", end > 1 && last != null ? Math.max(0, last - end) : 0);
+      if (!reveal) return;
+      const row = rows.find(row => row.dataset.objectId === scrollTo);
+      const seat = JSON.stringify([scrollTo, well.clientWidth, well.clientHeight,
+        row?.getBoundingClientRect().height, rows.map(row => row.dataset.objectId)]);
+      if (seat === revealedSeat.current) return;
+      revealedSeat.current = seat;
+      const selected = row?.getBoundingClientRect();
+      if (selected && (selected.top < top + padding - 1 || selected.bottom > top + well.clientHeight + 1))
+        row?.scrollIntoView?.({block: "nearest", inline: "nearest"});
+    };
+    measure();
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => measure());
+    [list, well, head, rows[0], ...groups].forEach(node => { if (node) watch?.observe(node); });
+    let frame = 0;
+    const scrolled = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => measure(false)); };
+    well.addEventListener("scroll", scrolled, {passive: true});
+    return () => { watch?.disconnect(); well.removeEventListener("scroll", scrolled); cancelAnimationFrame(frame); };
+  }, [sorted, scrollTo]);
 
   // Enter OPENS on keydown (its native click prevented); every other
   // activation — pointer, Space, element.click(), assistive press — is ONE

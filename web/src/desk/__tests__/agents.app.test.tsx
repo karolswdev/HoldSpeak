@@ -434,6 +434,7 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped");
     selectRow("launch:launch_ag0_ghost");
     expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
+    expect(screen.getByTestId("conductor-receipt").textContent).toBe("The session stopped during restart; use Hand again.");
     expect(document.body.textContent).not.toContain("Working");
   });
 

@@ -739,7 +739,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             </div>
           ) : null}
           {reviewResult(member.review) ? <ReviewResult review={member.review} /> : null}
-          {!lane && !report && !screen && !latest ? <PaneNotice><span data-testid="conductor-receipt">{member.receipt ? plainReceipt(member.receipt) : "No activity yet."}</span></PaneNotice> : null}
+          {!lane && !report && !screen && !latest ? <PaneNotice><span data-testid="conductor-receipt">{member.flightState === "stopped_by_restart" ? "The session stopped during restart; use Hand again." : member.receipt ? plainReceipt(member.receipt) : "No activity yet."}</span></PaneNotice> : null}
           <DeskAnswerLine answer={member.deskAnswer} />
         </>
       )}

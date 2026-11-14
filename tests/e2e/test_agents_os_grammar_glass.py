@@ -7,7 +7,7 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows, clear_hub_windows_http
 from .conductor_rig import _seed
 
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents14r2"
+OUT = Path(os.environ.get("AGENTS_GLASS_OUT", str(Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents14r2")))
 PHASE = "before" if os.environ.get("AGENTS14_R2_BEFORE") else "after"
 TOKEN = "agents13"
 
@@ -76,11 +76,13 @@ def _whole_state_words(win) -> set[str]:
     measured=win.get_by_test_id("conductor-pill").evaluate_all("""els=>els.flatMap(el=>{
         const r=el.getBoundingClientRect(),well=el.closest('.object-list-rows'),box=well?.getBoundingClientRect();
         if(!box||!r.width||!r.height||r.bottom<=box.top||r.top>=box.bottom)return [];
-        return [{id:el.closest('[data-object-id]').getAttribute('data-object-id'),word:el.textContent,
+        const row=el.closest('[data-object-id]'),rect=row.getBoundingClientRect();
+        const edge=Math.max(box.top,...[...well.querySelectorAll('.object-list-group-label')].map(head=>head.getBoundingClientRect()).filter(r=>r.top<=box.top+1&&r.bottom>box.top).map(r=>r.bottom));
+        return [{id:row.getAttribute('data-object-id'),word:el.textContent,whole:rect.top>=edge-1&&rect.bottom<=box.bottom+1,
           fits:el.scrollWidth<=el.clientWidth+1&&[...el.querySelectorAll('span')].every(s=>s.scrollWidth<=s.clientWidth+1)}];
     })""")
     assert all(row["fits"] for row in measured), [row for row in measured if not row["fits"]]
-    return {row["id"] for row in measured}
+    return {row["id"] for row in measured if row["whole"]}
 
 
 def _read_the_fleet(page, win) -> None:
@@ -91,15 +93,15 @@ def _read_the_fleet(page, win) -> None:
     _settle(page)
     seen=_whole_state_words(win)
     first=True
-    while well.evaluate("el=>el.scrollTop+el.clientHeight<el.scrollHeight-1"):
+    while not expected <= seen:
         previous=well.evaluate("el=>el.scrollTop")
         well.evaluate("el=>{el.scrollTop+=Math.max(1,el.clientHeight*.75)}")
         _settle(page)
         if first:
             page.screenshot(path=str(OUT/f"scroll-55-{PHASE}-{900 if page.viewport_size['width']==1440 else 393}.png"))
             first=False
-        assert well.evaluate("el=>el.scrollTop") > previous, "The list must keep the owner's scroll"
         seen |= _whole_state_words(win)
+        assert well.evaluate("el=>el.scrollTop") > previous or expected <= seen, "The list must keep the owner's scroll until every row is read"
     assert expected <= seen, f"Rows not read: {expected-seen}"
     well.evaluate("el=>{el.scrollTop=0}")
     _settle(page)

@@ -52,7 +52,6 @@ export function ListPane({
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined" || !ref.current) return;
-    let previousSeat = "";
     const update = () => {
       const seat = ref.current;
       const grid = [
@@ -184,29 +183,6 @@ export function ListPane({
         pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
         seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
       }
-      const row = seat?.querySelector<HTMLElement>(
-        '[data-object-id][aria-selected="true"]',
-      );
-      const well = row?.closest<HTMLElement>(".object-list-rows");
-      // A column refit during scrolling must not pull the list back. Follow
-      // a changed selection, row order or available seat instead.
-      const pane = seat?.parentElement, layout = pane && getComputedStyle(pane);
-      const available = layout?.display === "grid"
-        ? [pane?.clientWidth, pane?.clientHeight, layout.gridTemplateColumns, layout.gridTemplateRows]
-        : [seat?.clientWidth, seat?.clientHeight];
-      const nextSeat = JSON.stringify([
-        row?.dataset.objectId, Boolean(grid), available,
-        [...(well?.querySelectorAll<HTMLElement>("[data-object-id]") ?? [])].map(row => row.dataset.objectId),
-      ]);
-      if (nextSeat === previousSeat) return;
-      previousSeat = nextSeat;
-      if (!row || !well) return;
-      const r = row.getBoundingClientRect(),
-        w = well.getBoundingClientRect();
-      const group = row.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
-      const top = w.top + (group?.getBoundingClientRect().height ?? 0);
-      if (r.bottom > w.bottom) well.scrollTop += r.bottom - w.bottom;
-      else if (r.top < top) well.scrollTop -= top - r.top;
     };
     const observer = new ResizeObserver(update);
     const mutations = new MutationObserver(update);
