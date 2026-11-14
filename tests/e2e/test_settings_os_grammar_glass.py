@@ -381,13 +381,13 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
                                 if tab != "Engines":
-                                    choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',tab.lower())
+                                    choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',tab.lower(),word=tab)
                                 _settle(page)
                                 shot(f"engines-library-{tab.lower()}")
                                 page.screenshot(path=str(lane_shots / f"10-engines-library-{tab.lower()}-{900 if width == 1440 else 393}.png"))
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
                             if only:
-                                choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',"engines")
+                                choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',"engines",word="Engines")
                                 # Reach the end of the recorded roster with long identities.
                                 for engine in detection["engines"]:
                                     expect(library.get_by_test_id(f"settings-engine-{engine.get('profileId') or engine['id']}")).to_have_count(1)
