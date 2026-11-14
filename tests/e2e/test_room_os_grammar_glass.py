@@ -166,7 +166,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 shot(win, tab.lower())
                 if tab == "Sources":
                     win.get_by_role("row", name="Jira account", exact=False).click()
-                    expect(win.get_by_text("Not available", exact=True)).to_be_visible()
+                    expect(win.locator(".surface-inspector-facts").get_by_text("Project name", exact=True)).to_have_count(0)
                     shot(win, "source-account-selected")
                     _verb(page, win, "Remove")
                     expect(win.get_by_role("button", name="Cancel", exact=True)).to_be_focused()

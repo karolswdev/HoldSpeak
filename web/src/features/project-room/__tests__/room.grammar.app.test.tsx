@@ -72,13 +72,13 @@ describe("Room selection grammar", () => {
     expect(roomReadingText(POLISH.brief.body_md)).toContain("Load test rerun · Owner Dana");
     expect(roomReadingText(POLISH.brief.body_md)).not.toContain("-- owner");
   });
-  it("shows a source name instead of an account key and says when its project name is unavailable", async () => {
+  it("shows the saved source facts and omits an unknown project name", async () => {
     wire(POLISH.room); mount();
     fireEvent.click(await screen.findByRole("tab", {name:"Sources"}));
     fireEvent.click(await row(/Jira account/));
     const facts = within(document.querySelector(".surface-inspector-facts") as HTMLElement);
-    expect(facts.getByText("Project name")).toBeVisible();
-    expect(facts.getByText("Not available")).toBeVisible();
+    expect(facts.queryByText("Project name")).toBeNull();
+    expect(facts.getByText("Jira", {exact: true})).toBeVisible();
     expect(screen.getByRole("grid", {name:"Sources"})).not.toHaveTextContent("team@example.com");
     press("Remove");
     expect(screen.getByRole("region", {name:"Remove Jira account?"})).not.toHaveTextContent("team@example.com");

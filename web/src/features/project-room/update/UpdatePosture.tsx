@@ -127,7 +127,6 @@ export function UpdatePosture({
                   { label: "Kind", value: kind },
                   { label: "From", value: ref.startsWith("item:") ? "Project plan" : refIdentityLabel(ref) },
                   { label: "Revision", value: revision },
-                  { label: "Read time", value: "Not supplied" },
                   { label: "Checked", value: checkedAt },
                 ],
                 open: refOpener(ref) ?? undefined,
