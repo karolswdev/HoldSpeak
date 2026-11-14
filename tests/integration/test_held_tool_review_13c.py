@@ -65,8 +65,8 @@ def test_request_body_is_frozen_and_its_count_is_not_disclosed_to_an_agent(peopl
     call.principal = Principal(PrincipalKind.AGENT, 'request-caller')
     owner = held_call_details(call, OWNER)
     caller = held_call_details(call, call.principal)
-    assert {'label': 'Commitment', 'value': 'hidden (secret)'} in caller['facts']
-    assert {'label': 'From', 'value': 'hidden (secret)'} in caller['facts']
+    assert {'label': 'Commitment', 'value': 'Hidden'} in caller['facts']
+    assert {'label': 'From', 'value': 'Hidden'} in caller['facts']
     assert owner['binding'] == caller['binding']
     assert 'Private request words' not in json.dumps(caller)
 
@@ -357,6 +357,6 @@ def test_every_declarations_hidden_parent_hides_children_from_the_caller(owner_o
         args = {'private': {'title': 'Private object title'}}
         assert ({'label': 'Private title', 'value': 'Private object title'} in _facts(schema, args, OWNER)) is owner_only
         facts = _facts(schema, args, caller)
-        assert {'label': 'Private', 'value': 'hidden (secret)'} in facts
+        assert {'label': 'Private', 'value': 'Hidden'} in facts
         assert not any(row['label'] == 'Private title' for row in facts), tool['name']
         assert 'Private object title' not in json.dumps(facts), tool['name']

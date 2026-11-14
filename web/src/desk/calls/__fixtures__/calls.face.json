@@ -25,12 +25,12 @@
         },
         {
           "label": "Through",
-          "value": "file"
+          "value": "File"
         }
       ],
       "binding": {
         "id": "send-plan",
-        "revision": "973d254852c1bfa6ccb33807cb9faf9dcf8abe808136dfc235e2f2ef0dc6d617"
+        "revision": "5f3d42d3da4b77cca93ccf5a838f8bb98d089c7c81186adf3b0e7b17bfc27441"
       },
       "label": "Send the platform plan to the team"
     },
@@ -88,12 +88,12 @@
             },
             {
               "label": "Through",
-              "value": "file"
+              "value": "File"
             }
           ],
           "binding": {
             "id": "send-plan",
-            "revision": "973d254852c1bfa6ccb33807cb9faf9dcf8abe808136dfc235e2f2ef0dc6d617"
+            "revision": "5f3d42d3da4b77cca93ccf5a838f8bb98d089c7c81186adf3b0e7b17bfc27441"
           },
           "label": "Send the platform plan to the team"
         },
@@ -225,7 +225,7 @@
         "effect": "sent"
       }
     ],
-    "note_ref": "note:note_e727f7c271c1",
+    "note_ref": "note:note_c027e373ea38",
     "project_ref": "",
     "outcome": "done",
     "ended_by": "holdspeak"
@@ -255,7 +255,7 @@
         "effect": "sent"
       }
     ],
-    "note_ref": "note:note_e727f7c271c1",
+    "note_ref": "note:note_c027e373ea38",
     "project_ref": "",
     "outcome": "done",
     "ended_by": "holdspeak",
@@ -307,7 +307,7 @@
             "effect": "sent"
           }
         ],
-        "note_ref": "note:note_e727f7c271c1",
+        "note_ref": "note:note_c027e373ea38",
         "project_ref": "",
         "outcome": "done",
         "ended_by": "holdspeak"
@@ -373,12 +373,12 @@
         },
         {
           "label": "Through",
-          "value": "file"
+          "value": "File"
         }
       ],
       "binding": {
         "id": "send-new-plan",
-        "revision": "7f1840a099619d6df73df98882fc44c26f617cf310e3d293d1bc1109dcad6178"
+        "revision": "bc925ca9ac9348e13f5d63811ff488228900d794d1074f56ad82941584af4e82"
       },
       "label": "Send the platform plan to the team"
     },

@@ -237,6 +237,8 @@ export interface ObjectListProps {
   columns?: readonly ObjectListColumn[];
   /** A names-only preference list needs no column caption. */
   headerless?: boolean;
+  /** A headerless list names its collection in its existing verb row. */
+  caption?: string;
   /** Window grammar: `dense` is the native list view (30 px rows). */
   density?: "default" | "dense";
   /** OS selection grammar: 26 px rows, no row verbs, one selected row. */
@@ -284,7 +286,7 @@ export function ObjectList({
   sort = { key: "name", dir: "asc" },
   visibleColumns,
   columns: declared,
-  headerless = false,
+  headerless = false, caption,
   density = "default",
   selection = false,
   verbs = [],
@@ -678,7 +680,7 @@ export function ObjectList({
           );
         })}
       </div> : null}
-      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
+      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner caption={caption} verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
       <div className="object-list-rows" role={groups ? "presentation" : "rowgroup"} ref={bodyRef}>
         <GadgetLabelContext.Provider value={true}>{groups ? <>
           {groups.map(group => {
@@ -770,8 +772,8 @@ function listVerbButton(verb: ListVerb, row: ObjectListRow | null, onItems: (eve
 }
 
 /** The shared strip measures its verbs before folding them into one menu. */
-function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries, menuEntries = [], trailingEntries = [] }: {
-  label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[]; menuEntries?: WorkMenuEntry[]; trailingEntries?: WorkMenuEntry[];
+function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, caption, verbs, entries, menuEntries = [], trailingEntries = [] }: {
+  label: string; caption?: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[]; menuEntries?: WorkMenuEntry[]; trailingEntries?: WorkMenuEntry[];
 }) {
   const { ref: findRef, fits: scopeFits } = useStripFit<HTMLSpanElement>(Boolean(scopes.length), scopes.map(scope => `${scope.id}:${scope.kind === "tick" ? scope.checked : scope.value}`).join("|"));
   const [narrow, setNarrow] = useState(false);
@@ -835,6 +837,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     {trailing && !(narrow && trailingEntries.length) ? <span className="object-list-find"><SelectionFieldContext.Provider value={true}>{trailing}</SelectionFieldContext.Provider></span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
     <span ref={ref} className="object-list-toolbar-strip">{[...buttons.slice(0,shown).filter(stop), viewFits ? view : null, ...buttons.slice(0,shown).filter(button => !stop(button))]}{folded.length ? more : null}</span>
+    {caption ? <span className="object-list-caption">{caption}</span> : null}
     <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>{VERB_OVERFLOW_WORD} ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}

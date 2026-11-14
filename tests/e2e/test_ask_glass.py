@@ -25,6 +25,121 @@ NOTE_ID, NOTE = "n-mira", "1:1 with Mira"
 ICON = f".desk-screen [data-object-id='note:{NOTE_ID}']"
 
 
+# Deliberately longer than the owner's Tuesday material, including Markdown
+# blocks and an unbroken identifier. This is model-stub text, not live inference.
+LONG_TOKEN = "architecture_checkpoint_" + "x" * (180 - len("architecture_checkpoint_"))
+LONG_SCOPE = "Review the platform recovery point, retained draft, migration result and next owner action before an architecture team signs the deployment checkpoint"
+PATH_SCOPE = "web/src/desk/components/architecture/reviews/" + "checkpoint_" * 10 + "AskWorkspace.tsx"
+
+
+def _shaped_answer():
+    return "\n".join([
+        "## Platform checkpoint", "", "Review the rollback plan and keep the approved recovery point until the review is complete.", "",
+        "| Check | Owner | Result |", "| --- | --- | --- |",
+        "| Migration | Mira | Review the rollback record |", "| Recovery | Karol | Keep the checkpoint |", "",
+        "```sh", "git status --short", f"checkpoint={LONG_TOKEN}", "```", "",
+        *[f"Checkpoint {n}: record the observed result, the owner and the next review date.  " for n in range(1, 43)],
+        "", "### Next step", "", "Keep the checkpoint until the review is complete.",
+    ])
+
+
+def _stored_long_thread(db, template):
+    """Exercise the real ledger and its public read, rather than forge messages."""
+    from holdspeak.services.thread_service import ThreadService
+    thread = db.threads.create_thread(title="What do I owe Mira this week?")
+    parent = None
+    refs = template["thread"]["refs"]
+    for n in range(30):
+        for role, text in [("user", "When should I tell her?" if n == 29 else f"What do I owe Mira at checkpoint {n + 1}?"), ("assistant", _shaped_answer())]:
+            message = db.threads.append_message(thread.id, role=role, parent_id=parent)
+            db.threads.append_part(message.id, kind="text", text=text)
+            db.threads.complete_message(message.id)
+            parent = message.id
+            matching = [ref for ref in refs if ref["origin"] == ("reference" if role == "user" else "relevance")]
+            # Each original frozen reference already came from the Ask producer.
+            if matching:
+                db.threads.freeze_refs(thread.id, message.id, [matching[0]])
+    service = ThreadService(db, broadcast=lambda *_: None)
+    return {"thread": service.get(thread.id), "recent": {"threads": service.list_threads()}, "first": {"thread_id": thread.id}}
+
+
+def _seat_failures(win, width):
+    """All visible text/rows are whole; offscreen content remains scrollable."""
+    return win.evaluate(r"""(win, width) => {
+      const failures=[];
+      const mast=win.querySelector('.surface-mast-facts');
+      if (!mast?.textContent?.trim()) failures.push('The Mast scope is blank');
+      const about=win.querySelector('[data-testid=ask-context]');
+      if (width===393 && (!about || !about.getBoundingClientRect().width || about.closest('[inert]'))) failures.push('About is absent from the verb row');
+      const edge=el=>{const box=el.getBoundingClientRect(), clip=getComputedStyle(el).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(' ').map(parseFloat);return {top:box.top+(clip?.[0]||0),bottom:box.bottom+(clip?.length===1?-clip[0]:-(clip?.[2]??clip?.[0]??0))};};
+      const reading=win.querySelector('.surface-object-reading');
+      if(reading?.getBoundingClientRect().height) {
+        const box=edge(reading), walker=document.createTreeWalker(reading,NodeFilter.SHOW_TEXT);
+        let cut=false;
+        for(let node=walker.nextNode();node;node=walker.nextNode()) {
+          if(!node.textContent.trim() || node.parentElement.closest('[aria-hidden=true]')) continue;
+          const range=document.createRange(), rects=[];
+          if(node.parentElement.closest('pre') && node.textContent.includes('\n')) {
+            let from=0; for(const line of node.textContent.split('\n')) {range.setStart(node,from);range.setEnd(node,from+line.length);rects.push(...range.getClientRects());from+=line.length+1;}
+          } else {range.selectNodeContents(node);rects.push(...range.getClientRects());}
+          if(rects.some(r=>(r.top<box.bottom-.5 && r.bottom>box.bottom+.5) || (r.top<box.top-.5 && r.bottom>box.top+.5))) cut=true;
+        }
+        if(cut) failures.push('The reader has a partial text line at an edge');
+        if([...reading.querySelectorAll('.object-list-row')].map(row=>row.getBoundingClientRect()).some(r=>r.height<=reading.getBoundingClientRect().height && ((r.top<box.bottom-.5 && r.bottom>box.bottom+.5) || (r.top<box.top-.5 && r.bottom>box.top+.5)))) failures.push('The reader has a partial embedded selection row');
+      }
+      const held=win.querySelector('[data-testid=ask-hold]');
+      if (held) {
+        const box=held.getBoundingClientRect(), composer=win.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect(), mast=win.querySelector('.surface-mast').getBoundingClientRect();
+        if(box.top<mast.bottom-1 || box.bottom>composer.top+1) failures.push('The held question leaves its seat');
+        for (const button of held.querySelectorAll('.surface-inspector-actions button')) {const rect=button.getBoundingClientRect();if(rect.top<box.top-.5 || rect.bottom>box.bottom+.5 || rect.bottom>composer.top+.5) failures.push('A held answer leaves its seat');}
+        const fields=held.querySelector('.surface-inspector-fields');
+        if(fields) {const edgeBox=edge(fields);if([...fields.querySelectorAll('.gadget-row')].some(row=>{const r=row.getBoundingClientRect();return r.top<edgeBox.bottom-.5 && r.bottom>edgeBox.bottom+.5;})) failures.push('Held facts end in a partial row');}
+        for (const row of held.querySelectorAll('.gadget-row')) {
+          const value=row.querySelector('.gadget-row-gadget')?.textContent?.trim()||'';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(value)) failures.push('A held fact has an ISO date');
+          if (/^hidden \(/.test(value)) failures.push('A held fact shows the private-kind label');
+          if(row.querySelector('.gadget-row-label')?.textContent?.toLowerCase().endsWith('kind') && /^[a-z]/.test(value)) failures.push('The source kind is not sentence case');
+        }
+      }
+      const prompts=win.querySelector('[role=grid][aria-label="From your desk now"] .object-list-rows');
+      if(prompts?.getBoundingClientRect().height) {
+        const box=edge(prompts), row=prompts.querySelector('[data-object-id]')?.getBoundingClientRect();
+        if(row && (row.top<box.top-.5 || row.bottom>box.bottom+.5)) failures.push('The first suggested question is not a whole row');
+      }
+      const sources=win.querySelector('[data-testid=ask-looked-at] .object-list-rows');
+      if(sources?.getBoundingClientRect().height) {
+        const box=edge(sources), seat=sources.closest('[data-testid=ask-looked-at]').getBoundingClientRect();box.bottom=Math.min(box.bottom,seat.bottom);const rows=[...sources.querySelectorAll('[data-object-id]')].map(r=>r.getBoundingClientRect());
+        if(rows.some(r=>r.top<box.bottom-.5 && r.bottom>box.bottom+.5)) failures.push('Sources ends in a partial row');
+        if([...sources.querySelectorAll('[data-col=fact]')].some(cell=>cell.textContent.trim() && !cell.getBoundingClientRect().width)) failures.push('A source fact is hidden');
+        if(width===1440 && rows.filter(r=>r.top>=box.top-.5 && r.bottom<=box.bottom+.5).length<Math.min(3,rows.length)) failures.push('Sources has fewer than three whole rows');
+      }
+      const sourceSeat=win.querySelector('[data-testid=ask-looked-at]');
+      if(sourceSeat && reading?.getBoundingClientRect().height) {
+        const sr=sourceSeat.getBoundingClientRect(), rr=reading.closest('.surface-object-reader').getBoundingClientRect();
+        if(sr.top<rr.bottom-1) failures.push('Sources is not below the answer');
+        const pane=sourceSeat.closest('.surface-list-pane');
+        if(pane && rr.height<pane.getBoundingClientRect().height*.6-1) failures.push('The answer has less than 60 percent of its seat');
+        if(width===393 && !sourceSeat.querySelector('[aria-expanded]')) failures.push('Compact Sources has no reveal');
+        const trigger=sourceSeat.querySelector('[aria-expanded]'), opener=sourceSeat.querySelector('[data-list-verb=open-source]');
+        if(width===393 && trigger && opener && opener.getBoundingClientRect().top<trigger.getBoundingClientRect().bottom+7.5) failures.push('Source controls touch');
+        const rows=sourceSeat.querySelector('.object-list-rows'), bar=sourceSeat.querySelector('.object-list-inner-toolbar,.object-list-verbs');
+        if(rows && bar) {
+          const box=edge(rows), visible=[...rows.querySelectorAll('[data-object-id]')].map(row=>row.getBoundingClientRect()).find(r=>r.top>=box.top-.5 && r.bottom<=Math.min(box.bottom,sr.bottom)+.5);
+          if(width===1440 && visible && visible.top>bar.getBoundingClientRect().bottom+2) failures.push('A gap precedes the first Source row');
+        }
+        if(width===1440) {const recent=win.querySelector('[data-testid=ask-recent] .object-list');if(recent?.getBoundingClientRect().width<win.getBoundingClientRect().width*.35) failures.push('Recent lost its previous width');}
+      }
+      if(!win.querySelector('[data-testid=ask-conversation]')) for(const b of win.querySelectorAll('[data-testid=ask-actions] button:disabled')) if(/^(Save as note|Make it a task|Send|Copy)/.test(b.textContent.trim())) failures.push('An empty ask shows an answer-only verb');
+      for(const pre of win.querySelectorAll('pre.reading-code')) {
+        const label=pre.querySelector('.reading-language'), code=pre.querySelector('code');
+        if(label && code && reading?.getBoundingClientRect().height) {const r=edge(reading), l=label.getBoundingClientRect();const first=document.createRange();first.setStart(code.firstChild,0);first.setEnd(code.firstChild,code.textContent.split('\n')[0].length);const c=first.getBoundingClientRect();if(l.top>=r.top && l.bottom<=r.bottom && c.top>=r.bottom) failures.push('A code block shows only its language');}
+      }
+      const scope=document.querySelector('[data-testid=ask-scope-menu] .object-list-rows');
+      if(scope) {const box=edge(scope), rows=[...scope.querySelectorAll('[data-object-id]')];if(rows.length && !scope.getBoundingClientRect().height) failures.push('The scope rows have no visible seat');if(rows.some(row=>{const r=row.getBoundingClientRect();return r.top<box.bottom-.5 && r.bottom>box.bottom+.5;})) failures.push('The scope search ends in a partial row');}
+      return failures;
+    }""", width)
+
+
 @pytest.fixture
 def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     _ensure_build()
@@ -62,7 +177,7 @@ def test_1440_a_screen_note_dropped_on_ask_becomes_an_about_chip(hub: str) -> No
             body = page.get_by_test_id("ask-body")
             body.wait_for(timeout=T)
             about = page.get_by_test_id("ask-context")
-            assert "My whole desk" in about.inner_text()
+            assert "My whole desk" in about.get_attribute("title")
             # The window opens over the Screen's icons: move it by its title
             # strip until the note's icon is clear.
             icon_box = page.locator(ICON).bounding_box()
@@ -80,9 +195,9 @@ def test_1440_a_screen_note_dropped_on_ask_becomes_an_about_chip(hub: str) -> No
             assert moved and moved["y"] > icon_box["y"] + icon_box["height"], (icon_box, moved)
             page.locator(ICON).drag_to(body)
             page.wait_for_function(
-                "note => (document.querySelector('[data-testid=\"ask-context\"]')?.textContent || '').includes(note)",
+                "note => (document.querySelector('[data-testid=\"ask-context\"]')?.title || '').includes(note)",
                 arg=NOTE, timeout=T)
-            assert "My whole desk" not in about.inner_text()
+            assert "My whole desk" not in about.get_attribute("title")
             assert not errors, errors
         finally:
             browser.close()
@@ -108,16 +223,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     from .engine_stub_rig import _StubHandler, completion_reply
     from .glass_infra import _settle, clear_hub_windows
 
-    answer = (
-        "## Platform checkpoint\n\nReview the rollback plan with Mira on Friday.\n\n"
-        "### Review order\n\n- Confirm the recovery point.\n- Check the data migration.\n"
-        "- Keep the current deployment available.\n\n"
-        "### Rollback command\n\n```sh\ngit status --short\n```\n\n"
-        "### Review notes\n\n" + "\n\n".join(
-            f"Checkpoint {n}: record the observed result, the owner and the next review date."
-            for n in range(1, 9)
-        ) + "\n\n### Next step\n\nKeep the checkpoint until the review is complete."
-    )
+    answer = _shaped_answer()
     release, started = threading.Event(), threading.Event()
     requests: list[dict] = []
 
@@ -146,7 +252,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     threading.Thread(target=model.serve_forever, daemon=True).start()
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask14")
+    shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     try:
         with sync_playwright() as pw:
@@ -249,7 +355,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 }""")
                 assert measure["font"] >= 14 and measure["line"] >= 21, measure
                 assert measure["width"] <= 760, measure
-                expect(window.locator("[data-testid=ask-turn] pre code")).to_have_text("git status --short")
+                expect(window.locator("[data-testid=ask-turn] pre code")).to_have_text(f"git status --short\ncheckpoint={LONG_TOKEN}")
                 assert reading.evaluate("el => el.scrollHeight > el.clientHeight"), "Long material must scroll in its reading viewport"
                 # Text selection and scrolling must not hide the composer.
                 expect(editor).to_be_in_viewport()
@@ -305,9 +411,14 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     hold, thread, tools = tapes["ask.hold"], tapes["ask.thread"], tapes["ask.tools"]
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask14")
+    from holdspeak.db import get_database
+    thread = _stored_long_thread(get_database(), thread)
+    answer_count = sum(message["role"] == "assistant" for message in thread["thread"]["messages"])
+    hold["answer"]["output"] = _shaped_answer()
+    shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     pending, decisions = [], []
+    seat_failures = []
     note_fail = [True]
     try:
         with sync_playwright() as pw:
@@ -352,17 +463,21 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             def shot(state):
                 _settle(page)
                 page.screenshot(path=str(shots / f"checks-{state}-{stage}-{900 if width == 1440 else 393}.png"))
+                seat_failures.extend((state, reason) for reason in _seat_failures(win, width))
+                if state == "thread-open" and not win.locator(".surface-object-reading").evaluate("el => {const r=el.getBoundingClientRect(), h=[...el.querySelectorAll('[data-testid=ask-turn] > h3')].at(-1).getBoundingClientRect();return h.top>=r.top-1 && h.bottom<=r.bottom+1;}"):
+                    seat_failures.append((state, "The thread opens past its newest question"))
                 expect(win.locator(".surface-mast-title")).to_have_count(1)
                 if width == 1440:
                     box = win.bounding_box()
                     assert box and box["width"] == 900 and box["height"] == 600, box
-                expect(editor).to_be_in_viewport()
+                if win.get_by_test_id("ask-reading").is_visible():
+                    expect(editor).to_be_in_viewport()
                 toolbar = win.get_by_test_id("ask-actions")
                 assert toolbar.evaluate("el => {const r=el.getBoundingClientRect(); const buttons=[...el.querySelectorAll(':scope > .kit-toolbar-verbs button')].filter(b=>b.getBoundingClientRect().width && !b.closest('[inert]'));return buttons.every(b=>{const x=b.getBoundingClientRect();return x.top>=r.top && x.bottom<=r.bottom && Math.abs(x.top-buttons[0].getBoundingClientRect().top)<2;});}")
                 sources = win.get_by_test_id("ask-looked-at")
                 if sources.count() and win.get_by_test_id("ask-reading").is_visible():
                     expect(sources).to_be_visible()
-                    assert sources.evaluate("el => {const r=el.getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('[data-object-id], button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
+                    assert sources.evaluate("el => {if(!el.querySelector('[role=grid]'))return true;const r=el.querySelector('[role=grid]').getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
 
@@ -382,16 +497,26 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             row.click()
             shot("recent-selected") if width == 1440 else page.screenshot(path=str(shots / f"checks-recent-selected-{stage}-393.png"))
             row.press("Enter")
-            expect(win.get_by_test_id("ask-turn")).to_have_count(2)
+            expect(win.get_by_test_id("ask-turn")).to_have_count(answer_count)
             shot("thread-open")
-            verb("Answer: 2").click()
+            verb(f"Answer: {answer_count}").click()
             shot("answer-menu")
-            page.get_by_role("menuitem", name="2. When should I tell her?", exact=True).click()
-            if width == 1440:
-                verb("Recent").click()
-                shot("recent-folded")
-                verb("Recent").click()
-                shot("recent-restored")
+            last_answer = page.get_by_role("menuitem", name=f"{answer_count}. When should I tell her?", exact=True)
+            if not last_answer.evaluate("el => {const r=el.closest('[role=menu]').getBoundingClientRect(), w=document.querySelector('[id=ask][data-layer=window]').getBoundingClientRect();return r.top>=w.top && r.bottom<=w.bottom;}"):
+                seat_failures.append(("answer-menu", "The answer menu leaves the viewport"))
+            last_answer.focus()
+            shot("answer-menu-tail")
+            if not last_answer.evaluate("el => {const r=el.getBoundingClientRect(), m=el.closest('[role=menu]').getBoundingClientRect();return r.top>=m.top && r.bottom<=m.bottom && r.top>=0 && r.bottom<=innerHeight;}"):
+                seat_failures.append(("answer-menu-tail", "The last answer cannot scroll into view"))
+            last_answer.press("Enter")
+            verb("Recent").click()
+            shot("recent-folded" if width == 1440 else "recent-restored")
+            verb("Recent").click()
+            shot("recent-restored" if width == 1440 else "recent-folded")
+            reveal = win.get_by_role("button", name=re.compile(r"^Sources(?: |$)"))
+            if width == 393: shot("sources-folded")
+            if reveal.count() and reveal.get_attribute("aria-expanded") == "false": reveal.click()
+            if width == 393: shot("sources-open")
             source = win.get_by_test_id("ask-looked-at").last.get_by_role("row", name=re.compile("1:1 with Mira"))
             source.click()
             shot("source-selected")
@@ -399,7 +524,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             shot("source-menu")
             assert page.get_by_role("menu", name="Sources actions").evaluate("el => {const m=el.getBoundingClientRect(), r=document.querySelector('[data-testid=ask-looked-at] [aria-selected=true]')?.getBoundingClientRect();return r && (m.top>=r.bottom-1 || m.bottom<=r.top+1);}")
             page.keyboard.press("Escape")
-            verb(re.compile("^About:")).click()
+            verb("About").click()
             popup = page.get_by_test_id("ask-scope-menu")
             expect(popup).to_be_visible()
             shot("scope-open")
@@ -415,7 +540,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             verb("Save as note").click()
             expect(win.get_by_role("button", name="Retry", exact=True)).to_be_visible()
             shot("save-failed")
-            assert reading.evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3')?.getBoundingClientRect();return !head || head.top>=r.top-1;}")
+            assert reading.evaluate("el => el.scrollHeight > el.clientHeight")
             reading.evaluate("el => el.scrollTop = el.scrollHeight")
             shot("save-failed-tail")
             assert reading.evaluate("el => {const r=el.getBoundingClientRect(), tail=el.querySelector('article:last-child .reading-document')?.lastElementChild?.getBoundingClientRect();return tail && tail.bottom<=r.bottom+1;}")
@@ -431,6 +556,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             editor.press("Enter")
             expect(win.get_by_test_id("run-line")).to_be_visible()
             assert pending
+            shot("asking")
             server.broadcast("ask_progress", hold["hold"])
             expect(win.get_by_test_id("ask-hold")).to_be_visible()
             shot("held")
@@ -446,7 +572,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             shot("held-failed")
             for name in ["Deny", "Allow once"]:
                 bounds = question.get_by_role("button", name=name, exact=True).evaluate("""el => {
-                  const r=el.getBoundingClientRect(), well=el.closest('.surface-object-reading').getBoundingClientRect();
+                  const r=el.getBoundingClientRect(), well=el.closest('.surface-pane-inspector').getBoundingClientRect();
                   return {inside:r.top>=well.top && r.bottom<=well.bottom, button:r.toJSON(), well:well.toJSON()};
                 }""")
                 assert bounds["inside"], bounds
@@ -469,6 +595,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             pending.pop().fulfill(status=tapes["ask.no-engine"]["status"], json=tapes["ask.no-engine"]["refusal"])
             expect(win.get_by_test_id("ask-not-answered")).to_be_visible()
             shot("no-engine")
+            assert not seat_failures, seat_failures
             browser.close()
     finally:
         server.stop()
@@ -501,6 +628,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
     # Sentence names, path- and code-led names, and an unbroken identifier.
     names = [f"{lead} — keep the approved deployment available while the architecture review checks the recovery point, migration result, retained draft and next owner action for the platform team {n:02d}"
              for n, lead in enumerate(["web/src/desk/components/AskWorkspace.tsx", "`held_call_details`", "architecture_review_checkpoint_" + "a" * 96] * 17)][:50]
+    names[0], names[1] = LONG_SCOPE, PATH_SCOPE
     notes = [primitives.create_note(owner, note_id=f"ask-long-{n}", title=name, body_markdown="Keep the recovery point until the review is complete.") for n, name in enumerate(names)]
     for name in names:
         db.threads.create_thread(title=name)
@@ -508,10 +636,11 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
     wire = Path(__file__).resolve().parents[2] / "web/src/test/wire"
     tools = json.loads((wire / "ask.tools.wire.json").read_text())
     # These names and ids come from the same real note producer as the desk.
-    answer = {**tools["answer"], "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
-    shots = evidence_dir("ask14")
+    answer = {**tools["answer"], "output": _shaped_answer(), "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
+    shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     pending, recent_requests = [], []
+    seat_failures = []
     delay_recent = [False]
     invocation = "ask_" + "c" * 32
     try:
@@ -540,6 +669,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             def shot(state):
                 _settle(page)
                 page.screenshot(path=str(shots / f"{state}-{stage}-{900 if width == 1440 else 393}.png"))
+                seat_failures.extend((state, reason) for reason in _seat_failures(win, width))
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert not errors, errors
 
@@ -573,7 +703,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
 
             for tool, args, state in [
                 ("thread.set_status", {"thread_id": "ask-facts", "text": "Reading sources"}, "9-held-undeclared"),
-                ("door.add_item", {"task": "Review the platform recovery point", "owner": "Me", "due": "2026-11-20"}, "9-held-task"),
+                ("door.add_item", {"task": "Review the platform recovery point", "owner": "Me", "due": "2026-11-20", "source_type": "meeting", "source_ref": "private-source"}, "9-held-task"),
             ]:
                 handle = ToolCallHandle(call_id=state, thread_id="ask-facts", turn_operation_id=invocation,
                                         name=tool, args=args, tool_class="effect_proposal", sensitive=False,
@@ -586,8 +716,29 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
                 expect(question).to_be_visible()
                 for fact in details["facts"]:
                     expect(question.get_by_text(fact["label"], exact=True)).to_be_visible()
-                    expect(question.get_by_text(fact["value"], exact=True)).to_be_visible()
+                    expect(question.get_by_text("Nov 20" if fact["label"] == "Due" else fact["value"], exact=True)).to_be_visible()
                 shot(state)
+                if state == "9-held-task":
+                    fields = question.locator(".surface-inspector-fields")
+                    fields.evaluate("el => el.scrollTop = el.scrollHeight")
+                    shot("9-held-task-tail")
+                    fields.evaluate("el => el.scrollTop = 0")
+            page.route("**/api/threads/*/decide", lambda route: route.fulfill(status=503, json={}))
+            authority = json.loads((wire / "ask.held-authority.wire.json").read_text())["held"]
+            server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [authority]})
+            expect(win.get_by_test_id("ask-hold").get_by_text("Authority binding", exact=True)).to_be_visible()
+            shot("9-held-authority")
+            reading = win.get_by_test_id("ask-hold").locator(".surface-inspector-fields")
+            reading.evaluate("el => el.scrollTop = 0")
+            shot("9-held-authority-head")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("9-held-authority-tail")
+            win.get_by_test_id("ask-hold").get_by_role("button", name="Allow once", exact=True).click()
+            expect(win.get_by_test_id("ask-hold").get_by_text("Answer not sent. Try again.", exact=True)).to_be_visible()
+            reading.evaluate("el => el.scrollTop = 0")
+            shot("9-held-authority-failed-head")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("9-held-authority-failed-tail")
             send = json.loads((wire.parents[1] / "desk/calls/__fixtures__/calls.face.json").read_text())["held"]["hold"]
             server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [send]})
             expect(win.get_by_test_id("ask-hold").get_by_text("the team", exact=True)).to_be_visible()
@@ -595,9 +746,26 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             pending.pop().fulfill(json=answer)
             expect(win.get_by_test_id("ask-turn")).to_be_visible()
             shot("3-many-sources")
+            code = win.locator("pre.reading-code").first
+            well = win.locator(".surface-object-reading")
+            well.evaluate("(el, top) => el.scrollTop += top-el.getBoundingClientRect().top", code.evaluate("el=>el.getBoundingClientRect().top"))
+            shot("4-code")
+            assert code.locator("code").inner_text().startswith("git status --short")
+            horizontal = code.locator("..")
+            assert horizontal.evaluate("el=>el.scrollWidth>el.clientWidth"), "The long code token needs its own horizontal seat"
+            horizontal.evaluate("el=>el.scrollLeft=el.scrollWidth")
+            assert horizontal.evaluate("el=>el.scrollLeft>0")
+            shot("4-code-tail")
+            horizontal.evaluate("el=>el.scrollLeft=0")
+            well.evaluate("el=>el.scrollTop=0")
             expect(editor).to_be_in_viewport()
-            assert win.locator(".surface-object-reading").evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3').getBoundingClientRect(); return head.top>=r.top && head.bottom<=r.bottom;}")
+            if not win.locator(".surface-object-reading").evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3').getBoundingClientRect(); return head.top>=r.top && head.bottom<=r.bottom;}"):
+                seat_failures.append(("3-many-sources", "The answer opens past its question"))
             sources = win.get_by_test_id("ask-looked-at")
+            reveal = sources.get_by_role("button", name=re.compile(r"^Sources(?: |$)"))
+            if width == 393: shot("3-sources-folded")
+            if reveal.count() and reveal.get_attribute("aria-expanded") == "false": reveal.click()
+            if width == 393: shot("3-sources-open")
             assert sources.locator("[data-object-id]").count() == len(notes)
             sources.locator("[data-object-id]").last.click()
             expect(sources.get_by_role("button", name="Open source", exact=True)).to_be_enabled()
@@ -621,6 +789,26 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             })
             expect(win.get_by_test_id("ask-selected-passage")).to_be_visible()
             shot("2-source-quote")
+            # Pinned scope without selected text must still name the same note.
+            win.get_by_role("button", name="Clear quote", exact=True).click()
+            shot("2-pinned-scope")
+            verb(re.compile("^About")).press("Enter")
+            shot("2-pinned-scope-open")
+            page.keyboard.press("Escape")
+            page.evaluate("source => window.dispatchEvent(new CustomEvent('holdspeak:ask-selection', {detail: source}))", {
+                "noteRef": "note:ask-long-1", "text": "Keep the recovery point until the review is complete.",
+                "body": "Keep the recovery point until the review is complete.",
+                "range": {"from": 0, "to": 52, "text": "Keep the recovery point until the review is complete."},
+                "windowId": "pullout:note:ask-long-1", "scrollTop": 0,
+                "source": {"id": "ask-long-1", "kind": "note", "title": names[1], "ref": "note:ask-long-1"},
+            })
+            shot("2-path-scope")
+            verb(re.compile("^About")).press("Enter")
+            shot("2-path-scope-open")
+            page.get_by_test_id("ask-scope-menu").get_by_role("textbox", name="Find a meeting, note, person").fill("review")
+            shot("2-scope-roster")
+            page.keyboard.press("Escape")
+            assert not seat_failures, seat_failures
             browser.close()
     finally:
         server.stop()

@@ -104,7 +104,7 @@ function MastText({children,compact,framed,heading=false,stateKey}:{children:Rea
       if (!heading) {
         const parts = text.split(/\s*·\s*/);
         while (parts.length && !fits(parts.join(" · "))) parts.pop();
-        setShown(parts.length === text.split(/\s*·\s*/).length ? null : parts.join(" · "));
+        setShown(parts.length === text.split(/\s*·\s*/).length ? null : parts.length ? parts.join(" · ") : fitName(text.split(/\s*·\s*/)[0], Math.max(4, Math.floor(room / measure.average)), 1, fits, "end")[0]);
         return;
       }
       // Retain the full title's natural seat while fitting its visible words.

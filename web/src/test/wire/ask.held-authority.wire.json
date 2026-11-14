@@ -1,0 +1,82 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_ask_held_words.py::test_a_long_held_authority_is_recorded_for_ask (isolated HOME). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "held": {
+  "call_id": "facts-call",
+  "tool": "agent.hand",
+  "words": "Hand an item to an agent",
+  "facts": [
+   {
+    "label": "Control",
+    "value": "Secure",
+    "redact": true
+   },
+   {
+    "label": "Files",
+    "value": "Work folder; more files need approval",
+    "redact": true
+   },
+   {
+    "label": "Commands",
+    "value": "Tool commands ask before they run",
+    "redact": true
+   },
+   {
+    "label": "Desk",
+    "value": "Ask before Desk writes",
+    "redact": true
+   },
+   {
+    "label": "Network",
+    "value": "No",
+    "redact": true
+   },
+   {
+    "label": "Folder",
+    "value": "/tmp/rig/hs-action-ai_1",
+    "redact": true
+   },
+   {
+    "label": "For",
+    "value": "Codex CLI",
+    "redact": true
+   },
+   {
+    "label": "Until",
+    "value": "Until this agent stops; Desk grants last at most 12 hours",
+    "redact": true
+   },
+   {
+    "label": "Authority binding",
+    "value": "Hidden"
+   },
+   {
+    "label": "Kind",
+    "value": "Action"
+   },
+   {
+    "label": "Item",
+    "value": "Hidden"
+   },
+   {
+    "label": "Requested agent",
+    "value": "Hidden"
+   },
+   {
+    "label": "Project",
+    "value": "Hidden"
+   },
+   {
+    "label": "Resolved Project",
+    "value": "Hidden"
+   },
+   {
+    "label": "Allowed",
+    "value": "Start or resume one agent for this item"
+   }
+  ],
+  "binding": {
+   "id": "facts-call",
+   "revision": "ca96622ecc5f21176320ff900447acae0b821c795e26f03d5643303c82bc5edd"
+  }
+ }
+}

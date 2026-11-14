@@ -87,7 +87,6 @@ def resolve_held_call(handle: Any, schema: Any = None) -> dict[str, Any]:
 
 
 HELD_FACT_VALUE_LIMIT = 160
-_PRIVATE_KINDS = {"secret", "token", "credential", "file bytes"}
 
 
 
@@ -119,26 +118,28 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
         value = row["value"] if "value" in row else _path(args, present[0])
         kind = row.get("kind")
         if _owner_private(row, args, reader):
-            value = "hidden (secret)"
+            value = "Hidden"
         elif kind != "text":
-            value = f"hidden ({kind if isinstance(kind, str) and kind in _PRIVATE_KINDS else 'secret'})"
+            value = "Hidden"
         elif not row.get("label"):
             value = "not described"
         else:
             if row.get("read"):
                 value = _named_value(row["read"], args, reader, reads)
                 if type(value) not in (str, int, float, bool) or value == "":
-                    value = "hidden (secret)"
+                    value = "Hidden"
             if row.get("format") == "prompt" and isinstance(value, str):
                 # Every part is short, but the owner must read the whole command.
                 parts = [value[i:i + HELD_FACT_VALUE_LIMIT] for i in range(0, len(value), HELD_FACT_VALUE_LIMIT)] or [""]
                 facts.extend({"label": row["label"] + (f" {i + 1}" if len(parts) > 1 else ""),
                               "value": part, "redact": True} for i, part in enumerate(parts))
                 continue
-            if row.get("format") and value != "hidden (secret)":
+            if row.get("format") and value != "Hidden":
                 value = _formatted(row["format"], value)
             elif type(value) not in (str, int, float, bool):
                 value = "not described"
+        if (str(row.get("label", "")).lower().endswith("kind") or row.get("label") == "Through") and isinstance(value, str) and value != "Hidden":
+            value = value[:1].upper() + value[1:].replace("_", " ")
         value = str(value)
         if len(value) > HELD_FACT_VALUE_LIMIT:
             value = value[:HELD_FACT_VALUE_LIMIT - 1] + "…"
@@ -157,11 +158,11 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
             if name is not None:
                 facts.extend(_facts(_tool_schema(name), payload, reader))
             else:
-                facts.append({"label": "Inputs", "value": "hidden (secret)"})
+                facts.append({"label": "Inputs", "value": "Hidden"})
     if not facts:
         facts.append({"label": "Write details", "value": "not described"})
     elif _uncovered(args, "", covered):
-        facts.append({"label": "Other fields", "value": "hidden (secret)"})
+        facts.append({"label": "Other fields", "value": "Hidden"})
     return facts
 
 
@@ -170,33 +171,33 @@ def _formatted(kind: str, value: Any) -> str:
     if kind == "subject_line":
         return value.splitlines()[0] if isinstance(value, str) and value.splitlines() else ""
     if kind == "body_word_count":
-        return f"{len(' '.join(value.splitlines()[1:]).split())} words" if isinstance(value, str) else "hidden (secret)"
+        return f"{len(' '.join(value.splitlines()[1:]).split())} words" if isinstance(value, str) else "Hidden"
     if kind == "egress":
         return _formatted("host", value) if value else "none"
     if kind == "word_count":
-        return f"{len(value.split())} words" if isinstance(value, str) else "hidden (secret)"
+        return f"{len(value.split())} words" if isinstance(value, str) else "Hidden"
     if kind == "utf8_bytes":
-        return f"{len(value.encode('utf-8'))} bytes" if isinstance(value, str) else "hidden (file bytes)"
+        return f"{len(value.encode('utf-8'))} bytes" if isinstance(value, str) else "Hidden"
     if kind == "item_count":
-        return f"{len(value)} paths" if isinstance(value, list) else "hidden (secret)"
+        return f"{len(value)} paths" if isinstance(value, list) else "Hidden"
     if kind == "spend_limit":
         if value is None:
             return "No limit"
-        return str(round(float(value), 2)) if type(value) in (int, float) else "hidden (secret)"
+        return str(round(float(value), 2)) if type(value) in (int, float) else "Hidden"
     if kind in {"host", "account"}:
         import re
         if not isinstance(value, str):
-            return "hidden (credential)"
+            return "Hidden"
         if kind == "account":
-            return value if re.fullmatch(r"[A-Za-z0-9._@+\-]+", value) else "hidden (credential)"
+            return value if re.fullmatch(r"[A-Za-z0-9._@+\-]+", value) else "Hidden"
         from urllib.parse import urlsplit
         try:
             url = urlsplit(value if "://" in value else "//" + value)
             if url.username or url.password or url.query or url.fragment or not url.hostname:
-                return "hidden (credential)"
+                return "Hidden"
             return url.hostname
         except ValueError:
-            return "hidden (credential)"
+            return "Hidden"
     return "not described"
 
 

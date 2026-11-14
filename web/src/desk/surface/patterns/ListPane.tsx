@@ -24,6 +24,7 @@ export function ListPane({
   previewTestId,
   deck,
   listShare,
+  listPosition = "before",
   minimumRows = 4,
   open = false,
   onBack,
@@ -35,8 +36,10 @@ export function ListPane({
   hostBack?: boolean;
   backLabel?: string;
   deck?: boolean;
-  /** Wide list share: width in a deck, height above a short facts pane. */
+  /** List share: width in a deck, height above facts or below a reading well. */
   listShare?: number;
+  /** A reading-first vertical split; listShare caps the list height. */
+  listPosition?: "before" | "after";
   /** A nested picker can yield rows before its surrounding form does. */
   minimumRows?: number;
   open?: boolean;
@@ -50,9 +53,10 @@ export function ListPane({
 }) {
   const depth = useContext(ListPaneDepth);
   const hasPreview = hasWords(children);
+  const hasList = hasWords(list);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (typeof ResizeObserver === "undefined" || !ref.current) return;
+    if (listPosition === "after" || typeof ResizeObserver === "undefined" || !ref.current) return;
     const update = () => {
       const seat = ref.current;
       const grid = [
@@ -194,15 +198,8 @@ export function ListPane({
       observer.disconnect();
       mutations.disconnect();
     };
-  }, [minimumRows, listShare]);
-  return (
-    <div
-      className="surface-list-pane"
-      data-layout={deck ? "deck" : undefined}
-      style={listShare == null ? undefined : {"--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
-      data-detail-open={(hasPreview && open) || undefined}
-    >
-      <div
+  }, [minimumRows, listShare, hasList, listPosition]);
+  const listSeat = hasList ? <div
         ref={ref}
         onClickCapture={(event) => {
           if (
@@ -217,13 +214,8 @@ export function ListPane({
         data-testid={listTestId}
       >
         <PaneNoticeContext.Provider value={notice}><ListPaneDepth.Provider value={depth}>{list}</ListPaneDepth.Provider></PaneNoticeContext.Provider>
-      </div>
-      {hasPreview && deck && !hostBack ? (
-        <Button variant="ghost" className="surface-list-back" onClick={onBack}>
-          {backLabel}
-        </Button>
-      ) : null}
-      {hasPreview ? (
+      </div> : null;
+  const previewSeat = hasPreview ? (
         <section
           className="surface-list-pane-preview"
           data-testid={previewTestId}
@@ -233,7 +225,21 @@ export function ListPane({
             {children}
           </ListPaneDepth.Provider>
         </section>
+      ) : null;
+  return (
+    <div
+      className="surface-list-pane"
+      data-layout={hasPreview && listPosition === "after" ? "stack" : deck && hasList ? "deck" : undefined}
+      style={listShare == null ? undefined : {"--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
+      data-detail-open={(hasPreview && open) || undefined}
+    >
+      {listPosition === "after" ? previewSeat : listSeat}
+      {hasPreview && hasList && deck && !hostBack ? (
+        <Button variant="ghost" className="surface-list-back" onClick={onBack}>
+          {backLabel}
+        </Button>
       ) : null}
+      {listPosition === "after" ? listSeat : previewSeat}
     </div>
   );
 }

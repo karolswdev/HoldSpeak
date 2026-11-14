@@ -2323,6 +2323,20 @@ seat after padding, glyphs, lamps and meters.
 - A selection list measures read-only columns from its header and visible facts;
   the name takes the remainder. Editable cells retain their declared minimum.
 
+Ask keeps Recent beside its answer. Sources follows the answer in DOM and on
+screen: `ListPane listPosition="after" listShare={.4}` gives the reading well
+at least 60% of its column. Compact Sources uses `Disclosure bounded`, closed
+initially to its heading and count, and yields the remaining room to the reader.
+A headerless `ListView caption` names its collection in the existing verb row,
+without a second heading or a gap before the rows. An absent list removes its
+seat while its reader stays mounted. `ObjectReader.wholeLines` clips partial
+text at both edges, measures code one line at a time and keeps a language
+caption with its first code line. `ObjectList.wholeRows`, on by default, owns
+all list row height and scroll anchors; Ask adds no row-edge policy.
+A long `InspectorQuestion bounded` keeps its heading,
+notice and answer row in view while its facts scroll on whole rows. Mast facts
+retain a fitted first part when that part alone is longer than the state seat.
+
 ### Send and Settings fits (2026-11-13, round 3)
 
 `ListView wholeRows` uses ObjectList's one height-and-anchor fitter.

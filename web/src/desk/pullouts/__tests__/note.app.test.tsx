@@ -120,7 +120,7 @@ describe("Betterment Q8: Add to note, in Ask opened from a note", () => {
     recordedHub(false);
     act(() => { useDesk.getState().askAbout([{ id: NOTE.note_id, kind: "note", ref: NOTE_REF, title: NOTE.title }]); });
     render(<AskPanel />);
-    expect(screen.getByTestId("ask-context")).toHaveTextContent(`${NOTE.title}`);
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining(`${NOTE.title}`));
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What should I do about Jun?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText(THREAD.first.output)).toBeInTheDocument();
@@ -302,7 +302,7 @@ describe("Direction A: the note's margin", () => {
     expect(container.querySelector(".thought-note-document")).not.toHaveClass("has-margin");
 
     fireEvent.click(within(container.querySelector(".thought-note-toolbar") as HTMLElement).getByRole("button", { name: "Ask about this" }));
-    await waitFor(() => expect(screen.getByTestId("ask-context")).toHaveTextContent(`${NOTE.title}`));
+    await waitFor(() => expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining(`${NOTE.title}`)));
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What should I do about Jun?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
@@ -343,7 +343,7 @@ describe("Direction A: the note's margin", () => {
     const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /><AskPanel /></MemoryRouter>);
     await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));
     fireEvent.click(within(container.querySelector(".thought-note-toolbar") as HTMLElement).getByRole("button", { name: "Ask about this" }));
-    await waitFor(() => expect(screen.getByTestId("ask-context")).toHaveTextContent(`${NOTE.title}`));
+    await waitFor(() => expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining(`${NOTE.title}`)));
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What should I do about Jun?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     const card = await screen.findByTestId("note-margin-ask");

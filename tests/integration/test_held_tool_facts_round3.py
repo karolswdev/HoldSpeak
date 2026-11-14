@@ -77,7 +77,7 @@ def test_each_declaration_hides_its_private_kinds_and_bounds_values(hub, tool):
         parents = [r['key'] for r in private_rows if isinstance(r['key'], str)]
         if all(any(k.startswith(p + '.') for p in parents) for k in keys):
             continue
-        assert {'label': row['label'], 'value': 'hidden (' + row['kind'] + ')'} in facts
+        assert {'label': row['label'], 'value': 'Hidden'} in facts
     for row in body_rows:
         assert any(f['label'] == row['label'] and f['value'].endswith(' words') for f in facts)
     # Hidden inheritance is a property of every declaration, not only notes.
@@ -286,7 +286,7 @@ def test_chained_names_use_each_readers_scoped_path_and_one_owner_revision(proje
             return ordinary(tool, args, reader)
         monkeypatch.setattr(server, 'read_for_principal', scoped)
         caller = held_call_details(call, credential.principal)
-        assert {'label': 'Project', 'value': 'hidden (secret)'} in caller['facts']
+        assert {'label': 'Project', 'value': 'Hidden'} in caller['facts']
         assert 'Matching project Second' not in json.dumps(caller)
         assert not any(t == 'project.get' and p == credential.principal for t, p in visited)
         assert caller['binding'] == owner['binding']
@@ -411,7 +411,7 @@ def test_nudge_dismiss_only_changes_the_second_step(project_rig, monkeypatch):
     registry = operations.bind_available({'project_steward_service': service})
     monkeypatch.setattr(family, '_ops', lambda: registry)
     call = held('nudge.dismiss', {'step_id': 'nudge-second'})
-    assert held_call_details(call, OWNER)['facts'] == [{'label': 'Review', 'value': 'hidden (secret)'}]
+    assert held_call_details(call, OWNER)['facts'] == [{'label': 'Review', 'value': 'Hidden'}]
     perform(rig.db, call)
     assert rig.db.steward_steps.get_step('nudge-first')['state'] == 'proposed'
     assert rig.db.steward_steps.get_step('nudge-second')['state'] == 'dismissed'
@@ -426,7 +426,7 @@ def test_a_chained_name_lookup_cannot_run_a_write(hub):
     before = hub.db._connection
     with before() as conn:
         count = conn.execute('SELECT COUNT(*) FROM action_items').fetchone()[0]
-    assert _facts(schema, {'id': 'name-source'}, OWNER) == [{'label': 'Name', 'value': 'hidden (secret)'}]
+    assert _facts(schema, {'id': 'name-source'}, OWNER) == [{'label': 'Name', 'value': 'Hidden'}]
     with before() as conn:
         assert conn.execute('SELECT COUNT(*) FROM action_items').fetchone()[0] == count
 
@@ -487,5 +487,5 @@ def test_a_project_decision_ref_cannot_change_stores_after_its_facts_are_read(pr
     assert not rig.projects.list_resources(OWNER, rig.b['id'])
     other = held('project.resource.add', {'project_id': rig.b['id'], 'resource_ref': 'decision:shared-id'})
     facts = held_call_details(other, OWNER)['facts']
-    assert {'label': 'Source', 'value': 'hidden (secret)'} in facts
+    assert {'label': 'Source', 'value': 'Hidden'} in facts
     assert 'Desk target' not in json.dumps(facts)

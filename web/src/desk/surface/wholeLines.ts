@@ -1,6 +1,6 @@
 import { useLayoutEffect, type RefObject } from "react";
 
-/** Keep a partial final reading line below the viewport edge.
+/** Keep partial reading lines outside both viewport edges.
  * The full scroll range stays available; no content or focus target is removed. */
 export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true, rows?: string) {
   useLayoutEffect(() => {
@@ -17,8 +17,18 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
           if (!node.textContent?.trim()) continue;
-          const range = document.createRange(); range.selectNodeContents(node);
-          if (typeof range.getClientRects === "function") rectangles.push(...range.getClientRects());
+          const range = document.createRange();
+          if (typeof range.getClientRects !== "function") continue;
+          if (node.parentElement?.closest("pre") && node.textContent.includes("\n")) {
+            let from = 0;
+            for (const line of node.textContent.split("\n")) {
+              range.setStart(node, from); range.setEnd(node, from + line.length);
+              rectangles.push(...range.getClientRects()); from += line.length + 1;
+            }
+          } else {
+            range.selectNodeContents(node);
+            rectangles.push(...range.getClientRects());
+          }
         }
       }
       const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
@@ -35,7 +45,17 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
         cut = Math.min(box.bottom, ...partial.map(rect => rect.top));
       }
-      const start = rows ? Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom)) : box.top;
+      if (!rows) for (const pre of el.querySelectorAll<HTMLElement>("pre")) {
+        const top = pre.getBoundingClientRect().top;
+        const code = pre.querySelector("code")?.firstChild;
+        if (!code?.textContent) continue;
+        const first = document.createRange();
+        if (typeof first.getBoundingClientRect !== "function") continue;
+        first.setStart(code, 0); first.setEnd(code, code.textContent.split("\n")[0].length);
+        const line = first.getBoundingClientRect();
+        if (top >= box.top && top < cut && line.bottom > cut) cut = top;
+      }
+      const start = Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom));
       el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${Math.ceil(start - box.top)}px`} 0 ${Math.ceil(box.bottom - cut)}px 0)` : "";
     };
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;

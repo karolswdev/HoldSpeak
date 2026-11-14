@@ -22,8 +22,11 @@ export function Disclosure({
   token,
   ariaLabel,
   controlsId,
+  bounded = false,
 }: {
   label: string;
+  /** Keep the reveal heading while its list uses the remaining seat. */
+  bounded?: boolean;
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -94,6 +97,7 @@ export function Disclosure({
     <div
       className="surface-disclosure"
       data-open={isOpen || undefined}
+      data-bounded={bounded || undefined}
       data-variant={variant !== "default" ? variant : undefined}
       data-token={token != null ? "" : undefined}
       onKeyDown={handleKeyDown}

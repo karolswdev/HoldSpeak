@@ -230,7 +230,7 @@ def test_a_hidden_delegate_parent_stays_hidden(fact_rig):
     private = {**schema, 'x-held-arguments': [*schema['x-held-arguments'], {'key': 'arguments', 'label': 'Inputs', 'kind': 'credential'}]}
     facts = _facts(private, {'verb_id': 'desk.create', 'arguments': {'kind': 'notes', 'data': {'title': PRIVATE}}}, OWNER)
     assert PRIVATE not in json.dumps(facts)
-    assert {'label': 'Inputs', 'value': 'hidden (credential)'} in facts
+    assert {'label': 'Inputs', 'value': 'Hidden'} in facts
 
 
 def test_repository_file_facts_show_size_and_path_never_content(fact_rig):
@@ -289,8 +289,8 @@ def test_model_credentials_and_secret_parent_children_never_become_facts(fact_ri
     args = {'draft': _draft(request_id='private', profile_id='private', provider_family='private_endpoint'), 'secret': {'value': PRIVATE}}
     details = held_call_details(held('model_library.define_endpoint', args), OWNER)
     assert PRIVATE not in json.dumps(details)
-    assert {'label': 'Credential', 'value': 'hidden (credential)'} in details['facts']
-    assert {'label': 'Endpoint', 'value': 'hidden (credential)'} in details['facts']
+    assert {'label': 'Credential', 'value': 'Hidden'} in details['facts']
+    assert {'label': 'Endpoint', 'value': 'Hidden'} in details['facts']
     assert {'label': 'Engine', 'value': 'Provider model'} in details['facts']
 
 
@@ -306,7 +306,7 @@ def test_calls_freeze_and_hide_the_effective_default_number(fact_rig):
         wire = held_call_details(call, OWNER)
         assert call.args['to'] == '+441234567890'
         assert '+441234567890' not in json.dumps(wire)
-        assert {'label': 'To', 'value': 'hidden (secret)'} in wire['facts']
+        assert {'label': 'To', 'value': 'Hidden'} in wire['facts']
 
 
 def test_credential_locators_are_hidden_even_in_refusals(fact_rig):

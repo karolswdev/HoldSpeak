@@ -138,7 +138,7 @@ def test_a_hidden_argument_never_leaves_the_read(rig, monkeypatch, kind):
     response = rig[3].get(url(rig))
     assert response.status_code == 200
     assert "never-send-this-value" not in response.text
-    assert {"label": "Private", "value": f"hidden ({kind})"} in response.json()["facts"]
+    assert {"label": "Private", "value": "Hidden"} in response.json()["facts"]
     binding = response.json()["binding"]
     rig[1].args["private"] = "changed-secret"
     assert read(rig)["binding"] != binding

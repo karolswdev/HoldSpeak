@@ -112,7 +112,7 @@ def test_a_held_send_names_the_document_destination_and_channel(hub, tmp_path, m
     details = response.json()
     assert details["facts"][:3] == [{"label": "Document", "value": "Platform plan"},
                                     {"label": "To", "value": "Platform team"},
-                                    {"label": "Through", "value": "file"}]
+                                    {"label": "Through", "value": "File"}]
     for opaque in (note["id"], destination["id"], args.get("send_id"), args.get("preview_digest")):
         if opaque:
             assert opaque not in response.text
@@ -136,7 +136,7 @@ def test_unreadable_references_and_private_payloads_never_leave_the_question(hub
         "kind": "notes", "id": "opaque-missing-note", "data": {"title": "New title", "private": "private-sentinel"},
     })
     details = ThreadService.held_tool_details(OWNER, handle.thread_id, handle.call_id)
-    assert {"label": "Object", "value": "hidden (secret)"} in details["facts"]
+    assert {"label": "Object", "value": "Hidden"} in details["facts"]
     assert "opaque-missing-note" not in json.dumps(details)
     assert "private-sentinel" not in json.dumps(details)
 
@@ -152,5 +152,5 @@ def test_a_declaration_cannot_use_a_write_as_its_name_lookup(hub, monkeypatch):
     monkeypatch.setattr(tools, "dispatch", lambda *args: calls.append(args))
     details = ThreadService.held_tool_details(OWNER, handle.thread_id, handle.call_id)
     assert calls == []
-    assert {"label": "Note", "value": "hidden (secret)"} in details["facts"]
+    assert {"label": "Note", "value": "Hidden"} in details["facts"]
     assert "must-never-be-written" not in json.dumps(details)

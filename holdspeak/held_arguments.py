@@ -18,7 +18,7 @@ must be idempotent. Missing, blank and whitespace must have the same meaning
 for facts and writes. Never stringify a structured value into a text fact.
 The target may select the caller as actor when direction depends on who sent
 it; reviewing as owner must not turn an agent's send into an owner's reply.
-Derived private values use owner_only facts; the caller gets their hidden kind,
+Derived private values use owner_only facts; the caller sees Hidden,
 and both readers keep the revision over the owner's facts. A frozen derived
 value is a checked precondition, never a client assertion to trust.
 Existing allowlisted aliases can declare x-held-delegate: the owning handler

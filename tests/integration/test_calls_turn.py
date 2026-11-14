@@ -277,7 +277,7 @@ def test_a_send_leaves_only_on_his_spoken_yes(hub, monkeypatch, tmp_path) -> Non
     said = _said(state)
     asked = [line for line in said if line.endswith("Say yes or no.")]
     assert asked == ["I want to send Payments runbook to HoldSpeak folder. "
-                     "Document: Payments runbook. To: HoldSpeak folder. Through: file. Say yes or no."], said
+                     "Document: Payments runbook. To: HoldSpeak folder. Through: File. Say yes or no."], said
     assert note_id not in asked[0]
     with hub.db._connection() as conn:
         rows = [dict(r) for r in conn.execute("SELECT state, destination_id FROM channel_sends").fetchall()]

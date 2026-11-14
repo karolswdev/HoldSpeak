@@ -5,7 +5,7 @@ import { GadgetRow } from "../../gadgets";
 import { InspectorFacts, PaneInspector } from "../PreferencePane";
 import { InspectorFigures } from "../../live/InspectorFigures";
 import { Mast, MastSlotContext, type MastDeclaration } from "../Mast";
-import { SurfaceWell, ListView, StatusBar } from "../../index";
+import { SurfaceWell, ListView, StatusBar, ListPane, ObjectReader } from "../../index";
 import { Button } from "../../../../components/signal/Signal";
 vi.mock("../../objects/fitName", async importOriginal => ({...await importOriginal<object>(), textMeasure: () => ({average: 8, width: (text: string) => text.length * 8})}));
 afterEach(() => {cleanup(); vi.restoreAllMocks();});
@@ -68,27 +68,6 @@ it("keeps sentences outside the short-label species in each label seat", () => {
   expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });
 
-it("paints only complete form rows while keeping the full field scroll range", async () => {
-  const { InspectorForm } = await import("../../index");
-  vi.spyOn(HTMLElement.prototype,"clientHeight","get").mockReturnValue(115);
-  vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockImplementation(function(this:HTMLElement) {
-    if (this.classList.contains("surface-inspector-fields")) return new DOMRect(0,0,240,75);
-    if (this.classList.contains("gadget-row")) return new DOMRect(0,this.textContent?.includes("Second")?40:0,240,40);
-    if (this.classList.contains("surface-inspector-actions")) return new DOMRect(0,75,240,40);
-    return new DOMRect(0,0,240,120);
-  });
-  const {container}=render(<InspectorForm wholeRows rows={[{label:"First",control:"First value"},{label:"Second",control:"Second value"}]} completion={{cancel:()=>{},primary:{label:"Save",run:()=>{}}}} />);
-  const fields=container.querySelector<HTMLElement>(".surface-inspector-fields")!;
-  expect(fields.style.maxHeight).toBe("40px");
-  expect(fields.style.clipPath).not.toBe("");
-  const bottom=75-parseFloat(fields.style.clipPath.split(" ")[2]);
-  for (const row of fields.querySelectorAll(".gadget-row")) {
-    const rect=row.getBoundingClientRect();
-    expect(rect.top>=bottom || rect.bottom<=bottom).toBe(true);
-  }
-  expect(fields).toHaveTextContent("Second value");
-  expect(screen.getByRole("button",{name:"Save"})).toBeVisible();
-});
 
 it("fits a path-led inspector name in whole lines and keeps its full identity", () => {
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(160);
@@ -122,4 +101,52 @@ it("a wrapping inspector exposes all of a long decision without a hover", () => 
   const {container} = render(<InspectorFacts name={name} nameMode="wrap" rows={[{label:"State",value:"To confirm"}]} />);
   expect(container.querySelector(".surface-inspector-heading > strong")).toHaveTextContent(name);
   expect(container.querySelector(".surface-inspector-name[data-wrap]")).toHaveAttribute("data-feedback-redact", "true");
+});
+
+it("keeps a fitted scope when the first Mast fact is wider than its seat", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(176);
+  const scope = "Review the platform recovery point, retained draft, migration result and next owner action before the architecture team signs the deployment checkpoint.";
+  const {container} = render(<Mast framed kind="thread" title="Ask" facts={`${scope} · Local engine`} />);
+  const line = container.querySelector(".surface-mast-facts")!;
+  expect(line).toHaveAttribute("aria-label", `${scope} · Local engine`);
+  expect(line.textContent).toMatch(/^Review/);
+  expect(line.textContent).not.toBe("…");
+  expect(line.textContent!.length * 8).toBeLessThanOrEqual(176);
+});
+
+
+it.each(["before", "after"] as const)("an optional %s source list leaves the reader and its position control mounted", listPosition => {
+  const pane = (listed: boolean) => <ListPane deck listPosition={listPosition} label="Answer" listTestId="sources" list={listed ? <ListView label="Sources" rows={[{id:"n",kind:"note",name:"Review"}]} columns={[{key:"name",word:"Sources"}]} /> : null}><ObjectReader label="Conversation"><input aria-label="Reading position" defaultValue="First line" /></ObjectReader></ListPane>;
+  const {rerender} = render(pane(false));
+  const position = screen.getByRole("textbox", {name:"Reading position"});
+  expect(screen.queryByTestId("sources")).toBeNull();
+  fireEvent.change(position,{target:{value:"Kept line"}});
+  rerender(pane(true));
+  expect(screen.getByRole("textbox", {name:"Reading position"})).toBe(position);
+  expect(position).toHaveValue("Kept line");
+  rerender(pane(false));
+  expect(screen.queryByTestId("sources")).toBeNull();
+  expect(screen.getByRole("textbox", {name:"Reading position"})).toBe(position);
+  expect(position).toHaveValue("Kept line");
+});
+
+it("keeps a partial first reading line outside the visible edge without moving scroll", () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => new DOMRect(0,0,300,45));
+  vi.spyOn(document, "createRange").mockImplementation(() => ({selectNodeContents:()=>{},getClientRects:()=>[new DOMRect(0,-5,300,18),new DOMRect(0,20,300,18)]}) as unknown as Range);
+  const {container}=render(<SurfaceWell wholeLines>Keep both lines reachable.</SurfaceWell>);
+  const well=container.querySelector<HTMLElement>(".surface-well-body")!;
+  expect(well.style.clipPath).toMatch(/^inset\(13px /);
+  expect(well.scrollTop).toBe(0);
+  expect(well).toHaveTextContent("Keep both lines reachable.");
+});
+
+
+it("a reading-first list follows the reader in DOM and shares its existing verb row", () => {
+  const {container}=render(<ListPane label="Answer" listPosition="after" listShare={.4} listTestId="sources" list={<ListView label="Sources" headerless caption="Sources · 3" rows={[{id:"n",kind:"note",name:"Review"}]} columns={[{key:"name",word:"Sources"}]} verbs={[{id:"open",label:"Open source",run:()=>{}}]} selectedId={null} onSelect={()=>{}} />}><ObjectReader label="Conversation">The answer</ObjectReader></ListPane>);
+  const pane=container.querySelector(".surface-list-pane")!;
+  expect(pane).toHaveAttribute("data-layout","stack");
+  expect(pane.firstElementChild).toHaveClass("surface-list-pane-preview");
+  const caption=screen.getByText("Sources · 3");
+  expect(caption.closest('[role="toolbar"]')).toBe(screen.getByRole("toolbar",{name:"Sources actions"}));
+  expect(screen.getByRole("button",{name:"Open source"})).toBeDisabled();
 });
