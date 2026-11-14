@@ -555,7 +555,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     text: intelState === "running" ? "Summary running" : "Summary queued", testId: "live-summary-engine",
     meter: { total: 1, current: 0, state: "working", label: intelState === "running" ? "Summary running" : "Summary queued" },
   };
-  else if (intelState === "error") summaryItem = { key: "summary", lamp: "fail", priority: 100, text: "Summary failed", testId: "live-summary-engine" };
+  else if (intelState === "error") summaryItem = null; // The failed act has its reason and retry in the pane.
   else if (meetingsHub?.summariesOff === true || intelPosture?.enabled === false) summaryItem = { key: "summary", text: "Summaries off", testId: "live-summary-engine" };
   else if (meetingsHub?.engineSet === false) summaryItem = { key: "summary", lamp: "warn", priority: 100, text: "No engine for summaries", testId: "live-summary-engine" };
   else if (engineName) summaryItem = { key: "summary", text: `Summaries on ${engineName}`, testId: "live-summary-engine" };
@@ -564,7 +564,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
      summary engine, and the link to the hub, each said once. */
   const ownPass = pass && (!pass.meeting_id || !meetingKey || pass.meeting_id === meetingKey) ? pass : null;
   const statusItems: StatusBarItem[] = [
-    action.message ? { key: "write", lamp: "fail" as const, text: "Failed", priority: 100 } : null,
     // W1-TRUTH (atlas 2026-10-27): never "Ready" next to "Speech not set
     // up". Before a meeting with no speech model the one state is the
     // warning (its one verb, Set up speech, is in the toolbar).
@@ -581,8 +580,8 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           }
         : {
             key: "capture",
-            lamp: action.message ? ("fail" as const) : ("idle" as const),
-            text: action.message ? "Failed" : stopOutcome ? "Stopped" : "Ready",
+            lamp: "idle" as const,
+            text: "Ready",
             testId: "live-capture-state",
           },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,

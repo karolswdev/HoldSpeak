@@ -202,6 +202,10 @@ describe("Live meeting: during, the transcript is the page", () => {
     expect(screen.getByRole("button", { name: save })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
     expect(document.body).not.toHaveTextContent("Press it again");
+    // A refused edit does not change the meeting's capture state.
+    const strip = screen.getByTestId("live-statusbar");
+    expect(strip).toHaveTextContent("Recording");
+    expect(strip).not.toHaveTextContent("Failed");
   });
 
   it("keeps the Stop snapshot and reads only its saved meeting after another recording starts", async () => {
@@ -285,6 +289,7 @@ describe("Live meeting: during, the transcript is the page", () => {
     const failed = { ...ACTIONS.saved, stopped: true, meeting_active: false, intel_status: { state: "error", detail: "Summary engine stopped" } };
     answer({ "/api/state": failed, "/api/settings/hub": hubWithEngine, "/api/meetings/m-caught?include_parked=true": ACTIONS.saved });
     await mount("m-caught");
+    expect(screen.getByTestId("live-statusbar")).not.toHaveTextContent("Summary failed");
     const pane = screen.getByText("Summary engine stopped").closest("[role=status]")!;
     expect(pane).toHaveTextContent("Summary engine stopped");
     fireEvent.click(within(pane as HTMLElement).getByRole("button", { name: "Try again" }));
@@ -302,6 +307,7 @@ describe("Live meeting: during, the transcript is the page", () => {
     await waitFor(() => expect(screen.getAllByRole("status").some(el => /refused|did not stop/.test(el.textContent || ""))).toBe(true));
     expect(screen.getByTestId("window-mast")).toHaveTextContent("Recording");
     expect(screen.getByTestId("window-mast")).not.toHaveTextContent("Failed");
+    expect(screen.getByTestId("live-statusbar")).not.toHaveTextContent("Failed");
     expect(screen.getByTestId("window-mast")).toHaveTextContent(ACTIONS.state.formatted_duration);
   });
 
@@ -513,6 +519,7 @@ describe("Live meeting: what the hub hears (Live slice 3)", () => {
   });
 
   it("before: a refused grant says Not allowed with Allow, and no level", async () => {
+    vi.spyOn(window, "open").mockImplementation(() => null);
     useDesk.setState({ recording: "idle", liveMeetingId: null });
     answer({
       "/api/settings/hub": hubWithEngine,
@@ -524,7 +531,13 @@ describe("Live meeting: what the hub hears (Live slice 3)", () => {
     await waitFor(() => expect(within(row).getByTestId("live-ready-mic-state")).toHaveTextContent("Microphone not allowed"));
     expect(within(row).getByTestId("live-ready-mic-state").getAttribute("data-tone")).toBe("fail");
     expect(within(row).queryByRole("meter")).toBeNull();
-    expect(within(row).getByRole("button", { name: "Allow Microphone…" })).toBeInTheDocument();
+    const notice = within(row).getByRole("status");
+    expect(notice).toHaveTextContent("Microphone not allowed");
+    const allow = within(notice).getByRole("button", { name: "Allow Microphone…" });
+    fireEvent.click(allow);
+    expect(window.open).toHaveBeenCalledWith(MIC_REFUSED.settings_url, "_self", "noopener");
+    expect(row).not.toHaveTextContent("macOS asks for Microphone access");
+    vi.mocked(window.open).mockRestore();
   });
 
   it("before: digital silence says Quiet and Check again listens once more", async () => {
