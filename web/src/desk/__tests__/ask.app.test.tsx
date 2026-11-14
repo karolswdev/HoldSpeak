@@ -23,6 +23,7 @@ import HOLD from "../../test/wire/ask.hold.wire.json";
 import STREAM from "../../test/wire/ask.stream.wire.json";
 import NO_ENGINE from "../../test/wire/ask.no-engine.wire.json";
 import CALLS from "../calls/__fixtures__/calls.face.json";
+import { faceTimeWords } from "../surface/format";
 import { durableDraftKey } from "../../lib/durableDraft";
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
@@ -333,7 +334,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("ask, read, follow up, read the second answer: one window, one thread", async () => {
     render(<AskPanel />);
     // Ask D1: the scope word names what the question is about.
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("1:1 with Mira"));
     await askText("What do I owe Mira this week?", THREAD.first.output);
 
     const first = calls.filter((c) => c.url.endsWith("/api/ask"))[0];
@@ -365,7 +366,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(screen.getByText(THREAD.first.output)).toBeInTheDocument();
     expect(screen.getByText(THREAD.second.output)).toBeInTheDocument();
     // The thread's About comes back with it.
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("1:1 with Mira"));
     // The rail stays, with the open ask selected.
     expect(within(screen.getByTestId("ask-recent")).getByRole("row", { name: /What do I owe Mira this week\?/ })).toHaveAttribute("aria-selected", "true");
     // A follow-up continues that thread and carries its About.
@@ -450,7 +451,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     useDesk.setState({ pullouts: [{ id: "note:n-mira", origin: null }] });
     render(<AskPanel />);
     useDesk.setState({ selectedIds: [] });
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("1:1 with Mira"));
     fireEvent.change(askBox(), { target: { value: "Who owns review?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(calls.some((call) => call.url.endsWith("/api/ask"))).toBe(true));
@@ -572,7 +573,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     fireEvent.click(screen.getByTestId("ask-context"));
     fireEvent.click(screen.getByRole("row", { name: /1:1 with Mira Chosen/ }));
     fireEvent.click(within(screen.getByTestId("ask-scope-menu")).getByRole("button", { name: "Remove" }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("My whole desk"));
     expect(screen.getByRole("button", { name: "Return to Project" })).toBeInTheDocument();
     await askText("What needs attention?", THREAD.first.output);
     const sent = calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"))!;
@@ -617,7 +618,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     });
     render(<AskPanel />);
     fireEvent.click(screen.getByRole("button", { name: "Clear quote" }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("1:1 with Mira"));
     expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Source");
     expect(screen.getByRole("button", { name: "Back to note" }).closest("details")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
@@ -701,12 +702,12 @@ describe("saved Ask thread reads keep the latest selection authoritative", () =>
     await openRecentThread("B");
     await act(async () => { readB.resolve(reply(delayedThreadDetail("B", "Answer B", "Note B"))); });
     expect(screen.getByText("Answer B")).toBeInTheDocument();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("Note B");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("Note B"));
 
     await act(async () => { readA.resolve(reply(delayedThreadDetail("A", "Answer A", "Note A"))); });
     expect(screen.getByText("Answer B")).toBeInTheDocument();
     expect(screen.queryByText("Answer A")).toBeNull();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("Note B");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("Note B"));
 
     fireEvent.change(askBox(), { target: { value: "A B follow-up" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -794,7 +795,7 @@ describe("saved Ask thread reads keep the latest selection authoritative", () =>
     await act(async () => { first.resolve(reply(delayedThreadDetail("A", "Old A", "Old note A"))); });
     expect(screen.getByText("Latest A")).toBeInTheDocument();
     expect(screen.queryByText("Old A")).toBeNull();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("Latest note A");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("Latest note A"));
   });
 });
 
@@ -997,7 +998,7 @@ describe("Ask D1: the question at the top", () => {
     expect(row).toHaveClass("kit-toolbar");
     expect(screen.queryByText("Ask your desk")).toBeNull();
     expect(screen.getByRole("button", { name: "New ask" })).toBeEnabled();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("My whole desk"));
     expect(within(row).getByRole("textbox", { name: "Ask about your work" })).toBeInTheDocument();
     expect(screen.getByTestId("engine-line")).toBeInTheDocument();
     expect(within(row).getByRole("button", { name: "Ask" })).toBeDisabled();
@@ -1075,7 +1076,7 @@ describe("Ask D1: the question at the top", () => {
     expect(within(menu).getByRole("row", { name: /My whole desk/ })).toBeInTheDocument();
     fireEvent.doubleClick(within(menu).getByRole("row", { name: /Payments ledger cutover/ }));
     expect(screen.queryByTestId("ask-scope-menu")).toBeNull();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("Payments ledger cutover");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("Payments ledger cutover"));
     await askText("What is left before the freeze?", THREAD.first.output);
     const sent = calls.find((c) => c.method === "POST" && c.url.endsWith("/api/ask"))!;
     expect((sent.body?.context as Array<{ ref: string }>).map((c) => c.ref)).toEqual(["project:p-ledger"]);
@@ -1420,7 +1421,7 @@ it("a failed held-call press keeps its target and answer verbs, then Deny reache
   expect(within(question).getByText(HOLD.hold.holds[0].words, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
   for (const fact of HOLD.hold.holds[0].facts) {
     expect(within(question).getByText(fact.label, { exact: true })).toBeInTheDocument();
-    expect(within(question).getByText(fact.value, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+    expect(within(question).getByText(faceTimeWords(fact.value), { exact: true })).toHaveAttribute("data-feedback-redact", "true");
   }
   expect(within(question).getByText("Give Mira feedback on the cutover design doc")).toBeInTheDocument();
   expect(within(question).getByRole("button", { name: "Deny" })).toHaveFocus();
@@ -1546,10 +1547,29 @@ it("a described Send shows its recorded document and destination facts before De
   const question = screen.getByTestId("ask-hold");
   for (const fact of held.facts) {
     expect(within(question).getByText(fact.label, { exact: true })).toBeInTheDocument();
-    expect(within(question).getByText(fact.value, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+    expect(within(question).getByText(faceTimeWords(fact.value), { exact: true })).toHaveAttribute("data-feedback-redact", "true");
   }
   fireEvent.click(within(question).getByRole("button", { name: "Deny" }));
   await waitFor(() => expect(screen.queryByTestId("ask-hold")).toBeNull());
   expect(calls.find(call => call.url.endsWith("/decide"))?.body).toEqual({ call_id: held.call_id, decision: "deny", binding: held.binding });
   await act(async () => release?.());
+});
+
+it("a held task shows a date word, a sentence-case kind and a lamp for its withheld source", async () => {
+  useDesk.setState({ askThread: null });
+  vi.mocked(crypto.randomUUID).mockReturnValue("cccccccc-cccc-cccc-cccc-cccccccccccc");
+  hubWithTools(() => new Promise<Response>(() => {}));
+  render(<AskPanel />);
+  const editor = screen.getByRole("textbox", { name: "Ask about your work" });
+  fireEvent.change(editor, { target: { value: "Check the recovery point" } });
+  fireEvent.keyDown(editor, { key: "Enter" });
+  await waitFor(() => expect(calls.some(call => call.url.endsWith("/api/ask"))).toBe(true));
+  act(() => deliver("ask_progress", HOLD.hold));
+  const question = await screen.findByTestId("ask-hold");
+  await waitFor(() => expect(question).toBeVisible());
+  expect(within(question).getByText("Meeting", { exact: true })).toBeVisible();
+  expect(within(question).getByRole("img", { name: "Hidden" })).toHaveAttribute("data-state", "off");
+  expect(within(question).getByText("Oct 23", { exact: true })).toBeVisible();
+  expect(question).not.toHaveTextContent("2026-10-23");
+  expect(question).not.toHaveTextContent("hidden (secret)");
 });

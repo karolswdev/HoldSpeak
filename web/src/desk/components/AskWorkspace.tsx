@@ -2,7 +2,7 @@
  * The older composer exports in askFace still serve Memory and the Room. */
 import { useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
-import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, faceTimeWords } from "../surface";
+import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, faceTimeWords } from "../surface";
 import { spriteUrl } from "../sprites";
 import { nameIsFile } from "../surface/objects/fitName";
 import { agentWordsPlain } from "./AgentWords";
@@ -39,7 +39,7 @@ export function AskScope({ rows, candidates, onPick, onRemove, onOpenRow, contro
     <Popover align={align} anchor={anchor} open={open} onClose={close} ariaLabel="About">
       <PreferencePane label="About" testId="ask-scope-menu">
         <StringGadget label="Find a meeting, note, person" placeholder="Find a source" value={query} onChange={setQuery} />
-        <ListPane label="About" list={<ListView label="About" ordered columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
+        <ListPane label="About" list={<ListView label="About" ordered wholeRows columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
           rows={choices.map(row => ({ id: row.ref, kind: row.kind, name: row.label, sprite: nameIsFile(row.label) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: rows.some(known => known.ref === row.ref) ? "Chosen" : undefined }))}
           defaultVerb="choose" verbs={[
             { id: "choose", label: "Choose", run: row => { if (row) choose(row.id); } },
@@ -77,14 +77,13 @@ export function AskNotAnswered({ reason, words, verb }: { reason: string; words:
   return <div data-testid="ask-not-answered" data-reason={reason}><PaneActions><DotWord tone={reason === "stopped" ? "idle" : "fail"}>{words}</DotWord>{verb}</PaneActions></div>;
 }
 
-export function AskSources({ rows }: { rows: readonly AskReferenceRowData[] }) {
-  const [picked, setPicked] = useState<string | null>(null);
-  if (!rows.length) return null;
-  const list = <ListView label="Sources" ordered
+export function AskSources({ rows, children, compact, targetId }: { rows: readonly AskReferenceRowData[]; children: ReactNode; compact: boolean; targetId: string }) {
+  const [selection, setSelection] = useState<{ targetId: string; id: string } | null>(null);
+  const picked = selection?.targetId === targetId ? selection.id : null;
+  const list = <ListView label="Sources" ordered wholeRows
     columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }]}
-    rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: row.meta }))} selectedId={picked} onSelect={setPicked}
+    rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: row.meta }))} selectedId={picked} onSelect={id => setSelection({ targetId, id })}
     defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />;
-  return rows.length === 1
-    ? <PaneGroup label="" grow={false}><div data-testid="ask-looked-at" data-feedback-redact="true">{list}</div></PaneGroup>
-    : <PreferencePane label="Sources" testId="ask-looked-at" data-feedback-redact="true"><ListPane label="Sources" minimumRows={1} list={list} /></PreferencePane>;
+  return <PreferencePane label="Answer and sources" data-feedback-redact="true"><ListPane label="Answer and sources" deck={!compact} open hostBack listShare={.4}
+    listTestId="ask-looked-at" list={rows.length ? list : null}>{children}</ListPane></PreferencePane>;
 }

@@ -263,9 +263,9 @@ def test_selected_note_ask_save_and_return(
             about_in_menu = not about.is_visible()
             if about_in_menu:
                 ask.get_by_role("button", name="Actions ▾", exact=True).click()
-                about = page.get_by_role("menuitem", name=re.compile(r"^About:"))
-            expect(about).to_contain_text(NOTE_TITLE)
-            assert "My whole desk" not in about.inner_text()
+                about = page.get_by_role("menuitem", name=re.compile(r"^About$"))
+            expect(about).to_have_attribute("title", re.compile(re.escape(NOTE_TITLE)))
+            assert "My whole desk" not in about.get_attribute("title")
             if about_in_menu:
                 page.keyboard.press("Escape")
             _visible_before_scroll(ask, "Back to note")

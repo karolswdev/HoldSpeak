@@ -341,7 +341,7 @@ def test_only_the_callers_own_launch_prompt_is_in_its_copy(prompt_rig):
     caller = held_call_details(call, stranger)
     assert owner['binding'] == caller['binding']
     assert 'rm -rf build/' not in json.dumps(caller['facts'])
-    assert any(f['label'] == 'Prompt' and f['value'] == 'hidden (secret)' for f in caller['facts'])
+    assert any(f['label'] == 'Prompt' and f['value'] == 'Hidden' for f in caller['facts'])
 
 
 @pytest.mark.parametrize('choice,action,lifetime', [
@@ -466,7 +466,7 @@ def test_orphaned_grant_names_never_fall_back_to_an_opaque_project_id(hub, monke
     call = held('principals.agent.revoke', {'agent_identity': 'Build agent'})
     details = held_call_details(call, OWNER)
     assert opaque not in json.dumps(details)
-    assert 'hidden (secret)' in json.dumps(details)
+    assert 'Hidden' in json.dumps(details)
 
 
 @pytest.mark.parametrize('bound', [True, False])

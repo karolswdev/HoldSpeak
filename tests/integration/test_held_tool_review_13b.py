@@ -49,7 +49,7 @@ def test_p1_caller_names_take_the_same_project_scope_and_owner_binding(hub, monk
         owner = held_call_details(held, OWNER)
         own_copy = held_call_details(held, caller)
         assert {"label": "Meeting", "value": "Project B private plan"} in owner["facts"]
-        assert {"label": "Meeting", "value": "hidden (secret)"} in own_copy["facts"]
+        assert {"label": "Meeting", "value": "Hidden"} in own_copy["facts"]
         assert "Project B private plan" not in json.dumps(own_copy)
         assert own_copy["binding"] == owner["binding"]
     finally:
@@ -73,10 +73,10 @@ def test_p1_caller_palette_and_response_filter_apply_to_names(hub, monkeypatch):
             response["result"]["content"][0]["text"] = json.dumps({"withheld": True})
             return response
         monkeypatch.setattr(policy, "filter_response", cut)
-        assert held_call_details(held, credential.principal)["facts"][0]["value"] == "hidden (secret)"
+        assert held_call_details(held, credential.principal)["facts"][0]["value"] == "Hidden"
         # An empty palette is restrictive too.
         monkeypatch.setattr(agent_credentials, "for_principal", lambda p: SimpleNamespace(palette=frozenset(), palette_name="ALL"))
-        assert held_call_details(held, credential.principal)["facts"][0]["value"] == "hidden (secret)"
+        assert held_call_details(held, credential.principal)["facts"][0]["value"] == "Hidden"
     finally:
         agent_credentials.revoke(credential.principal.identity)
 
@@ -364,7 +364,7 @@ def test_an_argument_dependent_write_cannot_be_a_name_lookup(hub, monkeypatch):
     monkeypatch.setattr(tools, "dispatch", lambda *args: writes.append(args) or {"title": "must-not-run"})
     details = held_call_details(handle("desk.delete", {"kind": "notes", "id": "B"}), OWNER)
     assert writes == []
-    assert {"label": "Object", "value": "hidden (secret)"} in details["facts"]
+    assert {"label": "Object", "value": "Hidden"} in details["facts"]
 
 
 def test_calls_freezes_the_missing_target_before_its_noop_answer(hub, tmp_path, monkeypatch):

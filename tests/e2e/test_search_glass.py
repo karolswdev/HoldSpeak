@@ -163,7 +163,7 @@ def test_search_people_prep_ask_and_keep_remove_on_real_desk(people_face: Any) -
         about.click()
     else:
         ask.get_by_role("button", name="Actions ▾", exact=True).first.click()
-        page.get_by_role("menuitem", name=re.compile("^About:")).click()
+        page.get_by_role("menuitem", name=re.compile("^About$")).click()
     scope = page.get_by_test_id("ask-scope-menu")
     scope.locator(f'[data-object-id="{person}"]').click()
     scope.get_by_role("button", name="Open", exact=True).click()

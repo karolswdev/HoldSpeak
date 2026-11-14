@@ -1,3 +1,4 @@
+import { useWholeLines } from "../wholeLines";
 import { MiddleText } from "../MiddleText";
 import { hasWords, labelCaption } from "../content";
 import { sentenceChildren } from "../words";
@@ -308,6 +309,7 @@ export function ObjectList({
   const menuOwner = useId();
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  useWholeLines(bodyRef, wholeRows, ".object-list-row");
   useRovingRows(bodyRef, { selector: selection ? ".object-list-row" : ".object-list-open" });
   useLayoutEffect(() => {
     const list = listRef.current, well = bodyRef.current;
@@ -320,7 +322,7 @@ export function ObjectList({
       const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
       const end = Math.max(0, ...ends.map(edge => edge + well.scrollTop));
       well.style.flex = "none";
-      // A short well ends at its last row. Overflow keeps a partial row as its cue.
+      // A short well ends at its last row; the shared fitter hides partial rows.
       well.style.height = `${Math.max(0, Math.min(available, end))}px`;
     };
     const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};

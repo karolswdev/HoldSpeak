@@ -49,6 +49,7 @@ export function ListPane({
 }) {
   const depth = useContext(ListPaneDepth);
   const hasPreview = hasWords(children);
+  const hasList = hasWords(list);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined" || !ref.current) return;
@@ -210,15 +211,15 @@ export function ListPane({
       observer.disconnect();
       mutations.disconnect();
     };
-  }, [minimumRows]);
+  }, [minimumRows, hasList]);
   return (
     <div
       className="surface-list-pane"
-      data-layout={deck ? "deck" : undefined}
+      data-layout={deck && hasList ? "deck" : undefined}
       style={listShare == null ? undefined : {"--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
       data-detail-open={(hasPreview && open) || undefined}
     >
-      <div
+      {hasList ? <div
         ref={ref}
         onClickCapture={(event) => {
           if (
@@ -233,8 +234,8 @@ export function ListPane({
         data-testid={listTestId}
       >
         <PaneNoticeContext.Provider value={notice}><ListPaneDepth.Provider value={depth}>{list}</ListPaneDepth.Provider></PaneNoticeContext.Provider>
-      </div>
-      {hasPreview && deck && !hostBack ? (
+      </div> : null}
+      {hasPreview && hasList && deck && !hostBack ? (
         <Button variant="ghost" className="surface-list-back" onClick={onBack}>
           {backLabel}
         </Button>

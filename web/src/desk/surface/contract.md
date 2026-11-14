@@ -2312,3 +2312,11 @@ seat after padding, glyphs, lamps and meters.
 - `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
   header and list verb row. Its remaining viewport seat scrolls to the last
   entry; it does not lift the menu back over those controls.
+
+
+Ask composes `ListPane.listShare` for Sources beside its answer at wide sizes.
+Compact Sources reserve four rows above the answer. `ObjectReader.wholeLines`
+uses the shared line fitter; `ObjectList.wholeRows` uses its row fitter, retaining
+all scrollable content. A long `InspectorQuestion bounded` keeps its heading,
+notice and answer row in view while its facts scroll on whole rows. Mast facts
+retain a fitted first part when that part alone is longer than the state seat.

@@ -72,3 +72,6 @@
 
 .surface-list-notice { flex: none; min-width: 0; }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .surface-list-notice { grid-column: 1 / -1; grid-row: 2; }
+
+/* An optional list can arrive or leave without replacing its reading pane. */
+.surface-list-pane:not(:has(> .surface-list-pane-list)) > .surface-list-pane-preview { padding: 0; border: 0; }

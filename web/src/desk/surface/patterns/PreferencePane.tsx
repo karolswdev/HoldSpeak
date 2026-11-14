@@ -284,11 +284,13 @@ function factText(value: ReactNode): string {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, cancelLabel, variant, onDisarm, rows, leading, actionId }: {
+export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, cancelLabel, variant, onDisarm, rows, leading, actionId, bounded = false }: {
   question: string; keeps?: readonly string[]; clears?: string; restores?: string; keepsTestId?: string; consequenceTestId?: string; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
   targetId: string | number;
   leading?: ReactNode; actionId: string;
+  /** Long question facts scroll while the question and answers keep their seats. */
+  bounded?: boolean;
   rows?: readonly InspectorRow[]; onDisarm?(): void; cancelLabel?: string; variant?: "brass" | "danger" | "primary";
 }) {
   const [answer] = useState(() => ({ target: targetId, action: actionId, run: verb.run }));
@@ -296,11 +298,11 @@ export function InspectorQuestion({ question, keeps, clears, restores, keepsTest
   useLayoutEffect(() => { if (!current) (onDisarm ?? cancel)(); }, [current, cancel, onDisarm]);
   const ref = useRef<HTMLElement>(null);
   if (!current) return null;
-  return <section ref={ref} className="surface-pane-inspector" aria-label={question} data-question data-testid={testId}>
+  return <section ref={ref} className="surface-pane-inspector" aria-label={question} data-question data-bounded={bounded || undefined} data-testid={testId}>
     <div className="surface-pane-inspector-head"><strong>{question}</strong></div>
     {clears ? <div className="surface-question-consequence" data-testid={consequenceTestId}>Clears {clears}{restores ? ` and puts back ${restores}` : ""}.</div> : consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
     {keeps?.length ? <div className="surface-question-keeps" data-testid={keepsTestId}>{new Intl.ListFormat("en", {style:"long",type:"conjunction"}).format(keeps)} {keeps.length > 1 || /s$/i.test(keeps[0]) ? "stay" : "stays"}.</div> : null}
-    {rows?.length ? <InspectorForm rows={rows} /> : null}
+    {rows?.length ? <InspectorForm wholeRows={bounded} rows={rows} /> : null}
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
     <InspectorActions danger cancelLabel={cancelLabel} variant={variant} completion={{ leading, cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
   </section>;

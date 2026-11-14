@@ -146,9 +146,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_20a84c4fa0e74870b393e98a34c20a74",
+      "id": "ia_03d2dbf254aa4d1f8a6dd5e2a414246f",
       "revision": 2,
-      "sha256": "sha256:6101f9b43ff87a447a741c50fc0a889a01f870331c7683700fd7511bc5a0fa5a",
+      "sha256": "sha256:041fffe635def00c3b84dd18554e34c2e24c1d3697e6f4ac31ce8ccabea0ecd1",
       "scope": {
        "capability_id": "ask.answer",
        "kind": "capability"
@@ -166,7 +166,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.916063Z",
+      "created_at": "2026-11-14T00:59:51.948454Z",
       "effective_retry_policy_id": "retry.text.standard",
       "retry_policy_source": "capability_default"
      },
@@ -243,9 +243,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_20a84c4fa0e74870b393e98a34c20a74",
+      "id": "ia_03d2dbf254aa4d1f8a6dd5e2a414246f",
       "revision": 2,
-      "sha256": "sha256:6101f9b43ff87a447a741c50fc0a889a01f870331c7683700fd7511bc5a0fa5a",
+      "sha256": "sha256:041fffe635def00c3b84dd18554e34c2e24c1d3697e6f4ac31ce8ccabea0ecd1",
       "scope": {
        "capability_id": "ask.answer",
        "kind": "capability"
@@ -263,7 +263,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.916063Z",
+      "created_at": "2026-11-14T00:59:51.948454Z",
       "effective_retry_policy_id": "retry.text.standard",
       "retry_policy_source": "capability_default"
      },
@@ -286,9 +286,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_20a84c4fa0e74870b393e98a34c20a74",
+      "id": "ia_03d2dbf254aa4d1f8a6dd5e2a414246f",
       "revision": 2,
-      "sha256": "sha256:6101f9b43ff87a447a741c50fc0a889a01f870331c7683700fd7511bc5a0fa5a",
+      "sha256": "sha256:041fffe635def00c3b84dd18554e34c2e24c1d3697e6f4ac31ce8ccabea0ecd1",
       "scope": {
        "capability_id": "ask.answer",
        "kind": "capability"
@@ -306,7 +306,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.916063Z",
+      "created_at": "2026-11-14T00:59:51.948454Z",
       "effective_retry_policy_id": "retry.text.standard",
       "retry_policy_source": "capability_default"
      },
@@ -905,9 +905,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_20a84c4fa0e74870b393e98a34c20a74",
+      "id": "ia_03d2dbf254aa4d1f8a6dd5e2a414246f",
       "revision": 2,
-      "sha256": "sha256:6101f9b43ff87a447a741c50fc0a889a01f870331c7683700fd7511bc5a0fa5a",
+      "sha256": "sha256:041fffe635def00c3b84dd18554e34c2e24c1d3697e6f4ac31ce8ccabea0ecd1",
       "scope": {
        "capability_id": "ask.answer",
        "kind": "capability"
@@ -925,7 +925,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.916063Z",
+      "created_at": "2026-11-14T00:59:51.948454Z",
       "effective_retry_policy_id": "retry.text.standard",
       "retry_policy_source": "capability_default"
      },
@@ -948,9 +948,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_ede745f4d53a4631809454f8fcacf9ca",
+      "id": "ia_1e35a97b7f774e6aa8a31ab6c0dc66fe",
       "revision": 1,
-      "sha256": "sha256:51138b269e466b8bf7f284bc0de48041c0aa75e0fb8471bc6bbd2ccba1b77c26",
+      "sha256": "sha256:9bf0c8e0f543824c736869c1b86a9a7ef0a3b852d91846296667dc20774ed91e",
       "scope": {
        "capability_id": "speech.intent_classify",
        "kind": "capability"
@@ -968,7 +968,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.914830Z",
+      "created_at": "2026-11-14T00:59:51.946965Z",
       "effective_retry_policy_id": "retry.structured.standard",
       "retry_policy_source": "capability_default"
      },
@@ -991,9 +991,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_c4aa0ff30cd64ec1b38b5d9b104bd4ad",
+      "id": "ia_7d356cbd34534827b91cab3b04d8d5f9",
       "revision": 1,
-      "sha256": "sha256:62e6d2f3c5abe5e3f4d7ac07694c0dfc6c4ac33827948e834b1b093fb47b162c",
+      "sha256": "sha256:a154dd12648f354d5d9ef8273774a74d255819c722582944f08fd1c0c1444b02",
       "scope": {
        "capability_id": "speech.rewrite",
        "kind": "capability"
@@ -1011,7 +1011,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.915169Z",
+      "created_at": "2026-11-14T00:59:51.947367Z",
       "effective_retry_policy_id": "retry.text.standard",
       "retry_policy_source": "capability_default"
      },
@@ -1052,9 +1052,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_f88245d92ce94ff0af6f3272e07ffe31",
+      "id": "ia_b700ad67df654cb9b670553237758ae2",
       "revision": 1,
-      "sha256": "sha256:f2f51e3599ce3906000f469b2c45ed17c8e5861e7262706c6b0234a46fb39190",
+      "sha256": "sha256:01705a91b54eeea276337199d60738a781bd05b0bf43c4b8b1ee149974fe3d02",
       "scope": {
        "capability_id": "speech.transcribe",
        "kind": "capability"
@@ -1079,7 +1079,7 @@
         "profile_revision": 1
        }
       ],
-      "created_at": "2026-11-08T22:51:48.901048Z",
+      "created_at": "2026-11-14T00:59:51.921435Z",
       "effective_retry_policy_id": "retry.audio.transcription",
       "retry_policy_source": "capability_default"
      },
@@ -1109,9 +1109,9 @@
      "inherited_from": "capability",
      "assignment": {
       "schema": "InferenceAssignmentProjection@1",
-      "id": "ia_866d605993ae4d0e85d99fd747ab0d63",
+      "id": "ia_e05ef8b12c394bb5aa0a77c7889bbfe8",
       "revision": 1,
-      "sha256": "sha256:02c133b4da339da71ab6d500f5d56e3abdf3b9614bd97e37ac0c01fac1ad3d5d",
+      "sha256": "sha256:7c333fd837807d1d1d6391c07863ad59c37b24ea8600039d6e392cde3f64f916",
       "scope": {
        "capability_id": "thought.interview",
        "kind": "capability"
@@ -1129,7 +1129,7 @@
       ],
       "retry_policy_id": null,
       "issues": [],
-      "created_at": "2026-11-08T22:51:48.915492Z",
+      "created_at": "2026-11-14T00:59:51.947761Z",
       "effective_retry_policy_id": "retry.text.standard",
       "retry_policy_source": "capability_default"
      },
@@ -1179,12 +1179,12 @@
  },
  "answer": {
   "output": "Here's what you owe Mira this week, from the 1:1 (m-mira-1on1, 2026-10-15):\n\n**Give Mira feedback on her cutover design doc** — due Friday 2026-10-23.\n\nThat's the only open item owed to her. The follow-through board and the meeting's proposals are both empty, so there's nothing else pending from that conversation.\n\nI've made it a task:\n- **Task:** Give Mira feedback on the cutover design doc\n- **Owner:** Me\n- **Due:** 2026-10-23 (Friday)\n- **Source:** meeting m-mira-1on1\n\nIt's now on your Door as an open item.",
-  "invocation_id": "ask_a9fa93e484d84e52a4adf818a34904d4",
+  "invocation_id": "ask_bb2f92a424534bf99ca3cd02116a1c22",
   "model": "qwen3.8-27b",
   "egress": {
    "scope": "private_network"
   },
-  "thread_id": "th_650d2cdb37d5",
+  "thread_id": "th_82e0e61ffb3d",
   "message_ids": {
    "question": "tm_000000000000",
    "answer": "tm_000000000001"
@@ -1194,7 +1194,7 @@
     "ref": "meeting:m-mira-1on1",
     "title": "1:1 with Mira",
     "kind": "meeting",
-    "at": "2026-11-06T22:51:48.908202+00:00"
+    "at": "2026-11-12T00:59:51.929835+00:00"
    }
   ],
   "used": {
@@ -1207,7 +1207,7 @@
    ],
    "wrote": [
     {
-     "ref": "action_item:ai_2ea8aa6a0cdd454ab41fafa20f9359d8",
+     "ref": "action_item:ai_e836f7cdba9a432ba60eab7573c233db",
      "label": "Give Mira feedback on the cutover design doc",
      "kind": "action_item",
      "undo": true
@@ -1284,7 +1284,7 @@
   ]
  },
  "thread": {
-  "id": "th_650d2cdb37d5",
+  "id": "th_82e0e61ffb3d",
   "title": "About: the meeting m-mira-1on1 (1:1 with Mira). What do I owe Mira this week? M…",
   "recipe_id": "",
   "profile_override": "",
@@ -1294,9 +1294,9 @@
   "status_line": "",
   "token_in": 40,
   "token_out": 40,
-  "created_at": 1794178308.9311192,
-  "updated_at": 1794178309.523442,
-  "last_turn_at": 1794178309.336016,
+  "created_at": 1794617991.962948,
+  "updated_at": 1794617992.038336,
+  "last_turn_at": 1794617992.0322099,
   "mode": null,
   "messages": [
    {
@@ -1314,7 +1314,7 @@
     "stats_json": null,
     "parts": [
      {
-      "id": "tp_b10aa79f844f",
+      "id": "tp_181c97f5491a",
       "kind": "text",
       "text": "About: the meeting m-mira-1on1 (1:1 with Mira).\n\nWhat do I owe Mira this week? Make the feedback a task for Friday 2026-10-23.",
       "ordinal": 0,
@@ -1322,8 +1322,8 @@
       "draft": false
      }
     ],
-    "created_at": 1794178308.946375,
-    "updated_at": 1794178308.946663,
+    "created_at": 1794617991.97748,
+    "updated_at": 1794617991.977984,
     "completed_at": null,
     "aborted_at": null
    },
@@ -1332,10 +1332,10 @@
     "role": "assistant",
     "parent_id": "tm_000000000000",
     "streaming": false,
-    "receipt_id": "ire_2bba3de04c2e5854df1a2eb68bddeecf",
+    "receipt_id": "op_9bb8fcb35af14472b602146b783bc2b7",
     "egress_scope": "private_network",
     "egress_host": "192.168.1.43",
-    "egress_receipt_id": "ire_2bba3de04c2e5854df1a2eb68bddeecf",
+    "egress_receipt_id": "op_9bb8fcb35af14472b602146b783bc2b7",
     "egress_fallback": false,
     "model_id": "qwen3.8-27b",
     "error_json": null,
@@ -1345,7 +1345,7 @@
     },
     "parts": [
      {
-      "id": "tp_b6e2de7a55c2",
+      "id": "tp_3b34b2c9b422",
       "kind": "text",
       "text": "I'll look into the meeting with Mira and what's owed. Let me start by reading the meeting and the relevant memory pages.\n\n",
       "ordinal": 0,
@@ -1353,7 +1353,7 @@
       "draft": false
      },
      {
-      "id": "tp_117ec503c156",
+      "id": "tp_1fec15cdd303",
       "kind": "tool_call",
       "text": null,
       "ordinal": 1,
@@ -1369,7 +1369,7 @@
       "tool_call_id": "n75kEsmMwleNubsCQoclP1An4coEdDwI"
      },
      {
-      "id": "tp_80c61663b3b3",
+      "id": "tp_8e1e82ad3d7b",
       "kind": "tool_call",
       "text": null,
       "ordinal": 2,
@@ -1385,7 +1385,7 @@
       "tool_call_id": "VlL9U6uEXjbKALGPLqYOqSQjHM1WV10m"
      },
      {
-      "id": "tp_bd13d908bc29",
+      "id": "tp_0c9ad41f1a69",
       "kind": "tool_call",
       "text": null,
       "ordinal": 3,
@@ -1401,7 +1401,7 @@
       "tool_call_id": "Fg2Uec3m7DSyvq9SXBKxKQUefLpmchbl"
      },
      {
-      "id": "tp_a20f7b850829",
+      "id": "tp_30fd9d383b4c",
       "kind": "text",
       "text": "Let me check the follow-through board and any proposals from the meeting to make sure I'm not missing anything owed to Mira.\n\n",
       "ordinal": 4,
@@ -1409,7 +1409,7 @@
       "draft": false
      },
      {
-      "id": "tp_96632198731b",
+      "id": "tp_415614556625",
       "kind": "tool_call",
       "text": null,
       "ordinal": 5,
@@ -1425,7 +1425,7 @@
       "tool_call_id": "DinvZhVpFchbgcenpRoUwk6skZ87bYJJ"
      },
      {
-      "id": "tp_f3f35c2a9778",
+      "id": "tp_d8b7e3d2dcb8",
       "kind": "tool_call",
       "text": null,
       "ordinal": 6,
@@ -1441,7 +1441,7 @@
       "tool_call_id": "S9pYEi7piHbOCOhyFd6KClnJghVJ5BiA"
      },
      {
-      "id": "tp_8301e019e882",
+      "id": "tp_fd4f9249f170",
       "kind": "text",
       "text": "The board and proposals are empty, so the meeting's action item is the only thing owed. Now I'll create the task as requested.\n\n",
       "ordinal": 7,
@@ -1449,7 +1449,7 @@
       "draft": false
      },
      {
-      "id": "tp_139747ea1385",
+      "id": "tp_e4097a2414a5",
       "kind": "tool_call",
       "text": null,
       "ordinal": 8,
@@ -1465,7 +1465,7 @@
       "tool_call_id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD"
      },
      {
-      "id": "tp_5a56a75cdd82",
+      "id": "tp_feffc1b7a67a",
       "kind": "text",
       "text": "Here's what you owe Mira this week, from the 1:1 (m-mira-1on1, 2026-10-15):\n\n**Give Mira feedback on her cutover design doc** — due Friday 2026-10-23.\n\nThat's the only open item owed to her. The follow-through board and the meeting's proposals are both empty, so there's nothing else pending from that conversation.\n\nI've made it a task:\n- **Task:** Give Mira feedback on the cutover design doc\n- **Owner:** Me\n- **Due:** 2026-10-23 (Friday)\n- **Source:** meeting m-mira-1on1\n\nIt's now on your Door as an open item.",
       "ordinal": 9,
@@ -1473,9 +1473,9 @@
       "draft": false
      }
     ],
-    "created_at": 1794178308.959975,
-    "updated_at": 1794178309.523343,
-    "completed_at": 1794178309.523343,
+    "created_at": 1794617991.981028,
+    "updated_at": 1794617992.0381691,
+    "completed_at": 1794617992.0381691,
     "aborted_at": null
    },
    {
@@ -1493,21 +1493,21 @@
     "stats_json": null,
     "parts": [
      {
-      "id": "tp_fe290c40c138",
+      "id": "tp_f5209895b034",
       "kind": "text",
-      "text": "{\"id\": \"ai_2ea8aa6a0cdd454ab41fafa20f9359d8\", \"task\": \"Give Mira feedback on the cutover design doc\", \"owner\": \"Me\", \"due\": \"2026-10-23\", \"status\": \"open\", \"source_type\": \"meeting\", \"source_ref\": \"meeting:m-mira-1on1\"}",
+      "text": "{\"id\": \"ai_e836f7cdba9a432ba60eab7573c233db\", \"task\": \"Give Mira feedback on the cutover design doc\", \"owner\": \"Me\", \"due\": \"2026-10-23\", \"status\": \"open\", \"source_type\": \"meeting\", \"source_ref\": \"meeting:m-mira-1on1\"}",
       "ordinal": 0,
       "sensitive": false,
       "draft": false,
       "meta_json": {
        "kind": "data",
-       "receipt_id": "tr-8061387a5a4d"
+       "receipt_id": "tr-9b1e16a4df8b"
       },
       "tool_call_id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD"
      }
     ],
-    "created_at": 1794178309.336016,
-    "updated_at": 1794178309.336192,
+    "created_at": 1794617992.0322099,
+    "updated_at": 1794617992.032407,
     "completed_at": null,
     "aborted_at": null
    }
@@ -1520,11 +1520,11 @@
   },
   "refs": [
    {
-    "id": "tr_75e0dd6ed3ff",
+    "id": "tr_1146086955f5",
     "ref_kind": "meeting",
     "ref_id": "m-mira-1on1",
-    "frozen_json": "{\"kind\":\"meeting\",\"subtitle\":\"2026-11-06\",\"text\":\"Mira: I need your feedback on my cutover design doc by Friday.\",\"title\":\"1:1 with Mira\",\"via\":\"memory\"}",
-    "created_at": 1794178308.946836,
+    "frozen_json": "{\"kind\":\"meeting\",\"subtitle\":\"2026-11-11\",\"text\":\"Mira: I need your feedback on my cutover design doc by Friday.\",\"title\":\"1:1 with Mira\",\"via\":\"memory\"}",
+    "created_at": 1794617991.978237,
     "message_id": "tm_000000000000",
     "origin": "relevance"
    }
@@ -1540,7 +1540,7 @@
     ],
     "wrote": [
      {
-      "ref": "action_item:ai_2ea8aa6a0cdd454ab41fafa20f9359d8",
+      "ref": "action_item:ai_e836f7cdba9a432ba60eab7573c233db",
       "label": "Give Mira feedback on the cutover design doc",
       "kind": "action_item",
       "undo": true
@@ -1554,7 +1554,7 @@
  "todo": {
   "status": "ok",
   "result": {
-   "id": "ai_b1ce622071c14e17a1ec73a0231c80fe",
+   "id": "ai_2e7cee2a69a2471685c91ecb9faf70db",
    "task": "Give Mira feedback on her cutover design doc",
    "owner": null,
    "due": null,
@@ -1562,6 +1562,6 @@
    "source_type": "thread",
    "source_ref": "thread:tm_000000000001"
   },
-  "receipt_id": "tr-2a44bc3bed1d"
+  "receipt_id": "tr-7937fe2f5fcc"
  }
 }

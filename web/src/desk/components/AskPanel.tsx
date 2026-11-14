@@ -59,7 +59,7 @@ import {
 } from "./AskWorkspace";
 import { chosenScopeWords, deskPrompts, wholeDeskWords } from "../askPrompts";
 import { useNeedsYou } from "../needsYou";
-import { humanTime } from "../surface/format";
+import { faceTimeWords, humanTime } from "../surface/format";
 import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
@@ -311,14 +311,6 @@ export function AskPanel() {
   const [heldFailure, setHeldFailure] = useState<{ callId: string; revision: string; words: string } | null>(null);
   const heldNow = useRef(held);
   heldNow.current = held;
-  // A failed answer adds a notice above the verbs. Keep that same call's
-  // completion in the reading seat, including when the owner scrolled it.
-  useLayoutEffect(() => {
-    if (!heldFailure) return;
-    const index = heldNow.current.calls.findIndex(call => call.call_id === heldFailure.callId && call.binding.revision === heldFailure.revision);
-    if (index < 0) return;
-    readingRef.current?.querySelectorAll<HTMLElement>('[data-testid="ask-hold"]')[index]?.querySelector<HTMLElement>(".surface-inspector-actions")?.scrollIntoView({ block: "center" });
-  }, [heldFailure]);
   const [deskTools, setDeskTools] = useState(false);
   const [tasks, setTasks] = useState<Record<string, { ref: string; label: string }>>({});
   const [makingTask, setMakingTask] = useState<string | null>(null);
@@ -1039,7 +1031,7 @@ export function AskPanel() {
   useLayoutEffect(() => {
     const reading = readingRef.current;
     if (!newestTurn || !reading) return;
-    const heads = reading.querySelectorAll<HTMLElement>("[data-testid=ask-turn] h3");
+    const heads = reading.querySelectorAll<HTMLElement>("[data-testid=ask-turn] > h3");
     const head = heads[heads.length - 1];
     if (!head) return;
     const offset = head.getBoundingClientRect().top - reading.getBoundingClientRect().top;
@@ -1182,9 +1174,9 @@ export function AskPanel() {
   const activeTurn = turns.find(turn => turn.key === answerKey) ?? turns.at(-1);
   const verbs: ListVerb[] = [
     ...(running ? [{ id: "stop", label: "Stop", enabled: () => true, run: stop }] : []),
-    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", enabled: () => true, run: returnToSource }] : []),
     { id: "new", label: "New ask", key: "Mod+n", enabled: () => true, run: () => { startNew(); setAnswerKey(""); setPickedRecent(null); setRailSheet(false); promptRef.current?.focus(); } },
-    { id: "about", label: `About: ${about.length ? `${about[0].title}${about.length > 1 ? ` and ${about.length - 1} more` : ""}` : "My whole desk"}`, testId: "ask-context", enabled: () => true, run: () => { scopeAnchor.current = document.querySelector('[data-testid="ask-actions"]'); setScopeOpen(true); } },
+    { id: "about", label: "About", title: about.length ? about.map(row => row.title).join(", ") : "My whole desk", testId: "ask-context", enabled: () => true, run: () => { scopeAnchor.current = document.querySelector('[data-testid="ask-actions"]'); setScopeOpen(true); } },
+    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", enabled: () => true, run: returnToSource }] : []),
     { id: "save", label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
       run: () => { if (activeTurn) { if (saved[activeTurn.key]) openRef(saved[activeTurn.key], { projectReturn: activeProjectReturn }); else void saveAsNote(activeTurn); } } },
     { id: "task", label: "Make it a task", enabled: () => Boolean(activeTurn && threadId && !tasks[activeTurn.key] && !(activeTurn.used?.wrote ?? []).some(row => row.ref.startsWith("action_item:"))) && !running && !makingTask,
@@ -1220,8 +1212,8 @@ export function AskPanel() {
       }}>
         <AskMast line={[about.length ? about.map(row => row.title).join(", ") : "My whole desk", engine.model, running ? "Asking" : engineDown || engine.down ? "Not answering" : ""].filter(Boolean).join(" · ")} held={held.calls.length} asking={running ? runSeconds : undefined} />
         <ShowMe app="ask:desk" />
-        <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
-          list={<ListView label="Recent" ordered empty={railShown ? "No recent asks" : undefined}
+        <ListPane deck={railShown} listShare={.25} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
+          list={<ListView label="Recent" ordered wholeRows empty={railShown ? "No recent asks" : undefined}
             rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.id, "rest", null, 20) : undefined,
               detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
               leadingLamp: { state: row.state === "writing" ? "working" : row.state === "not_answered" ? "failed" : "done", label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }))}
@@ -1236,7 +1228,8 @@ export function AskPanel() {
           {recent.error ? <SurfaceState error="Recent not read" onRetry={() => void readRecent()} /> : null}
           {keepFailure ? <SurfaceState error={keepFailure} retryLabel="Retry" onRetry={() => { const turn = keepTarget.current; if (turn) void saveAsNote(turn); }} /> : null}
           {forgotten ? <ActionNotice tone="info" action={{ label: "Undo", onClick: undoForget }}>Forgotten: {forgotten.title}</ActionNotice> : null}
-          <ObjectReader label="Ask conversation" testId={hasConversation ? "ask-conversation" : "ask-empty"}>
+          <AskSources rows={activeTurn && !running ? dedupeReferenceRows(citedRefs(activeTurn.lookedAt).map(referenceRow)) : []} compact={compact} targetId={activeTurn?.key ?? ""}>
+          <ObjectReader wholeLines label="Ask conversation" testId={hasConversation ? "ask-conversation" : "ask-empty"}>
             <span ref={node => { readingRef.current = node?.parentElement as HTMLDivElement | null; }} />
           {selectedPassage?.source ? <AskSourceFrame quote={selectedPassage.text} open={passageOpen} onToggle={setPassageOpen}
             onClear={() => { const source = selectedPassage.source; latchAskSelection(null); setSelectedPassage(source ? { ...selectedPassage, text: "", source } : null); }} /> : null}
@@ -1256,19 +1249,19 @@ export function AskPanel() {
               {running ? <>
                 {arriving ? <div data-testid="ask-arriving" aria-live="polite"><ReadingDocument>{arriving}</ReadingDocument></div>
                   : <div data-testid="run-line"><PaneActions><Lamp state="working" label="Asking" /><span>{progress ? progressWords(progress) : "Reading your desk"}</span>{runStartedAt ? <Elapsed start={runStartedAt} /> : null}</PaneActions></div>}
-                {held.calls.map(call => <InspectorQuestion key={`${held.threadId}:${call.call_id}:${call.binding.revision}`} targetId={`${held.threadId}:${call.call_id}:${call.binding.revision}`}
-                  notice={heldFailure?.callId === call.call_id && heldFailure.revision === call.binding.revision ? <ActionNotice tone="danger" role="alert">{heldFailure.words}</ActionNotice> : undefined} actionId="decide-tool" question={`${call.words}?`} rows={[{ label: "Tool", control: <span data-feedback-redact="true">{call.words}</span> }, ...call.facts.map(fact => ({ label: fact.label, control: <span data-feedback-redact="true">{fact.value}</span> }))]} testId="ask-hold" cancelLabel="Deny" cancel={() => void decide(call, "deny")}
-                  variant="brass" verb={{ label: "Allow once", busy: deciding === `${call.call_id}:${call.binding.revision}`, run: () => void decide(call, "approve") }} />)}
                 {progress?.state === "busy" && progress.alternatives[0] ? <Button dense variant="secondary" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>{otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}</Button> : null}
               </> : null}
               {failedRun ? notAnswered(failedRun) : null}
             </section> : null}
-            {!hasConversation ? <ListView label="From your desk now" ordered columns={[{ key: "name", word: "From your desk now" }, ...(prompts.some(row => row.source) ? [{ key: "why", word: "Why", priority: 1, track: "140px" }] : [])]}
+            {!hasConversation ? <ListView label="From your desk now" ordered wholeRows columns={[{ key: "name", word: "From your desk now" }, ...(prompts.some(row => row.source) ? [{ key: "why", word: "Why", priority: 1, track: "140px" }] : [])]}
               rows={prompts.map(row => ({ id: row.key, kind: row.kind, name: row.text, cells: { why: row.source } }))}
               selectedId={promptId} onSelect={setPromptId} defaultVerb="use-question"
               verbs={[{ id: "use-question", label: "Use question", run: row => { const prompt = prompts.find(prompt => prompt.key === row?.id); if (prompt) prefillPrompt(prompt.text); } }]} /> : null}
           </ObjectReader>
-          {activeTurn && !running ? <AskSources key={activeTurn.key} rows={dedupeReferenceRows(citedRefs(activeTurn.lookedAt).map(referenceRow))} /> : null}
+          </AskSources>
+          {sent && running ? held.calls.map(call => <InspectorQuestion bounded key={`${held.threadId}:${call.call_id}:${call.binding.revision}`} targetId={`${held.threadId}:${call.call_id}:${call.binding.revision}`}
+                  notice={heldFailure?.callId === call.call_id && heldFailure.revision === call.binding.revision ? <ActionNotice tone="danger" role="alert">{heldFailure.words}</ActionNotice> : undefined} actionId="decide-tool" question={`${call.words}?`} rows={[{ label: "Tool", control: <span data-feedback-redact="true">{call.words}</span> }, ...call.facts.map(fact => ({ label: fact.label, control: <span data-feedback-redact="true">{fact.value === "Hidden" ? <Lamp state="off" label="Hidden" /> : null}{faceTimeWords(fact.value)}</span> }))]} testId="ask-hold" cancelLabel="Deny" cancel={() => void decide(call, "deny")}
+                  variant="brass" verb={{ label: "Allow once", busy: deciding === `${call.call_id}:${call.binding.revision}`, run: () => void decide(call, "approve") }} />) : null}
 
           <Toolbar label="Ask" data-testid="ask-toolbar" className="object-list-toolbar" trailingStays
             trailing={<AskSendButton disabled={running || !prompt.trim()} onClick={() => void ask()} />}>
@@ -1322,6 +1315,6 @@ export function AskBar() {
 }
 
 function AskMast({ line, held, asking }: { line: string; held: number; asking?: number }) {
-  useWindowMast({ line, figures: held ? [{ value: held, label: "held", tone: "ask" }] : asking !== undefined ? [{ value: `${Math.floor(asking / 60)}:${String(asking % 60).padStart(2, "0")}`, label: "asking" }] : [] });
+  useWindowMast({ line: <span data-feedback-redact="true">{line}</span>, figures: held ? [{ value: held, label: "held", tone: "ask" }] : asking !== undefined ? [{ value: `${Math.floor(asking / 60)}:${String(asking % 60).padStart(2, "0")}`, label: "asking" }] : [] });
   return null;
 }

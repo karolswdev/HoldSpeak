@@ -609,3 +609,8 @@
 
 /* Object names use the shared measured fitter; facts keep the complete value. */
 .surface-inspector-facts .gadget-row-gadget { overflow-wrap: anywhere; }
+
+/* A long held question keeps its answer row outside the facts' scroll well. */
+.surface-pane-inspector[data-question][data-bounded] { flex: 2 1 0; min-height: 0; overflow: hidden; }
+.surface-pane-inspector[data-question][data-bounded] > .surface-inspector-form { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.surface-pane-inspector[data-question][data-bounded] > .surface-inspector-form > .surface-inspector-fields { flex: 1 1 0; min-height: 0; overflow: auto; }

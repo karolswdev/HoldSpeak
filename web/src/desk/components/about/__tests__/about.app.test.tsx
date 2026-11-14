@@ -128,7 +128,7 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
     fireEvent.change(field, { target: { value: "Avery" } });
     await waitFor(() => expect(matches()).toContain("Avery Chen"));
     fireEvent.doubleClick(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Avery Chen/ }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("Avery Chen");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("Avery Chen"));
 
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What does Avery owe?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -142,15 +142,15 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Find a meeting, note, person" }), { target: { value: "Ledger cutover" } });
     await waitFor(() => expect(matches()).toContain("Ledger cutover sync"));
     fireEvent.doubleClick(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Ledger cutover sync/ }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("Ledger cutover sync");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("Ledger cutover sync"));
 
     fireEvent.click(screen.getByTestId("ask-context"));
     expect(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Ledger cutover sync Chosen/ })).toBeInTheDocument();
     fireEvent.click(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Ledger cutover sync Chosen/ }));
     fireEvent.click(within(screen.getByTestId("ask-scope-menu")).getByRole("button", { name: "Remove" }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("My whole desk"));
     fireEvent.doubleClick(screen.getByRole("row", { name: /My whole desk/ }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("My whole desk"));
   });
 
   it("This week's meetings asks about this week's meetings only", async () => {
@@ -169,7 +169,7 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
     const data = { types: [HAND_MIME], getData: (type: string) => (type === HAND_MIME ? "note:n-avery" : ""), dropEffect: "none" };
     fireEvent.dragOver(body, { dataTransfer: data });
     fireEvent.drop(body, { dataTransfer: data });
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Avery");
+    expect(screen.getByTestId("ask-context")).toHaveAttribute("title", expect.stringContaining("1:1 with Avery"));
     fireEvent.click(screen.getByTestId("ask-context"));
     expect(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /1:1 with Avery Chosen/ })).toBeInTheDocument();
   });

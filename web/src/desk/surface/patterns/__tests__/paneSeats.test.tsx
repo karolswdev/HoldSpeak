@@ -5,7 +5,7 @@ import { GadgetRow } from "../../gadgets";
 import { InspectorFacts, PaneInspector } from "../PreferencePane";
 import { InspectorFigures } from "../../live/InspectorFigures";
 import { Mast, MastSlotContext, type MastDeclaration } from "../Mast";
-import { SurfaceWell, ListView, StatusBar } from "../../index";
+import { SurfaceWell, ListView, StatusBar, ListPane, ObjectReader } from "../../index";
 import { Button } from "../../../../components/signal/Signal";
 vi.mock("../../objects/fitName", async importOriginal => ({...await importOriginal<object>(), textMeasure: () => ({average: 8, width: (text: string) => text.length * 8})}));
 afterEach(() => {cleanup(); vi.restoreAllMocks();});
@@ -117,4 +117,31 @@ it("a wrapping inspector exposes all of a long decision without a hover", () => 
   const {container} = render(<InspectorFacts name={name} nameMode="wrap" rows={[{label:"State",value:"To confirm"}]} />);
   expect(container.querySelector(".surface-inspector-heading > strong")).toHaveTextContent(name);
   expect(container.querySelector(".surface-inspector-name[data-wrap]")).toHaveAttribute("data-feedback-redact", "true");
+});
+
+it("keeps a fitted scope when the first Mast fact is wider than its seat", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(176);
+  const scope = "Review the platform recovery point, retained draft, migration result and next owner action before the architecture team signs the deployment checkpoint.";
+  const {container} = render(<Mast framed kind="thread" title="Ask" facts={`${scope} · Local engine`} />);
+  const line = container.querySelector(".surface-mast-facts")!;
+  expect(line).toHaveAttribute("aria-label", `${scope} · Local engine`);
+  expect(line.textContent).toMatch(/^Review/);
+  expect(line.textContent).not.toBe("…");
+  expect(line.textContent!.length * 8).toBeLessThanOrEqual(176);
+});
+
+
+it("an optional source list leaves the reader and its position control mounted", () => {
+  const pane = (listed: boolean) => <ListPane deck label="Answer" listTestId="sources" list={listed ? <ListView label="Sources" rows={[{id:"n",kind:"note",name:"Review"}]} columns={[{key:"name",word:"Sources"}]} /> : null}><ObjectReader label="Conversation"><input aria-label="Reading position" defaultValue="First line" /></ObjectReader></ListPane>;
+  const {rerender} = render(pane(false));
+  const position = screen.getByRole("textbox", {name:"Reading position"});
+  expect(screen.queryByTestId("sources")).toBeNull();
+  fireEvent.change(position,{target:{value:"Kept line"}});
+  rerender(pane(true));
+  expect(screen.getByRole("textbox", {name:"Reading position"})).toBe(position);
+  expect(position).toHaveValue("Kept line");
+  rerender(pane(false));
+  expect(screen.queryByTestId("sources")).toBeNull();
+  expect(screen.getByRole("textbox", {name:"Reading position"})).toBe(position);
+  expect(position).toHaveValue("Kept line");
 });
