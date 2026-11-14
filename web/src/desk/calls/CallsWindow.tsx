@@ -27,6 +27,7 @@ import {
   type StatusBarItem,
 } from "../surface";
 import { PaneViewContext } from "../surface/patterns/PaneViews";
+import { nameIsFile } from "../surface/objects/fitName";
 import { useCompactViewport } from "../useCompactViewport";
 import { useGuideView } from "../walk/viewState";
 import {
@@ -172,6 +173,7 @@ function CallDetails({
   status,
   transcript,
   resultsView,
+  split,
   busy,
   answer,
 }: {
@@ -181,6 +183,7 @@ function CallDetails({
   status: CallsStatus;
   transcript: boolean;
   resultsView: boolean;
+  split: boolean;
   busy: boolean;
   answer(decision: "approve" | "deny", target: Call): void;
 }) {
@@ -215,27 +218,32 @@ function CallDetails({
   const elapsed = <Elapsed start={call.answered_at ?? call.started_at ?? ""} />;
   const length =
     call.duration_sec == null ? undefined : clockWords(call.duration_sec);
-  return (
-    <PaneInspector
-      label={callTitle(call)}
-      subtitle={`${outcome.word} · ${callWhen(call.started_at)}`}
-      object={
-        <img
-          src={spriteUrl("call", "calls", "rest", null, 32)}
-          width={32}
-          height={32}
-          alt=""
-        />
-      }
-      testId="calls-document"
-      trailing={
-        live
-          ? countWords(results.length, "result")
-          : !results.length
-            ? length
-            : undefined
-      }
-    >
+  const resultList = (
+    <ListView
+      label="Done on this call"
+      headerless={live && split}
+      caption={live && split ? countWords(results.length, "result") ?? undefined : undefined}
+      ordered
+      rows={results.map((item, i) => ({
+        id: String(i),
+        kind: item.kind,
+        name: item.label,
+        sprite: nameIsFile(item.label) ? spriteUrl("artifact", item.label, "rest", null, 20) : undefined,
+        detail: EFFECT_WORDS[item.effect] ?? item.effect,
+        leadingLamp: { state: "done" as const, label: "Done" },
+      }))}
+      columns={[{ key: "name", word: "Done on this call" }]}
+      rowProps={() => ({
+        "data-testid": "calls-result",
+        "data-feedback-redact": "true",
+      })}
+      selectedId={result}
+      onSelect={setResult}
+      verbs={openResult}
+      defaultVerb="open-result"
+    />
+  );
+  const body = (
       <InspectorBody>
         {results.length && !live ? (
           <InspectorFigures
@@ -292,33 +300,8 @@ function CallDetails({
           data-feedback-redact="true"
           rows={[{ label: "Number", value: maskedAddress(call.remote) }]}
         /> : null}
-        {!transcript && (!live || resultsView) && results.length ? (
-          <ListPane
-            listTestId="calls-results"
-            label="Done on this call"
-            list={
-              <ListView
-                label="Done on this call"
-                ordered
-                rows={results.map((item, i) => ({
-                  id: String(i),
-                  kind: item.kind,
-                  name: item.label,
-                  detail: EFFECT_WORDS[item.effect] ?? item.effect,
-                  leadingLamp: { state: "done" as const, label: "Done" },
-                }))}
-                columns={[{ key: "name", word: "Done on this call" }]}
-                rowProps={() => ({
-                  "data-testid": "calls-result",
-                  "data-feedback-redact": "true",
-                })}
-                selectedId={result}
-                onSelect={setResult}
-                verbs={openResult}
-                defaultVerb="open-result"
-              />
-            }
-          />
+        {!transcript && (!live || resultsView) && results.length && !(live && split) ? (
+          <ListPane minimumRows={1} listTestId="calls-results" label="Done on this call" list={resultList} />
         ) : null}
         {live && status.engine.model ? (
           <InspectorFacts
@@ -329,8 +312,17 @@ function CallDetails({
           />
         ) : null}
       </InspectorBody>
-    </PaneInspector>
   );
+  // The selected desktop row names the live call. Keep that space for its
+  // words, held question and results; compact inspection still needs a name.
+  if (live && split)
+    return <ListPane label={callTitle(call)} previewTestId="calls-document" listTestId="calls-results"
+      listPosition="after" listShare={.3} list={!transcript && results.length ? resultList : null}>{body}</ListPane>;
+  return <PaneInspector label={callTitle(call)} subtitle={`${outcome.word} · ${callWhen(call.started_at)}`}
+    object={<img src={spriteUrl(nameIsFile(callTitle(call)) ? "artifact" : "call", call.id, "rest", null, 32)} width={32} height={32} alt="" />}
+    testId="calls-document" trailing={live ? countWords(results.length, "result") : !results.length ? length : undefined}>
+    {body}
+  </PaneInspector>;
 }
 
 type Entry = { id: string; call?: CallSummary };
@@ -349,6 +341,7 @@ export function CallsCore({ scope }: CoreProps) {
     scope === "phone" || (asks.pending && !asks.callId) ? "phone" : null,
   );
   const [view, setView] = useState("all");
+  const [paneLayout, setPaneLayout] = useState<"split" | "compact">("compact");
   const [viewing, setViewing] = useState<Call | null>(null),
     [readError, setReadError] = useState("");
   const [busy, setBusy] = useState(""),
@@ -478,6 +471,7 @@ export function CallsCore({ scope }: CoreProps) {
       id: call.id,
       kind: "call",
       name: callTitle(call),
+      sprite: nameIsFile(callTitle(call)) ? spriteUrl("artifact", call.id, "rest", null, 20) : undefined,
       detail: call.direction === "out" ? "Outgoing call" : "Incoming call",
       group: call.state === "ended" ? 1 : 0,
       when: callWhen(call.started_at),
@@ -673,6 +667,8 @@ export function CallsCore({ scope }: CoreProps) {
   return (
     <PreferencePane label="Calls" data-feedback-redact="true">
       <PaneViews
+        inspectorShown={Boolean(live)}
+        onLayoutChange={setPaneLayout}
         label="Call view"
         value={view}
         onChange={setView}
@@ -681,7 +677,7 @@ export function CallsCore({ scope }: CoreProps) {
           ...(selected?.call && shown
             ? [
                 { id: "transcript", label: "Transcript" },
-                ...(live && shown.results?.length ? [{ id: "results", label: "Results" }] : []),
+                ...(live && shown.results?.length ? [{ id: "results", label: "Results", inspector: true }] : []),
               ]
             : []),
           ...(calls.settings?.line
@@ -830,6 +826,7 @@ export function CallsCore({ scope }: CoreProps) {
                     status={calls.status}
                     transcript={view === "transcript"}
                     resultsView={view === "results"}
+                    split={paneLayout === "split"}
                     busy={Boolean(busy)}
                     answer={answer}
                   />

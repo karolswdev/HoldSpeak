@@ -113,7 +113,7 @@ beforeEach(() => {
   mocks.listeners.clear();
   usePhoneFocus.setState({ pending: false, replyTo: null, callId: null });
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("Calls selection and results", () => {
   it("uses the shared grouped selection list and has no card, inner Mast or row verbs", async () => {
@@ -654,6 +654,36 @@ describe("round two", () => {
 });
 
 describe("round three", () => {
+  it.each([
+    ["declared Send", tape.held],
+    ["write without a declaration", tape.undeclared],
+  ])("keeps the hub's labelled facts for a %s", async (_label, call) => {
+    hub({"GET /api/calls/status":{...ready,active:call}, "GET /api/calls":{calls:[call]},
+      [`GET /api/calls/${call.id}`]:call});
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    for (const fact of call.hold.facts) {
+      expect(within(question).getByText(fact.label, {exact:true}).closest(".gadget-row")).toHaveTextContent(fact.value);
+    }
+  });
+  it("shows live results beside the call list without changing View in a split window", async () => {
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains("surface-pane-views") ? 900 : 0;
+    });
+    hub({"GET /api/calls/status":{...ready,active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    expect(screen.getByRole("log", {name:"Transcript"})).toHaveTextContent("Review the platform plan.");
+    expect(screen.getByTestId("calls-results")).toHaveTextContent(tape.held.results[0].label);
+    await chooseView("Transcript");
+    await chooseView("All calls");
+    expect(screen.getByTestId("calls-hold")).toBe(question);
+    fireEvent.click(screen.getAllByTestId("calls-result")[0]);
+    fireEvent.click(screen.getByRole("button", {name:"Open"}));
+    expect(mocks.openRef).toHaveBeenCalledWith(tape.held.results[0].ref);
+    fireEvent.click(screen.getByRole("button", {name:"Call view"}));
+    expect(screen.queryByRole("menuitem", {name:"Results"})).toBeNull();
+  });
   it("masks the call number in the rendered pane and marks its feedback region", async () => {
     hub();
     render(<CallsCore />);

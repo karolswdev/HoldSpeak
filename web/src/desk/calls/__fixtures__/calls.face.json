@@ -387,5 +387,58 @@
     "project_ref": "",
     "outcome": "",
     "ended_by": ""
+  },
+  "undeclared": {
+    "id": "call-face",
+    "direction": "in",
+    "remote": "sip:+15550100142@example.test",
+    "state": "live",
+    "started_at": "2026-11-12T04:00:00-07:00",
+    "answered_at": "2026-11-12T04:00:01-07:00",
+    "ended_at": null,
+    "duration_sec": 246.0,
+    "first_words": "Review the platform plan.",
+    "hold": {
+      "call_id": "undeclared-write",
+      "tool": "desk.create",
+      "words": "Save an object",
+      "facts": [
+        {
+          "label": "Write details",
+          "value": "not described"
+        }
+      ],
+      "binding": {
+        "id": "undeclared-write",
+        "revision": "a29799c860a73f906ea8ad21f31aa0e4a9b2d6dfe0bc7d5e20a7a81d4b256730"
+      },
+      "label": "Save an object"
+    },
+    "results": [
+      {
+        "kind": "note",
+        "label": "Platform plan",
+        "ref": "note:platform-plan",
+        "effect": "wrote"
+      }
+    ],
+    "note_ref": "",
+    "project_ref": "",
+    "outcome": "",
+    "ended_by": "",
+    "transcript": [
+      {
+        "who": "holdspeak",
+        "text": "What can I do?",
+        "at": "2026-11-12T04:00:02-07:00",
+        "interrupted": false
+      },
+      {
+        "who": "caller",
+        "text": "Review the platform plan.",
+        "at": "2026-11-12T04:00:06-07:00",
+        "interrupted": false
+      }
+    ]
   }
 }

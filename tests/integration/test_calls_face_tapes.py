@@ -71,9 +71,13 @@ def test_calls_face_tape(hub, monkeypatch, tmp_path):
     aggregator = _ToolExecutorAggregator()
     monkeypatch.setattr(ThreadService, "_tool_executor", aggregator)
     turns = DeskTurns(hub.db, lambda **_: None)
-    def hold(tool_call_id):
+    def hold(tool_call_id, *, undeclared=False):
         executor = ThreadToolExecutor(hub.db, principal=caller, dispatch_fn=lambda *_: {"ok":True}, control_mode_fn=lambda:"safe", held_egress=CALL_HELD)
         handle = executor.admit("calls-face-turn", thread.id, {"id":tool_call_id, "name":"channel.send", "arguments":{"send_id":prepared["send"]["id"]}})
+        if undeclared:
+            # The same missing-declaration edge as test_held_tool_details:
+            # keep the real held read, binding and CallRunner question.
+            handle.name = "desk.create"
         aggregator.register("calls-face-message", executor)
         details, _question, _noop = runner._question(handle.call_id, handle.name)
         return details
@@ -92,6 +96,10 @@ def test_calls_face_tape(hub, monkeypatch, tmp_path):
         return reply.json()
     with TestClient(app) as client:
         tape = {"_producer": "tests/integration/test_calls_face_tapes.py; real declared HTTP routes, CallRecord and CallRunner; fake phone and tool dispatch edges only; real held-details guard"}
+        record.hold = hold("undeclared-write", undeclared=True)
+        tape["undeclared"] = request(client, "GET", "/api/calls/call-face")
+        assert tape["undeclared"]["hold"]["facts"] == [{"label":"Write details", "value":"not described"}]
+        record.hold = hold("send-plan")
         tape["held"] = request(client, "GET", "/api/calls/call-face")
         tape["listed"] = request(client, "GET", "/api/calls")
         tape["denied"] = request(client, "POST", "/api/calls/call-face/decide", json={"decision": "deny", "binding":record.hold["binding"]})
