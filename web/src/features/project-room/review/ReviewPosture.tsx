@@ -43,6 +43,7 @@ export function ReviewPosture({
   const verbs: ListVerb[] = [
     {
       id: "accept",
+      variant: "primary",
       label: "Accept",
       enabled: () => Boolean(proposal) && !ctrl.decidingId,
       run: () => {
@@ -74,6 +75,7 @@ export function ReviewPosture({
     },
     {
       id: "undo",
+      toolbar: false,
       label: "Undo dismissal",
       enabled: () => ctrl.undoStack.length > 0,
       run: () => {
@@ -82,6 +84,7 @@ export function ReviewPosture({
     },
     {
       id: "finish",
+      toolbar: false,
       label: "Finish review",
       enabled: () =>
         !ctrl.checkpointed && Boolean(ctrl.window) && !ctrl.decidingId,
@@ -92,6 +95,7 @@ export function ReviewPosture({
     {
       enabled: () => true,
       id: "close",
+      toolbar: false,
       label: "Close review",
       run: () => {
         ctrl.exitReview();

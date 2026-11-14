@@ -7,7 +7,8 @@
  * A cold open asked the hub for nothing.
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import RECORDED from "../../__tests__/room-wires/recall-all-held.json";
 import { apiFetch } from "../../../../lib/api";
 import { RecallFace } from "../RecallFace";
 
@@ -82,6 +83,22 @@ describe("the cold Desk memory window", () => {
       await screen.findByText("Freeze window is Saturday 02:00"),
     ).toBeVisible();
     expect(screen.getByTestId("recall-results")).toBeInTheDocument();
+  });
+
+  it("keeps every returned kind under All when a commitment inspector opens", async () => {
+    vi.mocked(apiFetch).mockResolvedValue(RECORDED.all as never);
+    render(<RecallFace />);
+    const result = RECORDED.all;
+    const expected = [...result.current, ...result.superseded, ...result.disputed, ...result.owed, ...result.beliefs, ...result.meetings, ...result.briefs, ...result.also];
+    const grid = await screen.findByRole("grid", {name:"Recent on this desk"});
+    await waitFor(() => expect(grid.querySelectorAll('.object-list-row')).toHaveLength(expected.length));
+    fireEvent.click(screen.getByRole("row", {name:/Load test rerun/}));
+    expect(grid.querySelectorAll('.object-list-row')).toHaveLength(expected.length);
+    for (const row of result.also) expect(grid).toHaveTextContent(row.title);
+    expect(String(vi.mocked(apiFetch).mock.calls[0][0])).toContain("filter=all");
+    expect(result.also.some(row=>row.kind === "prep_brief")).toBe(true);
+    expect(result.also.some(row=>row.kind === "note")).toBe(true);
+    expect(result.also.some(row=>row.kind === "project_item")).toBe(true);
   });
 
   it("names the read for what it is, not as a search", async () => {

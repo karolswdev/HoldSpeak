@@ -37,7 +37,11 @@ function route(url: string, init: { method?: string } = {}) {
   if (url.endsWith("/watches")) return STEWARD.watches;
   return {};
 }
-function press(name: string) { fireEvent.click(screen.getAllByRole("button", { name }).at(-1)!); }
+function press(name: string) {
+  const button = screen.queryAllByRole("button", {name}).at(-1);
+  if (button) fireEvent.click(button);
+  else { fireEvent.click(screen.getAllByRole("button", {name:"Actions ▾"}).at(-1)!); fireEvent.click(screen.getByRole("menuitem", {name})); }
+}
 function choose(label: string, value: string) {
   const update = screen.queryByRole("button", {name:"Update view"}) ?? screen.queryByRole("button", {name:"Project view"});
   if (label === "View" && update) {
@@ -210,6 +214,13 @@ describe("Update seats", () => {
   });
 });
 describe("Preparation seats", () => {
+  it("shows Prepare without Stop or Keep before a brief exists", async () => {
+    render(<Prepare />);
+    await screen.findByRole("textbox", {name:"Purpose"});
+    expect(screen.queryByRole("button", {name:"Stop"})).toBeNull();
+    expect(screen.queryByRole("button", {name:"Keep"})).toBeNull();
+    expect(screen.getAllByRole("button", {name:"Prepare"}).at(-1)).toBeEnabled();
+  });
   it("reads the producer's brief headings in sentence case", async () => {
     routes[`POST /api/projects/${TAPE.PREP2_ROOM.project_id}/briefs/prepare`] = TAPE.PREPARE_OK;
     render(<Prepare />); await screen.findByRole("textbox", { name: "Purpose" }); press("Prepare");
@@ -259,6 +270,12 @@ describe("Preparation seats", () => {
     }
   });
 describe("Steward and review seats", () => {
+  it("keeps the review's default act and at most four other strip verbs", async () => {
+    routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;
+    render(<Review />);
+    await waitFor(() => expect(screen.getByRole("button", {name:"Accept"})).toBeEnabled());
+    expect(document.querySelectorAll('.object-list-toolbar-strip [data-list-verb]').length).toBeLessThanOrEqual(5);
+  });
   it("opens a run as steps and offers its recorded review", async () => {
     const run = STEWARD.completed.detail.run;
     routes[`GET /api/steward/runs/${run.id}`] = STEWARD.completed.detail;
@@ -287,6 +304,9 @@ describe("Steward and review seats", () => {
     press("Edit and accept");
     expect(screen.getByRole("combobox", {name:"State"})).toHaveValue("open");
     expect(screen.queryByRole("button", {name:"Speak State"})).toBeNull();
+    const text = screen.getByRole("textbox", {name:"Text"});
+    expect(text.tagName).toBe("TEXTAREA");
+    expect(text).toHaveAttribute("rows", "4");
   });
   it("edits human fields with the same labels as the facts and preserves the wire patch", async () => {
     routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;

@@ -236,7 +236,7 @@ export function PreparePosture({
       label: "Answer instead",
       run: () => onResultChange(ctrl.purpose),
     },
-  ];
+  ].filter(verb => verb.enabled());
   return (
     <PaneViews label="Project view" value={seat}
       tabs={[{id:"purpose",label:"Purpose"},{id:"sources",label:"Sources"},{id:"brief",label:"Prepared brief"},{id:"claims",label:"Claims"},{id:"carried",label:"Carried forward"},{id:"kept",label:"Kept briefs"}, ...projectViews.map(view => ({id:`project:${view.id}`,label:view.label}))]}

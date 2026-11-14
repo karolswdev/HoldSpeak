@@ -51,7 +51,7 @@ from __future__ import annotations
 
 from .room_errors import room_not_found
 
-from .room_claim_editor import claim_editors, edit_claim_body
+from .room_claim_editor import claim_editors, edit_claim_body, compose
 
 import hashlib
 import json
@@ -349,6 +349,30 @@ _HONEST_MINIMAL: dict[str, str] = {
 }
 
 
+def _item_claim(
+    item: dict[str, Any], span: str, section: str,
+    source_version: str, fallback: str, *, due: bool = False,
+) -> Claim:
+    ref = f"item:{item.get('id') or fallback}"
+    fields = (
+        ["title", "lifecycle", "due_at"] if due else
+        ["title", "severity", "lifecycle"] if section == "dependencies" else
+        ["severity", "title", "lifecycle"]
+    )
+    if section != "dependencies":
+        fields.insert(0, "item_type")
+    return Claim(
+        span_id=span,
+        text=compose(
+            item.get("item_type", "item"), None if due else item.get("severity"),
+            item.get("title", "Untitled"), item.get("lifecycle", "unknown"),
+            due=item.get("due_at") if due else None,
+        ),
+        refs=[ref], section=section, kind=KIND_OBSERVATION, support=SUPPORT_SUPPORTED,
+        support_record=_field_mapping_support(source_version, [ref], fields),
+    )
+
+
 # ── Section builders (deterministic) ──────────────────────────────────
 
 def _build_progress(
@@ -363,30 +387,9 @@ def _build_progress(
 
     lines: list[str] = []
     for i, item in enumerate(focus):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        lifecycle = item.get("lifecycle", "unknown")
-        item_type = item.get("item_type", "item")
-        severity = item.get("severity")
-
-        sev_str = f" [{severity}]" if severity else ""
-        text = f"{item_type.capitalize()}{sev_str}: {title} -- {lifecycle}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_{i}"
-        claims.append(Claim(
-            span_id=f"s_progress_{i}",
-            text=text,
-            refs=[ref],
-            section="progress",
-            # A recorded lifecycle read straight off the item row: an
-            # observation, supported by a field mapping (C2).
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref],
-                ["item_type", "severity", "title", "lifecycle"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_progress_{i}", "progress", source_version, f"unknown_{i}")
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     total = items_section.get("total", len(focus))
     cap = len(focus)
@@ -865,28 +868,9 @@ def _build_risks_blockers(
 
     lines: list[str] = []
     for i, item in enumerate(risk_items):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        item_type = item.get("item_type", "item")
-        lifecycle = item.get("lifecycle", "unknown")
-        severity = item.get("severity")
-
-        sev_str = f" [{severity}]" if severity else ""
-        text = f"{item_type.capitalize()}{sev_str}: {title} -- {lifecycle}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_rb_{i}"
-        claims.append(Claim(
-            span_id=f"s_risks_blockers_{i}",
-            text=text,
-            refs=[ref],
-            section="risks_blockers",
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref],
-                ["item_type", "severity", "title", "lifecycle"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_risks_blockers_{i}", "risks_blockers", source_version, f"unknown_rb_{i}")
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     return "\n".join(lines)
 
@@ -907,26 +891,9 @@ def _build_dependencies(
 
     lines: list[str] = []
     for i, item in enumerate(dep_items):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        lifecycle = item.get("lifecycle", "unknown")
-        severity = item.get("severity")
-
-        sev_str = f" [{severity}]" if severity else ""
-        text = f"Dependency{sev_str}: {title} -- {lifecycle}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_dep_{i}"
-        claims.append(Claim(
-            span_id=f"s_dependencies_{i}",
-            text=text,
-            refs=[ref],
-            section="dependencies",
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref], ["title", "severity", "lifecycle"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_dependencies_{i}", "dependencies", source_version, f"unknown_dep_{i}")
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     return "\n".join(lines)
 
@@ -948,28 +915,9 @@ def _build_next_actions(
 
     lines: list[str] = []
     for i, item in enumerate(action_items):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        item_type = item.get("item_type", "item")
-        lifecycle = item.get("lifecycle", "unknown")
-        due_at = item.get("due_at")
-
-        due_str = f", due {due_at}" if due_at else ""
-        text = f"{item_type.capitalize()}: {title} -- {lifecycle}{due_str}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_na_{i}"
-        claims.append(Claim(
-            span_id=f"s_next_actions_{i}",
-            text=text,
-            refs=[ref],
-            section="next_actions",
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref],
-                ["item_type", "title", "lifecycle", "due_at"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_next_actions_{i}", "next_actions", source_version, f"unknown_na_{i}", due=True)
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     return "\n".join(lines)
 

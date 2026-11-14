@@ -15,8 +15,69 @@ from .room_seed_rig import _seed_populated_project, _seed_meeting_with_proposals
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/room14r3"
+OUT = Path(os.environ.get("ROOM_SHOT_DIR", ROOT / ".tmp/evidence-shots/room14r3"))
 PHASE = os.environ.get("ROOM_SHOT_PHASE", "after")
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_recall_all_keeps_the_same_seeded_records_with_and_without_a_selection(tmp_path, monkeypatch, width):
+    from playwright.sync_api import sync_playwright, expect
+    from holdspeak.db import get_database
+    from tests.unit.test_memory_slice5_pages import _filed_note, _learn
+    _ensure_build()
+    OUT.mkdir(parents=True, exist_ok=True)
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition":"completed"}, token=TOKEN)
+            pid = _seed_populated_project(page)
+            for i in range(50):
+                _api(page,"POST",f"/api/projects/{pid}/items",{"item_type":"risk","title":f"review_binding_{i:02d}_"+"savedrevision"*14,"lifecycle":"open","details":{"likelihood":"high","impact":"critical","mitigation":"Read the rollback plan"}},token=TOKEN)
+            proposals = _seed_meeting_with_proposals(pid, [("Dana","Load test rerun"),("You","Use idempotency keys on retries")])
+            with get_database()._connection() as conn:
+                conn.execute("UPDATE follow_through_proposals SET kind='decision' WHERE id=?",(proposals[1],))
+            for proposal in proposals:
+                path=f"/api/proposals/{proposal}/confirm"
+                _api(page,"POST",path,{"binding":http_binding(path)},token=TOKEN)
+            _filed_note(get_database(),"recall-parity-note","Cutover status is ready. Rollback status is tested.",pid)
+            _learn(get_database())
+            brief=_api(page,"POST",f"/api/projects/{pid}/briefs/prepare",{"purpose":"Read the cutover plan","generator":"deterministic"},token=TOKEN)["brief"]
+            _api(page,"POST",f"/api/briefs/{brief['id']}/keep",{},token=TOKEN)
+            wire=_api(page,"GET","/api/memory/recall?recent=1&filter=all",token=TOKEN)
+            expected=sum(len(wire.get(key,[])) for key in ("current","superseded","disputed","owed","beliefs","meetings","briefs","also"))
+            clear_hub_windows_http(base,TOKEN)
+            _api(page,"POST","/api/desk/windows/surface-project-memory/open",{"object_ref":f"project:{pid}"},token=TOKEN)
+            if width == 1440:
+                _api(page,"POST","/api/desk/windows/surface-project-memory/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            win=page.locator("#surface-project-memory")
+            expect(win.get_by_role("grid",name="Open",exact=True)).to_be_attached()
+            _view(page,win,"Recall")
+            expect(win.locator(".object-list-row")).to_have_count(expected)
+            suffix="900" if width==1440 else "393"
+            measurements={"phase":PHASE,"width":width,"api_rows":expected,"kinds":{key:len(wire.get(key,[])) for key in ("current","superseded","disputed","owed","beliefs","meetings","briefs","also")}}
+            for selected in (False,True):
+                if selected:
+                    win.get_by_role("row",name=__import__("re").compile("Load test rerun")).click()
+                    expect(win.locator(".surface-inspector-facts")).to_contain_text("Dana")
+                _settle(page)
+                state="selected" if selected else "all"
+                measurements[state]=win.locator(".object-list-rows").evaluate("""well=>({rendered:well.querySelectorAll('.object-list-row').length,visible:[...well.querySelectorAll('.object-list-row')].filter(row=>{const r=row.getBoundingClientRect(),b=well.getBoundingClientRect();return r.top>=b.top-1&&r.bottom<=b.bottom+1;}).length,height:well.clientHeight,scroll:well.scrollHeight})""")
+                page.screenshot(path=str(OUT/f"2-recall-{state}-{PHASE}-{suffix}.png"))
+                expect(win.locator(".object-list-row")).to_have_count(expected)
+            # Scroll to the last returned source object: a four-row well is
+            # not a four-row result, and the scope must leave every row reachable.
+            last=win.locator(".object-list-row").last
+            last.scroll_into_view_if_needed()
+            expect(last).to_be_in_viewport()
+            (ROOT/".tmp"/f"recall-parity-{PHASE}-{suffix}.json").write_text(json.dumps({"measurements":measurements,"wire":wire},indent=2))
+            browser.close()
+    finally:
+        server.stop()
 
 
 def _verb(page: Any, win: Any, word: str) -> None:
@@ -53,6 +114,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
             page.set_default_timeout(15000)
             errors: list[str] = []
+            partial_lines: list[str] = []
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
@@ -154,8 +216,20 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                         return Math.abs(well.left-seat.left)<2 && well.width>=seat.width-2 && well.right<=seat.right+2;
                     }"""), "The text well must fill its inspector value seat"
                 if name == "review-edit":
+                    text = win.get_by_role("textbox", name="Text", exact=True)
+                    assert text.evaluate("e => e.tagName === 'TEXTAREA' && e.rows === 4 && getComputedStyle(e).overflowY !== 'hidden'")
+                    # Native textarea text can paint into bottom padding.
+                    # Count that paint seat too, then report after every state
+                    # is shot so the kit defect cannot hide the other panes.
+                    if not text.evaluate("e => {if(e.scrollHeight<=e.clientHeight)return true;const s=getComputedStyle(e),lines=(e.clientHeight-parseFloat(s.paddingTop))/parseFloat(s.lineHeight);return lines<=4.1 && Math.abs(lines-Math.round(lines))<.1;}"):
+                        partial_lines.append("Review Text exposes a partial fifth line in the kit pad's bottom padding")
                     expect(win.get_by_role("combobox", name="State", exact=True)).to_have_value("open")
                     expect(win.get_by_role("button", name="Speak State", exact=True)).to_have_count(0)
+                if name.startswith("review-"):
+                    assert win.locator('.object-list-toolbar-strip [data-list-verb]').count() <= 5
+                if name in ("prepare-purpose", "prepare-kept-reader"):
+                    expect(win.get_by_role("button", name="Stop", exact=True)).to_have_count(0)
+                    expect(win.get_by_role("button", name="Keep", exact=True)).to_have_count(0)
                 if name == "review-dismiss-question":
                     assert win.locator('[data-question]').evaluate("""e=>{
                         const keeps=e.querySelector('.surface-question-keeps').getBoundingClientRect();
@@ -263,6 +337,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     expect(win.locator(".desk-window-title")).to_have_attribute("aria-label", "Payments Platform Rewrite")
                     expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
                 if posture == "Recall":
+                    shot(win, "recall-all")
                     row = win.get_by_role("row", name=__import__("re").compile("Load test rerun")).first
                     expect(row).to_be_visible()
                     row.click()
@@ -302,6 +377,13 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     _verb(page, win, "Edit and accept")
                     expect(win.get_by_role("textbox", name="Text", exact=True)).to_be_visible()
                     shot(win, "review-edit")
+                    text = win.get_by_role("textbox",name="Text",exact=True)
+                    text.focus()
+                    text.press("ControlOrMeta+A")
+                    text.press("ArrowRight")
+                    assert text.evaluate("e => e.selectionEnd === e.value.length && (e.scrollHeight <= e.clientHeight || e.scrollTop > 0)")
+                    expect(text).to_have_value("web/src/features/project-room/review/ReviewPosture.tsx: keep the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team")
+                    shot(win, "review-edit-end")
                     _verb(page, win, "Cancel")
                     _verb(page, win, "Defer")
                     expect(win.get_by_role("textbox", name="Until", exact=True)).to_be_visible()
@@ -370,6 +452,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             expect(win.get_by_text("Could not load the Project", exact=False)).to_be_visible()
             shot(win, "failed-read")
             browser.close()
+            assert not partial_lines, partial_lines
     finally:
         server.stop()
 

@@ -8,16 +8,33 @@ from .project_definitions import ITEM_LIFECYCLES, SEVERITY_RANK
 from .room_edit_fields import choice, validate_edit_fields
 
 _KINDS = "|".join(re.escape(kind.capitalize()) for kind in ITEM_LIFECYCLES)
-_ITEM = re.compile(rf"^(?P<kind>{_KINDS})(?: \[(?P<severity>[a-z_]+)\])?: (?P<subject>.+) -- (?P<state>[a-z_]+)(?P<tail>, due .+)?$", re.DOTALL)
+_ITEM = re.compile(rf"^(?P<kind>{_KINDS})(?: \[(?P<severity>[a-z_]+)\])?: (?P<subject>.+) -- (?P<state>[a-z_]+)(?:, due (?P<due>.+))?$", re.DOTALL)
+
+
+def compose(kind: str, severity: str | None, subject: str, state: str, *, due: str | None = None) -> str:
+    """The stored item sentence. Subject punctuation and line breaks stay exact."""
+    level = f" [{severity}]" if severity else ""
+    return f"{kind.capitalize()}{level}: {subject} -- {state}" + (f", due {due}" if due else "")
+
+
+def parse(text: str) -> dict[str, Any] | None:
+    """Read a saved item sentence; other claim formats have no item fields."""
+    match = _ITEM.fullmatch(text)
+    if not match:
+        return None
+    fields = {**match.groupdict(), "kind": match["kind"].lower()}
+    if fields["due"] is None:
+        del fields["due"]
+    return fields
 
 
 def claim_editor(claim: dict[str, Any]) -> dict[str, Any]:
     text = str(claim.get("text") or "")
-    match = _ITEM.fullmatch(text)
+    match = parse(text)
     values: dict[str, Any] = {"subject": text}
     fields = [{"key": "subject", "label": "Subject", "kind": "text"}]
     if match:
-        kind = match["kind"].lower()
+        kind = match["kind"]
         values = {"subject": match["subject"], "kind": kind, "state": match["state"]}
         fields += [choice("kind", ITEM_LIFECYCLES), {**choice("state", ITEM_LIFECYCLES[kind]), "values_by_kind": {key:list(states) for key,states in ITEM_LIFECYCLES.items()}}]
         if match["severity"]:
@@ -68,11 +85,8 @@ def edit_claim_body(body: str, claims: list[dict[str, Any]], edits: list[dict[st
             raise ValidationError("Enter one claim subject on one line.", code="claim_subject_invalid")
         if not subject:
             raise ValidationError("Enter the claim subject.", code="claim_subject_required")
-        match = _ITEM.fullmatch(old)
-        new = subject
-        if match:
-            severity = f" [{values['severity']}]" if "severity" in values else ""
-            new = f"{values['kind'].capitalize()}{severity}: {subject} -- {values['state']}{match['tail'] or ''}"
+        saved = parse(old)
+        new = compose(values["kind"], values.get("severity"), subject, values["state"], due=saved.get("due")) if saved else subject
         # The same source fact can occur in Progress and Risks. Bind its
         # occurrence to the claim's section, not the first matching sentence.
         bounds = _claim_range(body, str(claim.get("section") or ""), headings)

@@ -53,12 +53,13 @@ export function roomEditRows(
                   change("lifecycle", lifecycles[0]);
               }}
             />
-          ) : field.key === "subject" ? (
+          ) : field.key === "subject" || field.key === "text" ? (
             <PadGadget
               disabled={disabled}
               label={field.label}
               value={String(value ?? "")}
-              rows={3}
+              rows={field.key === "text" ? 4 : 3}
+              inputProps={field.key === "text" ? {style:{resize:"none"}} : undefined}
               onChange={(next) => change(field.key, next)}
             />
           ) : (
