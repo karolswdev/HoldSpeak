@@ -5,7 +5,7 @@ import type { CoreProps } from "./core-types";
 import type { DeskProjection } from "../../desk/projections";
 import { openSurface } from "../../desk/shell";
 import { ALL_DESK_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { ActionNotice, InspectorFacts, InspectorQuestion, ListApp, SegmentedTabs, useListApp, useWindowMast, countWords, wireDayClock, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ActionNotice, InspectorFacts, InspectorQuestion, ListApp, PreferencePane, SegmentedTabs, useListApp, useWindowMast, countWords, wireDayClock, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { recheckProvider } from "./connections/api";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { activityRow, activityItems, activityWords, receiptDoor, type ActivityItem, type ActivityKind } from "./activityModel";
@@ -14,7 +14,7 @@ const VIEWS = [{id:"records",label:"Records"},{id:"rules",label:"Rules"},{id:"ca
 type Rows = Record<string, unknown>[];
 export function ActivityCore(_props: CoreProps) {
   const [view, setView] = useState<ActivityKind>("records");
-  return <SegmentedTabs label="Activity views" tabs={VIEWS} value={view} onChange={id => setView(id as ActivityKind)}><ActivityList key={view} view={view} /></SegmentedTabs>;
+  return <PreferencePane label="Activity"><SegmentedTabs label="Activity views" tabs={VIEWS} value={view} onChange={id => setView(id as ActivityKind)}><ActivityList key={view} view={view} /></SegmentedTabs></PreferencePane>;
 }
 function ActivityList({view}: {view: ActivityKind}) {
   const [enabled,setEnabled] = useState(false), [busy,setBusy] = useState(false), [notice,setNotice] = useState("");
