@@ -213,7 +213,7 @@ The name appears about 26,000 times in about 3,040 files of the core. It is in c
 
 The orchestrator recommended, and wrote this plan on the basis, that **Tenvil has no compatibility with HoldSpeak's stored state**: new folders, new Keychain names, new MCP server name, no migration code, no "read both names" shim. The owner is the only user. His HoldSpeak state is parked, as in the fresh starts of 2026-10-08 and 2026-11-02, and he sets Tenvil up as a new install.
 
-The owner had not answered this when this document was written. **Ask him before stage 4.** If he wants his data carried, write a one-time import tool later; do not put compatibility code in the product.
+**Ruled by the owner, 2026-11-14,** in answer to the four decisions the orchestrator put first (D1, D2, D4, D5): "Yes. That's fine. I'm okay with it. No compatibility." D1 is settled in his own words: no compatibility. The orchestrator reads "That's fine. I'm okay with it" as acceptance of the recommendations for D2, D4 and D5 as written; he named only compatibility, so confirm those three in one line at stage 0. If he later misses some data, write a one-time import tool; do not put compatibility code in the product.
 
 ### 7.2 The names
 
@@ -361,11 +361,11 @@ Short, plain, and with the gate result first. What is green, what is red and why
 
 ## 11. Decisions for the owner
 
-Each has the orchestrator's recommendation. Ask them together, once, at stage 0.
+Each has the orchestrator's recommendation. D1 is ruled. Ask the others together, once, at stage 0 (D2, D4 and D5 need only a one-line confirmation; see section 7.1).
 
 | | Decision | Recommendation |
 |---|---|---|
-| D1 | Does Tenvil keep any compatibility with HoldSpeak's stored state (data folders, Keychain, pairings, MCP names)? | No. A clean break; his HoldSpeak state is parked; a one-time import tool can be written later if he misses something |
+| D1 | Does Tenvil keep any compatibility with HoldSpeak's stored state (data folders, Keychain, pairings, MCP names)? | **RULED 2026-11-14: "No compatibility."** A clean break; his HoldSpeak state is parked |
 | D2 | Delivery Workbench (`.githooks/dw`, 40 files): product features (roadmaps, Programs delivery) and 7 test files (about 98 tests) run the vendored copy | Do not carry `.githooks/`. The product already falls back to a `dw` on PATH. Carry the vendored copy only as test support under `tests/support/dw/`, and decide later whether the integration stays in the product at all |
 | D3 | `uat/` (290 files): a UAT framework that runs the product as a subprocess; 17 test files (124 tests) import it | Carry `uat/conductor` and what those tests import; leave the guided site, decks and campaign documents behind |
 | D4 | The atlas (a graph of the desk kept in `docs/`) and its walk tests (about 110 tests) | Leave behind; the desk sweep and the glass files remain |
