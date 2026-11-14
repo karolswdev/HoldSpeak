@@ -1,4 +1,4 @@
-// Parked: ObjectList now owns padded row-edge scrolling for every list.
+// Parked in round 3; #2332 replaces the snap alternative. The independent round 2 guard is live again.
       const row = seat?.querySelector<HTMLElement>(
         '[data-object-id][aria-selected="true"]',
       );

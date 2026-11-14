@@ -1416,9 +1416,3 @@
 .object-list .object-list-head { padding-block: var(--space-1); }
 .object-list .object-list-sort { margin-inline: var(--space-1); }
 .object-list .object-list-row { padding-block: var(--space-1); }
-
-/* Lists settle below their headings, on a complete row. The measured tail
-   keeps the end of an overflowing well on the same row grid. */
-.object-list-rows { scroll-padding-top: var(--object-list-scroll-head, 0px); scroll-snap-type: y proximity; }
-.object-list-row { scroll-snap-align: start; }
-.object-list-rows::after { content: ""; display: block; flex: none; height: var(--object-list-scroll-tail, 0px); }

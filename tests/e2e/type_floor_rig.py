@@ -65,10 +65,9 @@ HIT_PROBE_JS = """
   // The product rule (window-chrome.css scroll-padding-block, PHILO-7-02):
   // a Button is fully hittable once it is scrolled into view. So before the
   // probe, scroll ONLY the containers a user can scroll (overflow auto or
-  // scroll, and the page) to bring the Button inside each one's scroll
-  // padding: nearest, or on its edge in a snapping well. An overflow:hidden
-  // box is never scrolled: what it clips stays clipped and fails. Every
-  // scroller goes back after the probe.
+  // scroll, and the page) to bring the Button in, nearest, inside each
+  // one's scroll padding. An overflow:hidden box is never scrolled: what it
+  // clips stays clipped and fails. Every scroller goes back after the probe.
   const hs202Scrollable = (n, axis) => {
     const o = getComputedStyle(n)[axis === 'y' ? 'overflowY' : 'overflowX'];
     return (o === 'auto' || o === 'scroll')
@@ -80,16 +79,7 @@ HIT_PROBE_JS = """
     const pl = parseFloat(cs.scrollPaddingLeft) || 0, pr = parseFloat(cs.scrollPaddingRight) || 0;
     let r = el.getBoundingClientRect();
     if (hs202Scrollable(n, 'y')) {
-      const outside = r.top < viewTop + pt || r.bottom > viewBottom - pb;
-      let snap = null;
-      if (outside && /^(y|block|both)( |$)/.test(cs.scrollSnapType)) {
-        // A pixel reveal can snap back and leave the target clipped. Use
-        // its real snap edge. Hidden ancestors remain clipped and fail.
-        for (let area = el; area && area !== n; area = area.parentElement)
-          if (getComputedStyle(area).scrollSnapAlign.split(' ')[0] === 'start') { snap = area; break; }
-      }
-      if (snap) n.scrollTop += snap.getBoundingClientRect().top - (viewTop + pt);
-      else if (r.top < viewTop + pt) n.scrollTop -= (viewTop + pt) - r.top;
+      if (r.top < viewTop + pt) n.scrollTop -= (viewTop + pt) - r.top;
       else if (r.bottom > viewBottom - pb) n.scrollTop += r.bottom - (viewBottom - pb);
     }
     r = el.getBoundingClientRect();

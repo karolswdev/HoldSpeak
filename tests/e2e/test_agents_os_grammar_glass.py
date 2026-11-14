@@ -85,6 +85,50 @@ def _whole_state_words(win) -> set[str]:
     return {row["id"] for row in measured if row["whole"]}
 
 
+def _audit_row_edges(page, win, state: str) -> None:
+    """Optional #2332 compatibility reading; no assertion or fit is changed."""
+    target = os.environ.get("AGENTS_ROW_AUDIT")
+    if not target or state not in {"checked", "remove-question", "restart", "queued-menu", "scroll-55", "permission-held"}:
+        return
+    import json
+    # The chosen fitter supplies the one shared row measurement on the
+    # local merge. The ordinary Agents rig has no dependency on that PR.
+    from .programs_group_rows_rig import WHOLE_ROWS
+    well = win.get_by_test_id("agents-list").locator(".object-list-rows")
+    detail = not well.is_visible()
+    selected = win.locator('[data-testid="agents-list"] [aria-selected="true"]').get_attribute("data-object-id") if detail else None
+    question = win.get_by_role("region", name="Remove Draft test scaffolding for flags?", exact=True)
+    removing = question.count() and question.is_visible()
+    if detail:
+        win.get_by_role("button", name="Back", exact=True).click()
+    page.mouse.move(2, 2)
+    _settle(page)
+    page.wait_for_timeout(300)
+    readings = win.get_by_test_id("agents-list").evaluate(WHOLE_ROWS)
+    headings = well.locator(".object-list-group-label").evaluate_all("els=>els.map(el=>({name:el.textContent,...el.getBoundingClientRect().toJSON()}))")
+    for reading in readings:
+        edge = max([reading["top"]] + [head["bottom"] for head in headings if head["top"] <= reading["top"] + 1 and head["bottom"] > reading["top"]])
+        reading["edge"] = edge
+        reading["headings"] = headings
+        for row in reading["partial"]:
+            row["hidden_top_px"] = max(0, edge-row["top"])
+            row["hidden_bottom_px"] = max(0, row["bottom"]-reading["bottom"])
+    suffix = 900 if page.viewport_size["width"] == 1440 else 393
+    output = Path(target)
+    output.mkdir(parents=True, exist_ok=True)
+    (output/f"{state}-{suffix}.json").write_text(json.dumps(readings, indent=2))
+    page.screenshot(path=str(OUT/f"{state}-list-{PHASE}-{suffix}.png"))
+    if detail and selected:
+        row = win.locator(f'[data-testid="agents-list"] [data-object-id="{selected}"]')
+        row.click()
+        if win.locator(".surface-list-pane").get_attribute("data-detail-open") is None:
+            row.press("Enter")
+        if removing and not question.is_visible():
+            _press(win, "conductor-bar-remove", "Remove")
+        page.mouse.move(2, 2)
+        _settle(page)
+
+
 def _read_the_fleet(page, win) -> None:
     """Every state is whole when its row enters the viewport; no offscreen width fence."""
     well=win.get_by_test_id("agents-list").locator(".object-list-rows")
@@ -99,6 +143,7 @@ def _read_the_fleet(page, win) -> None:
         _settle(page)
         if first:
             page.screenshot(path=str(OUT/f"scroll-55-{PHASE}-{900 if page.viewport_size['width']==1440 else 393}.png"))
+            _audit_row_edges(page, win, "scroll-55")
             first=False
         seen |= _whole_state_words(win)
         assert well.evaluate("el=>el.scrollTop") > previous or expected <= seen, "The list must keep the owner's scroll until every row is read"
@@ -417,6 +462,7 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
                         assert said["top"] >= fit["well"]["top"] - 1 and said["bottom"] <= min(strip["y"],fit["well"]["bottom"])+1, (said, fit)
                 if name == "restart":
                     assert win.locator('[data-testid="agents-list"] [aria-selected="true"]').count() == 1
+                _audit_row_edges(page, win, name)
             win=open_case("agents-ag7")
             target=win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag7_held"]')
             target.scroll_into_view_if_needed()
