@@ -36,7 +36,7 @@ def test_mast_selection_and_instrument_strip(tmp_path: Path, monkeypatch: pytest
             expect(head.locator(".surface-mast-facts")).to_contain_text("4 people")
             owed = sum(row.get("you_owe_count", 0) for row in open_rig._http(base, "GET", "/api/people/relationships?counts=1")["relationships"])
             expect(head.locator('[data-tone="ask"] dd')).to_have_text(str(owed))
-            expect(head).to_have_css("height", "58px" if width == 1440 else "44px")
+            expect(head).to_have_css("height", "40px" if width == 1440 else "44px")
             assert head.locator(".surface-mast-object img").count() == 1
             assert win.locator(".kit-statusbar-clock").count() == 1
             expect(win.locator(".kit-statusbar")).to_have_css("background-color", "rgb(16, 25, 43)")
@@ -129,7 +129,7 @@ def test_empty_collections_keep_their_mast_and_new_verb(tmp_path: Path, monkeypa
                 win = page.locator(f"#{seat}")
                 expect(win.get_by_role("button", name=verb, exact=True)).to_be_enabled()
                 expect(win.locator(".surface-mast-title")).to_have_text(title)
-                expect(win.locator(":scope > .desk-pullout-head")).to_have_css("height", "58px" if width == 1440 else "44px")
+                expect(win.locator(":scope > .desk-pullout-head")).to_have_css("height", "40px" if width == 1440 else "44px")
                 _settle(page)
                 assert win.locator(".object-list-row").count() == 0
                 assert win.locator(".surface-mast-figures").count() == 0

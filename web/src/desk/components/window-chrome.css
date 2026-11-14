@@ -1274,9 +1274,9 @@
   box-shadow: var(--material-top-light), inset 0 -1px 0 var(--material-cobalt-deep); border-bottom: 0;
 }
 .desk-next .desk-window.desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head { background: var(--material-cobalt-deep); color: var(--material-mast-muted); }
-.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-title { flex: none; color: inherit; font: var(--material-title-weight) var(--material-title-size) / 1.1 var(--font-sans); letter-spacing: -.03em; }
+.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-title { flex: none; color: inherit; font: var(--material-title-weight) var(--material-title-size) / 1.25 var(--font-sans); letter-spacing: -.03em; }
 .desk-next .desk-window-shell > .desk-pullout-head .surface-mast-object { display: grid; padding: 0; }
-.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-object > img { width: 28px; height: 28px; }
+.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-object > img { width: 22px; height: 22px; }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-gadgets { align-self: center; }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-gadget { color: var(--material-mast-ink); background: color-mix(in srgb, var(--hs-raised) 6%, transparent); border: 1px solid color-mix(in srgb, var(--hs-raised) 30%, transparent); border-radius: 4px; }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-gadget:hover { background: color-mix(in srgb, var(--hs-raised) 22%, transparent); }
@@ -1299,8 +1299,8 @@
 .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget { background: color-mix(in srgb, var(--hs-raised) 6%, transparent); }
 
 .desk-next .desk-window.desk-window-shell > .desk-window-grip { background: transparent; border: 0; box-shadow: none; }
-.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wings { align-self: center; height: 32px; }
-.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wing { height: 32px; min-height: 32px; line-height: 1; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wings { align-self: center; height: 28px; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wing { height: 28px; min-height: 28px; line-height: 1; }
 .desk-next .desk-window.desk-window-shell > .desk-pullout-head .surface-mast-object { color: var(--hs-steel); }
 .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings-menu { background: transparent; color: var(--material-mast-ink); }
 .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings-menu:is(:hover, :focus, :active, [aria-expanded="true"]) { background: color-mix(in srgb, var(--hs-raised) 18%, transparent); color: var(--material-mast-ink); }
