@@ -426,6 +426,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "inspect-activity",
     windowId: "surface-activity",
+    walk: "activity",
     label: "Activity",
     toolGlyph: "≋",
     description: "Inspect work context and source records.",

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "../../components/signal/Signal";
 import { openRef } from "../openObject";
 import {
   InspectorFacts,
@@ -8,25 +7,18 @@ import {
   Lamp,
   ListPane,
   ListView,
-  PaneActions,
   PaneInspector,
   streamTime,
 } from "../surface";
-import { programVerb } from "./api";
-import { stepResult, programFailure } from "./liveModel";
+import { stepResult } from "./liveModel";
 import type { Program } from "./types";
 
 export function ProgramOutcome({
   program,
-  onApplied,
-  onError,
 }: {
   program: Program;
-  onApplied(next: Program | null): void;
-  onError(words: string): void;
 }) {
-  const [picked, setPicked] = useState<string | null>(null),
-    [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
   const done = program.state === "done",
     parked = ["parked", "failed"].includes(program.state);
   const displaySteps = program.steps
@@ -36,17 +28,6 @@ export function ProgramOutcome({
   const park = program.checkpoints.find((cp) => /park/i.test(cp.line));
   const when = (stamp?: string | null) =>
     stamp ? streamTime(new Date(stamp)) : undefined;
-  const resume = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      onApplied(await programVerb(program.id, "resume"));
-    } catch (e) {
-      onError(programFailure(e));
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
     <>
       <PaneInspector
@@ -140,17 +121,6 @@ export function ProgramOutcome({
                     ]
             }
           />
-          {parked ? (
-            <PaneActions>
-              <Button
-                variant="primary"
-                loading={busy}
-                onClick={() => void resume()}
-              >
-                Resume
-              </Button>
-            </PaneActions>
-          ) : null}
         </InspectorBody>
       </PaneInspector>
       <ListPane

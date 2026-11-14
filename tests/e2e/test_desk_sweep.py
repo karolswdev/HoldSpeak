@@ -433,9 +433,6 @@ for _width in (1440, 900):
     _red("desk", _width, "whole",
          r"^Button '(?:[^']+, (?:Project|Note)(?:, [^']+)?|Program: [^']+)' uses \d+ lines$",
          "Needs a canvas: floor icon captions use two lines in the current floor design")
-_red("surface-activity", 393, "whole",
-     r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
-     "Needs a canvas: full receipt names wrap on the phone")
 
 
 

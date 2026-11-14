@@ -30,28 +30,31 @@ function serve({ stale = false, failCheck = false, refuseAdd = false } = {}) {
   return calls;
 }
 describe("Services in the OS list grammar", () => {
-  it("checks stale accounts on open and shows no Check verb or age", async () => {
+  it("reads stale accounts without a probe and checks only the selection on a press", async () => {
     const calls = serve({ stale: true });
     render(<ConnectionsPane onFooterUpdate={vi.fn()} />);
     await screen.findByRole("grid", { name: "Services" });
-    await waitFor(() => expect(calls).toContain("POST /api/connections/github/recheck"));
-    expect(screen.queryByRole("button", { name: "Check" })).toBeNull();
-    expect(document.body.textContent).not.toMatch(/checked.*ago/i);
+    expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual([]);
+    expect(screen.getByRole("button", { name: "Check" })).toBeDisabled();
     expect(document.querySelectorAll('[role=row] button')).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Sign in…" })).toBeDisabled();
     fireEvent.click(screen.getByText("GitHub"));
     expect(screen.getByRole("button", { name: "Sign in…" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
+    await waitFor(() => expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual(["POST /api/connections/github/recheck"]));
   });
-  it("does not recheck a fresh account, and a failed automatic check has a useful Retry", async () => {
-    const calls = serve(); render(<ConnectionsPane onFooterUpdate={vi.fn()} />);
-    await screen.findByText("GitHub"); expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual([]);
-    cleanup();
-    const retryCalls = serve({ stale: true, failCheck: true });
+  it("keeps a failed explicit check available for Retry without probing on open", async () => {
+    const calls = serve({ stale: true, failCheck: true });
     render(<ConnectionsPane onFooterUpdate={vi.fn()} />);
-    await screen.findByText("Account check failed");
+    await screen.findByText("GitHub");
+    expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual([]);
+    fireEvent.click(screen.getByText("GitHub"));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
+    await screen.findByRole("alert");
+    expect(screen.getByRole("alert")).toHaveTextContent("No connection");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    await waitFor(() => expect(retryCalls.filter((call) => call.endsWith("/recheck"))).toHaveLength(2));
-    await waitFor(() => expect(screen.queryByText("Account check failed")).toBeNull());
+    await waitFor(() => expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual(["POST /api/connections/github/recheck", "POST /api/connections/github/recheck"]));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
   it("a refused Add retains the account draft in its inspector", async () => {
     serve({ refuseAdd: true }); render(<ConnectionsPane onFooterUpdate={vi.fn()} />);

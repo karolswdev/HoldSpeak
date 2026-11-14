@@ -69,7 +69,7 @@
 
 .object-list--selection > .object-list-head { border: 0; box-shadow: inset 0 0 0 1px var(--wb-rule-soft); }
 .object-list--selection .object-list-th { height: 100%; box-sizing: border-box; padding-block: 0; align-items: center; }
-.object-list--selection .object-list-th[data-col] .object-list-sort { min-height: 0; height: 100%; padding: 0; }
+.object-list--selection .object-list-th[data-col] .object-list-sort { min-height: 0; height: 100%; padding: 0; margin-inline: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
 
 .object-list--selection .object-list-cell > .kit-dotword { min-width: 0; max-width: 100%; }
 
@@ -110,7 +110,7 @@
 
 /* D keeps selection, roving and fitting in the existing list. */
 .object-list.object-list--selection { --object-list-row-height: var(--material-row-height); }
-.object-list--selection > .object-list-head { height: var(--material-list-head-height); min-height: var(--material-list-head-height); box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
+.object-list--selection > .object-list-head { padding-block: 0; height: var(--material-list-head-height); min-height: var(--material-list-head-height); box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
 .object-list--selection .object-list-th { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); color: var(--hs-ink-2); }
 .object-list--selection .object-list-selection-title { font-weight: 600; }
 .object-list--selection > .object-list-rows { border-inline: 0; background: var(--hs-raised); }
@@ -152,5 +152,18 @@
 /* The text uses the name track, not the intrinsic width of its fitted words. */
 .object-list--selection .object-list-selection-name { flex: 1 1 0; }
 
+/* Find shares the selection bar; verbs yield to Actions before a second row. */
+@container surface (max-width: 520px) {
+  .object-list-toolbar { flex-wrap: nowrap; }
+  .object-list-toolbar .kit-toolbar-trailing,
+  .object-list-toolbar .kit-toolbar-trailing:has(> .object-list-find-row[data-scoped]) { flex: 0 1 132px; min-width: 132px; margin-left: 0; }
+  .object-list-toolbar .object-list-find { min-width: 132px; }
+}
+
 /* A selected record keeps its group name while its own well scrolls. */
 .object-list-group-label { position: sticky; top: 0; z-index: 1; }
+
+/* A sortable caption owes the phone's Button target and its bottom rule. */
+@container surface (max-width: 520px) {
+  .object-list.object-list--selection:has(> .object-list-head .object-list-sort) { --material-list-head-height: 46px; }
+}

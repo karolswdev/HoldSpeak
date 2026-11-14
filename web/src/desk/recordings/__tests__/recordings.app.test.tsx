@@ -177,6 +177,7 @@ describe("the window selection grammar", () => {
     render(<RecordingsCore />);
     const grid = await screen.findByRole("grid", { name: "Recordings" });
     expect(screen.queryByTestId("recordings-document")).toBeNull();
+    expect(screen.getByTestId("recordings-status")).toHaveTextContent("2 recordings");
     expect(within(grid).getByRole("columnheader", { name: "Kept until" })).toBeTruthy();
     const row = await pick();
     expect(row.querySelector("button")).toBeNull();

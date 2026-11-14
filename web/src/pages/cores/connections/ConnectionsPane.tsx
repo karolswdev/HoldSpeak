@@ -349,6 +349,7 @@ export function ConnectionsPane({
 }) {
   const [data, setData] = useState<ConnectionsResponse | null>(null);
   const [error, setError] = useState("");
+  const [failedCheck, setFailedCheck] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [picked, pick] = useState<string | null>(focusProvider ?? null);
   const [adding, add] = useState<"jira" | "confluence" | null>(null);
@@ -362,28 +363,11 @@ export function ConnectionsPane({
   const load = useCallback(async () => {
     const at = ++generation.current;
     try {
-      let answer = await fetchConnections();
+      const answer = await fetchConnections();
       if (at !== generation.current) return;
       setData(answer);
       setError("");
-      // The declared recheck operation owns probes. An age supplied by the
-      // hub wins over the browser clock; missing and stale checks run here.
-      const expired = (row: { checked_age_seconds?: number; last_checked_at?: string }) =>
-        (row.checked_age_seconds ?? (row.last_checked_at ? (Date.now() - Date.parse(row.last_checked_at)) / 1000 : Infinity)) > 300;
-      const stale = answer.tools.filter((tool) => ["github", "jira", "confluence"].includes(tool.provider_id) && (expired(tool) || tool.connections?.some(expired)));
-      for (const tool of stale) {
-        try {
-          const checked = await recheckProvider(tool.provider_id);
-          if (at !== generation.current) return;
-          if (checked)
-            answer = {
-              tools: answer.tools.map((row) => (row.provider_id === checked.provider_id ? checked : row)),
-            };
-          setData(answer);
-        } catch {
-          if (at === generation.current) setError("Account check failed");
-        }
-      }
+      // A read does not probe accounts. Check is an explicit owner verb.
       onFooterUpdate({ egressHost: undefined, checkedAt: undefined });
     } catch {
       if (at === generation.current) setError("Accounts not read");
@@ -407,6 +391,7 @@ export function ConnectionsPane({
     pending.current = true;
     setBusy(true);
     setError("");
+    setFailedCheck(null);
     ++generation.current;
     try {
       await work();
@@ -452,6 +437,12 @@ export function ConnectionsPane({
     onAttention?.(error || (attention ? `${attention.name}: ${attention.state === "owner_action_required" ? "Sign in again" : "Not reachable"}` : null));
   }, [error, attention?.id, attention?.state, onAttention]);
   const selected = (id?: string) => rows.find((row) => row.id === id);
+  const check = async (id?: string) => {
+    const row = selected(id);
+    if (!row) return;
+    const done = await act(async () => { await recheckProvider(row.provider, row.ref); });
+    if (!done) setFailedCheck(row.id);
+  };
   const signIn = async (id?: string) => {
     const row =
       selected(id) ??
@@ -510,6 +501,12 @@ export function ConnectionsPane({
       enabled: (row) => !busy && Boolean(row) && selected(row?.id)?.state !== "unavailable",
       run: (row) => void signIn(row?.id),
     },
+    {
+      id: "check",
+      label: "Check",
+      enabled: (row) => !busy && Boolean(row),
+      run: (row) => void check(row?.id),
+    },
     ...extraVerbs,
   ];
   return (
@@ -518,7 +515,7 @@ export function ConnectionsPane({
         <PaneActions>
           <span role="alert">{error}</span>
           {adding ? null : (
-            <Button dense onClick={() => void load()}>
+            <Button dense onClick={() => void (failedCheck ? check(failedCheck) : load())}>
               Retry
             </Button>
           )}

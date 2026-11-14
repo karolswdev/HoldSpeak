@@ -1,0 +1,1072 @@
+{
+  "provenance": "real isolated hub; ActivityRecordsMixin and pipeline-event producers; no provider engine",
+  "gets": {
+    "/api/activity/status": {
+      "settings": {
+        "enabled": true,
+        "paused": false,
+        "retention_days": 30,
+        "updated_at": "2026-11-13 22:19:25"
+      },
+      "sources": [],
+      "checkpoints": [],
+      "domain_rules": [],
+      "record_count": 50
+    },
+    "/api/activity/records?limit=100": {
+      "records": [
+        {
+          "id": 50,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/49",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_49",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.757382",
+          "last_seen_at": "2026-11-13T15:19:27.757382",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 49,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/48",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.757182",
+          "last_seen_at": "2026-11-13T15:19:27.757182",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 48,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/47",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_47",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.756926",
+          "last_seen_at": "2026-11-13T15:19:27.756926",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 47,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/46",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.756645",
+          "last_seen_at": "2026-11-13T15:19:27.756645",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 46,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/45",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_45",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.755853",
+          "last_seen_at": "2026-11-13T15:19:27.755853",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 45,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/44",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.755388",
+          "last_seen_at": "2026-11-13T15:19:27.755388",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 44,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/43",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_43",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.754978",
+          "last_seen_at": "2026-11-13T15:19:27.754978",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 43,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/42",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.754077",
+          "last_seen_at": "2026-11-13T15:19:27.754077",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 42,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/41",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_41",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.753533",
+          "last_seen_at": "2026-11-13T15:19:27.753533",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 41,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/40",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.752809",
+          "last_seen_at": "2026-11-13T15:19:27.752809",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 40,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/39",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_39",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.752609",
+          "last_seen_at": "2026-11-13T15:19:27.752609",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 39,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/38",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.752323",
+          "last_seen_at": "2026-11-13T15:19:27.752323",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 38,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/37",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_37",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.751730",
+          "last_seen_at": "2026-11-13T15:19:27.751730",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 37,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/36",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.751474",
+          "last_seen_at": "2026-11-13T15:19:27.751474",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 36,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/35",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_35",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.751266",
+          "last_seen_at": "2026-11-13T15:19:27.751266",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 35,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/34",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.751013",
+          "last_seen_at": "2026-11-13T15:19:27.751013",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 34,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/33",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_33",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.750738",
+          "last_seen_at": "2026-11-13T15:19:27.750738",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 33,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/32",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.750505",
+          "last_seen_at": "2026-11-13T15:19:27.750505",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 32,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/31",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_31",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.750283",
+          "last_seen_at": "2026-11-13T15:19:27.750283",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 31,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/30",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.750041",
+          "last_seen_at": "2026-11-13T15:19:27.750041",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 30,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/29",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_29",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.749837",
+          "last_seen_at": "2026-11-13T15:19:27.749837",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 29,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/28",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.749650",
+          "last_seen_at": "2026-11-13T15:19:27.749650",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 28,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/27",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_27",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.749333",
+          "last_seen_at": "2026-11-13T15:19:27.749333",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 27,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/26",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.748994",
+          "last_seen_at": "2026-11-13T15:19:27.748994",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 26,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/25",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_25",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.748017",
+          "last_seen_at": "2026-11-13T15:19:27.748017",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 25,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/24",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.747574",
+          "last_seen_at": "2026-11-13T15:19:27.747574",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 24,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/23",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_23",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.747343",
+          "last_seen_at": "2026-11-13T15:19:27.747343",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 23,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/22",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.747085",
+          "last_seen_at": "2026-11-13T15:19:27.747085",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 22,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/21",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_21",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.746796",
+          "last_seen_at": "2026-11-13T15:19:27.746796",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 21,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/20",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.745664",
+          "last_seen_at": "2026-11-13T15:19:27.745664",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 20,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/19",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_19",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.745277",
+          "last_seen_at": "2026-11-13T15:19:27.745277",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 19,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/18",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.744959",
+          "last_seen_at": "2026-11-13T15:19:27.744959",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 18,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/17",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_17",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.744716",
+          "last_seen_at": "2026-11-13T15:19:27.744716",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 17,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/16",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.743817",
+          "last_seen_at": "2026-11-13T15:19:27.743817",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 16,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/15",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_15",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.743581",
+          "last_seen_at": "2026-11-13T15:19:27.743581",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 15,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/14",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.741703",
+          "last_seen_at": "2026-11-13T15:19:27.741703",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 14,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/13",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_13",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.741171",
+          "last_seen_at": "2026-11-13T15:19:27.741171",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 13,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/12",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.740545",
+          "last_seen_at": "2026-11-13T15:19:27.740545",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 12,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/11",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_11",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.740053",
+          "last_seen_at": "2026-11-13T15:19:27.740053",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 11,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/10",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.739807",
+          "last_seen_at": "2026-11-13T15:19:27.739807",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 10,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/9",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_9",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.739366",
+          "last_seen_at": "2026-11-13T15:19:27.739366",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 9,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/8",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.739081",
+          "last_seen_at": "2026-11-13T15:19:27.739081",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 8,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/7",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_7",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.738820",
+          "last_seen_at": "2026-11-13T15:19:27.738820",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 7,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/6",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.738023",
+          "last_seen_at": "2026-11-13T15:19:27.738023",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 6,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/5",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_5",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.737672",
+          "last_seen_at": "2026-11-13T15:19:27.737672",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 5,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/4",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.736278",
+          "last_seen_at": "2026-11-13T15:19:27.736278",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 4,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/3",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_3",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.735802",
+          "last_seen_at": "2026-11-13T15:19:27.735802",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 3,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/2",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.735072",
+          "last_seen_at": "2026-11-13T15:19:27.735072",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 2,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/1",
+          "title": "activity_saved_revision_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_readwithoutspaces_1",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.734655",
+          "last_seen_at": "2026-11-13T15:19:27.734655",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        },
+        {
+          "id": 1,
+          "source_browser": "chrome",
+          "source_profile": "",
+          "url": "https://example.test/architecture/0",
+          "title": "web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together while a newer answer arrives and the owner reads the next requirement before starting work",
+          "domain": "example.test",
+          "visit_count": 1,
+          "first_seen_at": "2026-11-13T15:19:27.730660",
+          "last_seen_at": "2026-11-13T15:19:27.730660",
+          "entity_type": null,
+          "entity_id": null,
+          "project_id": "proj-38547b4c87b0"
+        }
+      ],
+      "entity_counts": {},
+      "domain_counts": {
+        "example.test": 50
+      },
+      "source_counts": {
+        "chrome": 50
+      },
+      "generated_at": "2026-11-13T22:19:27.805474+00:00",
+      "project_id": null,
+      "refreshed": false,
+      "refresh_errors": []
+    },
+    "/api/activity/project-rules": {
+      "rules": [
+        {
+          "id": "apr-7493a94884ee",
+          "project_id": "proj-38547b4c87b0",
+          "project_name": "Architecture change",
+          "name": "Architecture pages",
+          "enabled": true,
+          "priority": 100,
+          "match_type": "domain",
+          "pattern": "example.test",
+          "entity_type": null,
+          "created_at": "2026-11-13T15:19:27.759761",
+          "updated_at": "2026-11-13T15:19:27.759761"
+        }
+      ]
+    },
+    "/api/activity/meeting-candidates": {
+      "count": 1,
+      "candidates": [
+        {
+          "id": "amc-2d3c382b273e",
+          "source_connector_id": "candidate_inference",
+          "source_activity_record_id": null,
+          "dedupe_key": "candidate_inference:url:https://example.test/meeting",
+          "title": "Read the architecture change",
+          "starts_at": null,
+          "ends_at": null,
+          "meeting_url": "https://example.test/meeting",
+          "started_meeting_id": null,
+          "confidence": 0,
+          "status": "candidate",
+          "created_at": "2026-11-13T15:19:27.760370",
+          "updated_at": "2026-11-13T15:19:27.760370"
+        }
+      ]
+    },
+    "/api/activity/enrichment/connectors": {
+      "connectors": [
+        {
+          "id": "gh",
+          "enabled": false,
+          "settings": {},
+          "last_run_at": null,
+          "last_error": null,
+          "created_at": "2026-11-13T15:19:27.887930",
+          "updated_at": "2026-11-13T15:19:27.887930",
+          "label": "GitHub CLI",
+          "kind": "cli_enrichment",
+          "capabilities": [
+            "annotations"
+          ],
+          "requires_cli": "gh",
+          "description": "Read-only `gh pr view`, `gh pr list`, `gh issue view` and `gh issue list` calls for imported PR/issue activity and typed Watch snapshots. Disabled by default. No writes; no token management; no hidden network execution.",
+          "source": "first-party",
+          "cli_status": {
+            "connector_id": "gh",
+            "available": true,
+            "command_path": "/opt/homebrew/bin/gh"
+          }
+        },
+        {
+          "id": "jira",
+          "enabled": false,
+          "settings": {},
+          "last_run_at": null,
+          "last_error": null,
+          "created_at": "2026-11-13T15:19:27.905052",
+          "updated_at": "2026-11-13T15:19:27.905052",
+          "label": "Jira CLI",
+          "kind": "cli_enrichment",
+          "capabilities": [
+            "annotations"
+          ],
+          "requires_cli": "jira",
+          "description": "Read-only `jira issue view` and `jira issue list` calls for imported ticket activity and typed Watch snapshots. Disabled by default. No writes, no transitions, no hidden network execution.",
+          "source": "first-party",
+          "cli_status": {
+            "connector_id": "jira",
+            "available": false,
+            "command_path": null
+          }
+        },
+        {
+          "id": "acli_jira",
+          "enabled": false,
+          "settings": {},
+          "last_run_at": null,
+          "last_error": null,
+          "created_at": "2026-11-13T15:19:27.906304",
+          "updated_at": "2026-11-13T15:19:27.906304",
+          "label": "Atlassian CLI (Jira)",
+          "kind": "cli_enrichment",
+          "capabilities": [],
+          "requires_cli": "acli",
+          "description": "Read-only ``acli jira`` calls: auth status/switch, project list/view, workitem search/view. No writes, no transitions, no token management. The owner authenticates via ``acli jira auth login``; HoldSpeak never stores credentials.",
+          "source": "first-party"
+        },
+        {
+          "id": "acli_confluence",
+          "enabled": false,
+          "settings": {},
+          "last_run_at": null,
+          "last_error": null,
+          "created_at": "2026-11-13T15:19:27.908399",
+          "updated_at": "2026-11-13T15:19:27.908399",
+          "label": "Atlassian CLI (Confluence)",
+          "kind": "cli_enrichment",
+          "capabilities": [],
+          "requires_cli": "acli",
+          "description": "Read-only ``acli confluence`` calls: auth status/switch, space list/view, page view, blog list/view. No writes, no creates, no token management. The owner authenticates via ``acli confluence auth login``; HoldSpeak never stores credentials.",
+          "source": "first-party"
+        },
+        {
+          "id": "calendar_activity",
+          "enabled": false,
+          "settings": {},
+          "last_run_at": null,
+          "last_error": null,
+          "created_at": "2026-11-13T15:19:27.909897",
+          "updated_at": "2026-11-13T15:19:27.909897",
+          "label": "Calendar candidates",
+          "kind": "candidate_inference",
+          "capabilities": [
+            "candidates"
+          ],
+          "requires_cli": null,
+          "description": "Infers meeting candidates from existing calendar / video-call activity records. No network, no CLI.",
+          "source": "first-party"
+        }
+      ],
+      "github": {
+        "connector_id": "gh",
+        "available": true,
+        "command_path": "/opt/homebrew/bin/gh"
+      },
+      "jira": {
+        "connector_id": "jira",
+        "available": false,
+        "command_path": null
+      }
+    },
+    "/api/desk/projections?kind=receipt&attention_state=resolved&offset=0&limit=50": {
+      "version": 1,
+      "projections": [
+        {
+          "id": "pipeline:ev-sweep-0",
+          "projection_kind": "receipt",
+          "subject_ref": "service:HeartbeatService",
+          "subject_label": "Heartbeat",
+          "title": "Checked 2 rooms",
+          "summary": "{\"watches\":4,\"rooms\":2,\"held\":false}",
+          "reason_code": "pipeline_completed",
+          "decision_kind": "receipt",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "pipeline",
+          "attempt": null,
+          "outcome": "completed",
+          "timestamp": "2026-11-13T22:19:27Z",
+          "correlation_id": "c48459fa-3cb5-487c-ba41-6ec7ac1c9e60",
+          "source_kind": "pipeline_event",
+          "source_id": "ev-sweep-0",
+          "source_api": "/api/desk/projections",
+          "detail_url": "/cadence",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": "remote",
+          "caller": "studio.local",
+          "caller_identity": "sweep-runner"
+        }
+      ],
+      "counts": {
+        "needs_attention": 0,
+        "unseen": 0,
+        "acknowledged": 0,
+        "receipts": 1
+      },
+      "subject_counts": {
+        "service:HeartbeatService": {
+          "needs_attention": 0,
+          "receipts": 1
+        }
+      },
+      "page": {
+        "offset": 0,
+        "limit": 50,
+        "total": 1,
+        "has_more": false
+      }
+    }
+  },
+  "candidateStart": [
+    501,
+    {
+      "success": false,
+      "error": "Meeting start control not supported"
+    }
+  ],
+  "dryRun": {
+    "dry_run": {
+      "connector_id": "gh",
+      "kind": "cli_enrichment",
+      "capabilities": [
+        "annotations"
+      ],
+      "enabled": false,
+      "cli_required": "gh",
+      "cli_available": true,
+      "commands": [],
+      "proposed_annotations": [],
+      "proposed_candidates": [],
+      "warnings": [
+        "No GitHub PR or issue activity has been imported yet. Visit a PR or issue page in your browser, then refresh the activity ledger."
+      ],
+      "permission_notes": [
+        "GitHub CLI is currently disabled. Dry-run shows what the connector would do if you enabled it; nothing runs."
+      ],
+      "truncated": false
+    }
+  },
+  "watched": {
+    "settings": {
+      "enabled": true,
+      "paused": false,
+      "retention_days": 30,
+      "updated_at": "2026-11-13T22:19:32.851584+00:00"
+    },
+    "status": {
+      "settings": {
+        "enabled": true,
+        "paused": false,
+        "retention_days": 30,
+        "updated_at": "2026-11-13T22:19:32.851584+00:00"
+      },
+      "sources": [],
+      "checkpoints": [],
+      "domain_rules": [],
+      "record_count": 50
+    }
+  },
+  "paused": {
+    "settings": {
+      "enabled": false,
+      "paused": true,
+      "retention_days": 30,
+      "updated_at": "2026-11-13T22:19:32.899992+00:00"
+    },
+    "status": {
+      "settings": {
+        "enabled": false,
+        "paused": true,
+        "retention_days": 30,
+        "updated_at": "2026-11-13T22:19:32.899992+00:00"
+      },
+      "sources": [],
+      "checkpoints": [],
+      "domain_rules": [],
+      "record_count": 50
+    }
+  },
+  "refreshed": {
+    "results": [],
+    "status": {
+      "settings": {
+        "enabled": false,
+        "paused": true,
+        "retention_days": 30,
+        "updated_at": "2026-11-13T22:19:32.899992+00:00"
+      },
+      "sources": [],
+      "checkpoints": [],
+      "domain_rules": [],
+      "record_count": 50
+    }
+  },
+  "deletedRule": {
+    "deleted": true
+  },
+  "recheckRefusal": [
+    200,
+    {
+      "provider_id": "confluence",
+      "state": "never_checked",
+      "account": null,
+      "next_action": {
+        "kind": "setup",
+        "label": "Set up"
+      },
+      "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
+      "error_detail": null,
+      "last_checked_at": null,
+      "checked_age_seconds": null,
+      "egress_host": null,
+      "connections": [],
+      "operation_id": "op_55bc7c97c65c4cefb0c691ef107d93c6",
+      "receipt": {
+        "receipt_id": "rcpt_963e8036e4b24e519e6aa5190c648d0f",
+        "operation_id": "op_55bc7c97c65c4cefb0c691ef107d93c6",
+        "state": "succeeded",
+        "outcome": "succeeded",
+        "result_ref": "connection:confluence",
+        "created_at": 1794608373.037291,
+        "actor_kind": "owner",
+        "actor_identity": "owner-session",
+        "delegator_kind": "",
+        "delegator_identity": "",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "target_ref": "connection:confluence"
+      }
+    }
+  ],
+  "cleared": {
+    "deleted": 50,
+    "status": {
+      "settings": {
+        "enabled": false,
+        "paused": true,
+        "retention_days": 30,
+        "updated_at": "2026-11-13T22:19:32.899992+00:00"
+      },
+      "sources": [],
+      "checkpoints": [],
+      "domain_rules": [],
+      "record_count": 0
+    }
+  },
+  "emptyRecords": {
+    "records": [],
+    "entity_counts": {},
+    "domain_counts": {},
+    "source_counts": {},
+    "generated_at": "2026-11-13T22:19:34.632601+00:00",
+    "project_id": null,
+    "refreshed": false,
+    "refresh_errors": []
+  }
+}

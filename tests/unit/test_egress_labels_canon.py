@@ -70,7 +70,7 @@ WORKING_FACES = (
     "desk/drawer/DrawerWindow.tsx",
     "desk/drawer/InfoWindow.tsx",
     "pages/cores/ActivityCore.tsx",
-    "pages/cores/ActivityFinishedReceipts.tsx",
+    "pages/cores/activityModel.ts",
     "desk/components/automation/AutomationWindow.tsx",
     "desk/components/automation/AutomationBody.tsx",
     # The left-overs (2026-10-25): Delivery, Rhythm, the tool inspector (the

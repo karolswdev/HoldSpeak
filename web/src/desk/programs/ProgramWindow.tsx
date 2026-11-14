@@ -106,6 +106,7 @@ export function ProgramDetail({
     <>
       <StepTrack
         label="Program steps"
+        showNames={false}
         steps={program.steps
           .filter((row) => !row.race_of)
           .map((row) => ({
@@ -276,13 +277,9 @@ export function ProgramNow({
   const lines = useStepScreen(program, step, working);
   if (!waiting && (done || parked || tonight))
     return (
-      <ProgramOutcome
-        program={program}
-        onApplied={onApplied}
-        onError={onError}
-      />
+      <ProgramOutcome program={program} />
     );
-  const label = step ? `Step ${step.ordinal} · ${step.title}` : program.title;
+  const label = step?.title || program.title;
   const facts = [
     {
       label: "What it must prove",
@@ -305,6 +302,7 @@ export function ProgramNow({
       : []),
     {
       label: "Then",
+      paths: true,
       value:
         program.steps.find((row) => row.ordinal === (step?.ordinal ?? 0) + 1)
           ?.title || "The program recap",
@@ -329,6 +327,7 @@ export function ProgramNow({
         label={label}
         trailing={
           <>
+            {step ? <span>Step {step.ordinal}</span> : null}
             <Lamp
               state={
                 waiting
@@ -374,7 +373,7 @@ export function ProgramNow({
             />
           ) : undefined
         }
-        facts={facts}
+        facts={facts.filter(row => row.value?.trim() !== step?.title.trim())}
         question={
           waiting ? (
             <>

@@ -664,6 +664,15 @@ it("declared scope ticks and cycles use the Find row", () => {
   expect(cycle).toHaveBeenCalledWith("parked");
 });
 
+it("fits Find in the verb row and keeps the full accessible name", () => {
+  render(<>
+    <VerbToolbar label="Meetings" verbs={[]} trailing={<StringGadget label="Find a meeting" placeholder="Find a meeting" value="" onChange={() => {}} />} />
+    <StringGadget label="Find outside a verb row" placeholder="Find a source" value="" onChange={() => {}} />
+  </>);
+  expect(screen.getByRole("textbox", { name: "Find a meeting" })).toHaveAttribute("placeholder", "Find");
+  expect(screen.getByRole("textbox", { name: "Find outside a verb row" })).toHaveAttribute("placeholder", "Find a source");
+});
+
 it("changing a verb keeps the Find field and its focus mounted", () => {
   const list = (label: string) => (
     <ListView

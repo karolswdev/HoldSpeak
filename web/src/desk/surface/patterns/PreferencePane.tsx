@@ -270,13 +270,13 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
   }, [ref]);
 }
 
-export interface InspectorFact { label: string; value: ReactNode; key?: string }
+export interface InspectorFact { label: string; value: ReactNode; key?: string; paths?: boolean }
 /** Read-only values use the form's grid, without a completion row. */
 export function InspectorFacts({ object, name, nameTestId, rows, testId, notice, trailing, header = true, figures, subtitle, nameMode, "data-feedback-redact": redact }: { object?: ReactNode; nameMode?: "fit" | "wrap"; figures?: Parameters<typeof InspectorFigures>[0]["figures"]; subtitle?: string; "data-feedback-redact"?: boolean | "true" | "false"; header?: boolean; name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
   const heading = useContext(InspectorNameContext);
   if (header && heading !== name) return <PaneInspector object={object ?? (nameIsFile(name) ? <img src={objectSprite("artifact", name, "rest", 32)} alt="" draggable={false} /> : name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join(""))} nameMode={nameMode} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
   return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}>{figures ? <InspectorFigures figures={figures} label={name} /> : null}<InspectorForm notice={notice}
-    rows={rows.filter(row => hasWords(row.value) && (row.label === "Name" || factText(row.value).trim() !== name.trim())).map(row => ({ ...row, control: row.value }))} /></div>;
+    rows={rows.filter(row => hasWords(row.value) && (row.label === "Name" || factText(row.value).trim() !== name.trim())).map(row => ({ ...row, control: factValue(row.value, row.paths) }))} /></div>;
 }
 function factText(value: ReactNode): string {
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -328,3 +328,10 @@ export function PaneNotice({children}: {children: ReactNode}) { return <div clas
 
 /** A bounded composition of kit facts, figures, forms and notices. */
 export function InspectorBody({children, fit}:{children:ReactNode; fit?: "rows" | "reading"}) { return <div className="surface-inspector-body" data-fit={fit}>{children}</div>; }
+
+/** A path yields at its separators before a filename yields inside a word. */
+function factValue(value: ReactNode, paths = false): ReactNode {
+  if (!paths || typeof value !== "string" || !value.includes("/")) return value;
+  return <span className="surface-fact-text">{value.split(/(\s+)/).map((word,index) => word.includes("/")
+    ? <Fragment key={index}>{word.split(/(?<=\/)/).map((part,at)=><Fragment key={at}><span className="surface-path-part">{part}</span><wbr /></Fragment>)}</Fragment> : word)}</span>;
+}

@@ -301,7 +301,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
         cells: { project: row.projectName }, state: { label: STANDING[state].word, tone: state === "decided" ? "ok" : STANDING[state].lamp } };
     }} list={{ columns: [
       { key: "name", word: "Decision", priority: 100, track: "minmax(0, 3fr)", minWidth: 200 },
-      { key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" },
+      ...(app.visible.some(row => row.projectName) ? [{ key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" }] : []),
       { key: "when", word: "Decided", priority: 20, track: "112px" },
       { key: "state", word: "State", priority: 30, track: "112px" },
     ], verbs, defaultVerb: "open", toolbar: { scopes: [{ id: "current", kind: "tick", label: "Current only", checked: current, onChange: setCurrent }] },
