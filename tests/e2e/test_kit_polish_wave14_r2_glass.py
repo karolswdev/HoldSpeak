@@ -65,7 +65,9 @@ def test_list_audit(desk,pw_browser,width,app):
     box=well.bounding_box(); boxes=[row.bounding_box() for row in well.locator('.object-list-row').all()]
     visible=[row for row in boxes if row and row['y']<box['y']+box['height']-1 and row['y']+row['height']>box['y']]
     if boxes and boxes[-1]['y']+boxes[-1]['height']>box['y']+box['height']+1:
-     assert visible and visible[-1]['y']+visible[-1]['height']>box['y']+box['height']+1,(app,box,visible)
+     # Whole rows (#2332): the well starts and ends on a row edge; the rows below are reached by scrolling.
+     assert visible and abs(visible[0]['y']-box['y'])<=1 and abs(visible[-1]['y']+visible[-1]['height']-(box['y']+box['height']))<=1,(app,box,visible)
+     assert well.evaluate('el=>el.scrollHeight>el.clientHeight+1'),(app,box)
   if not os.environ.get('KIT14_R2_BEFORE') and app=='needs':
    shot(page,'10',app,'verbs',width)
    for bar in win.locator('.kit-toolbar-verbs:visible,.surface-pane-actions:visible').all():

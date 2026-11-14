@@ -101,15 +101,16 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
 });
 
 describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", () => {
-  it("the row's egress chip is ICLOUD (cloud), never THIS DEVICE", async () => {
+  it("the send line says iCloud syncs the folder, never this device", async () => {
     rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: "icloud" } }];
     render(<Well />);
     const row = await screen.findByTestId("send-well");
     await screen.findByTestId("send-preview");
-    expect(row.textContent).toContain("iCloud");
+    // No chip (#2331, owner ruling 2026-10-25): the line where the send happens says it in words.
+    expect(row.textContent).toContain("iCloud Drive syncs this folder: the file leaves this device.");
     expect(row.textContent).not.toContain("THIS DEVICE");
-    const chip = within(row).getAllByText("iCloud")[0];
-    expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
+    expect(row.textContent).not.toContain(" on this device");
+    expect(row.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
   it("plain Documents: no same-device egress chip", async () => {
@@ -118,6 +119,7 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
     await screen.findByTestId("send-preview");
     expect(row.textContent).not.toContain("THIS DEVICE");
     expect(row.textContent).not.toContain("iCloud");
+    expect(row.textContent).toContain(" on this device");
   });
 
   it("a SAVED receipt whose proof names iCloud shows the ICLOUD egress beside the path", async () => {
@@ -157,14 +159,14 @@ describe("another sync service: never THIS DEVICE", () => {
     ["onedrive", "OneDrive"],
     ["synced", "Synced"],
     ["com.example.unknown", "Synced"],
-  ])("a %s folder: the row's chip is %s (cloud scope)", async (provider, label) => {
+  ])("a %s folder: the send line names %s, never this device", async (provider, label) => {
     rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: provider } }];
     render(<Well />);
     const row = await screen.findByTestId("send-well");
     await screen.findByTestId("send-preview");
     expect(row.textContent).not.toContain("THIS DEVICE");
-    const chip = within(row).getAllByText(label)[0];
-    expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
+    expect(row.textContent).not.toContain(" on this device");
+    expect(row.textContent).toContain(`${label === "Synced" ? "A sync app" : label} syncs this folder: the file leaves this device.`);
   });
 });
 

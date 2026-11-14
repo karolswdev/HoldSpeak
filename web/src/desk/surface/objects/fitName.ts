@@ -60,17 +60,30 @@ export function fitName(
     const set = layout(candidate, fits);
     if (set && set.length <= lines) return set;
   }
-  for (let k = headSource.length; k >= 1; k--) {
+  const middle = longest(headSource.length, (k) => {
     const head = headSource.slice(0, k).replace(/[\s]+$/, "");
-    if (!head) continue;
-    const candidate = `${head}…${joiner}${tail}`;
-    const set = layout(candidate, fits);
-    if (set && set.length <= lines) return set;
-  }
+    if (!head) return null;
+    const set = layout(`${head}…${joiner}${tail}`, fits);
+    return set && set.length <= lines ? set : null;
+  });
+  if (middle) return middle;
   // Nothing of the start fits beside the end: the end alone, cut.
   let endOnly = `…${tail}`.slice(0, perLine);
   while (endOnly.length > 2 && !fits(endOnly)) endOnly = endOnly.slice(0, -1);
   return [endOnly];
+}
+
+/** The longest start that fits, by halving: a 4,000-character name took
+ *  4,000 measured layouts per fit when every length was tried in turn, and
+ *  the page stopped answering. A shorter start never fits worse, so the
+ *  halving finds the same cut. */
+function longest(max: number, at: (length: number) => string[] | null): string[] | null {
+  let low = 1, high = max, best: string[] | null = null;
+  while (low <= high) {
+    const mid = (low + high) >> 1, set = at(mid);
+    if (set) { best = set; low = mid + 1; } else high = mid - 1;
+  }
+  return best;
 }
 
 /** A word's pieces: it may break after each `_ - . / :` join (the join stays
@@ -136,10 +149,11 @@ function endCut(text: string, lines: number, fits: (line: string) => boolean): s
     const set = layout(`${text.slice(0, n)}…`, fits);
     if (set && set.length === lines) return set;
   }
-  for (let n = text.length - 1; n >= 1; n--) {
+  const byLetters = longest(text.length - 1, (n) => {
     const set = layout(`${text.slice(0, n).trimEnd()}…`, fits);
-    if (set && set.length <= lines) return set;
-  }
+    return set && set.length <= lines ? set : null;
+  });
+  if (byLetters) return byLetters;
   return [`${text.slice(0, 1)}…`];
 }
 
