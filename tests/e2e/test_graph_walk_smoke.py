@@ -195,7 +195,7 @@ def _assert_receipt_door(record, viewport):
     assert receipt_id.startswith("pipeline:"), receipt_id
     # Window grammar (2026-10-24): the receipt is a list row; Enter on it is
     # the list view's own open (a press selects; a double press opens).
-    assert record["trigger"]["selector"] == f"[id='activity-receipt-{receipt_id}'] button"
+    assert record["trigger"]["selector"] == f"[id='activity-receipt-{receipt_id}']"
     assert record["trigger"]["key"] == "Enter"
     # Activity remains open behind the result, so the owner can close Settings
     # and return to the exact receipt list he used.
@@ -226,13 +226,13 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
         "POST", "/api/settings/heartbeat/run-now", 200,
     )
     opened = [step for step in record["setup"] if step.get("selector") ==
-              f"[id='activity-receipt-{receipt_id}'] button" and step.get("action") == "press"]
+              f"[id='activity-receipt-{receipt_id}']" and step.get("action") == "press"]
     assert len(opened) == 1 and opened[0]["done"] is True and opened[0]["key"] == "Enter"
     assert _settings_title(viewport) in [window["title"] for window in record["before"]["windows"]]
     after = record["after"]
     assert _settings_title(viewport) not in [window["title"] for window in after["windows"]]
     assert after["observe_at"] == (
-        f"#surface-activity.is-front [id='activity-receipt-{receipt_id}'] button"
+        f"#surface-activity.is-front [id='activity-receipt-{receipt_id}']"
     )
     assert after["visible"] and after["hit_test"]["in_viewport"]
     assert len(after["hit_test"]["samples"]) == 9 and after["hit_test"]["all_owned"]

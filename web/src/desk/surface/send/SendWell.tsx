@@ -1205,6 +1205,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               { label: "Result", value: <LatestReceipt s={current} /> },
               { label: "When", value: stateWords(stamp(current.settled_at)) },
               { label: "Document", value: sentDocumentName(current) },
+              { label: "Kind", value: tag?.(current)?.word ? stateWords(tag(current)!.word) : null },
               { label: "Prepared", value: byWord(current) },
             ]}
           />

@@ -48,7 +48,7 @@ def test_unselected_collections_keep_the_whole_list(tmp_path,monkeypatch,width):
                 _api(page,'POST',f'/api/desk/windows/surface-{app}/open',{},token=TOKEN)
                 if width==1440:_api(page,'POST',f'/api/desk/windows/surface-{app}/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
                 page.reload(wait_until='load');_normal_chair(page);win=page.locator(f'#surface-{app}')
-                expect(win.get_by_test_id(query)).to_have_count(50)
+                expect(win.get_by_test_id(query)).to_have_count(50,timeout=20_000)  # 50 long rows after a reload: 5 s is short on a shared machine
                 for state in ['list','selected']:
                     if state=='selected':win.get_by_test_id(query).first.click()
                     _settle(page);page.screenshot(path=str(OUT/f'{app}-{state}-{900 if width==1440 else 393}-{phase}.png'))
@@ -65,5 +65,5 @@ def test_unselected_collections_keep_the_whole_list(tmp_path,monkeypatch,width):
                     _settle(page);page.screenshot(path=str(OUT/f'projects-selected-520-{phase}.png'))
             browser.close()
     finally:server.stop()
-    (ROOT/f'.tmp/programs-group14/r2/capacity-{width}-{phase}.json').write_text(json.dumps(metrics,indent=2))
+    (OUT/f'capacity-{width}-{phase}.json').write_text(json.dumps(metrics,indent=2))
     assert not faults,faults

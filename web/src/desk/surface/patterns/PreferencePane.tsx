@@ -272,9 +272,22 @@ export interface InspectorFact { label: string; value: ReactNode; key?: string; 
 /** Read-only values use the form's grid, without a completion row. */
 export function InspectorFacts({ object, name, nameTestId, rows, testId, notice, trailing, header = true, figures, subtitle, nameMode, "data-feedback-redact": redact }: { object?: ReactNode; nameMode?: "fit" | "wrap"; figures?: Parameters<typeof InspectorFigures>[0]["figures"]; subtitle?: string; "data-feedback-redact"?: boolean | "true" | "false"; header?: boolean; name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
   const heading = useContext(InspectorNameContext);
+  // The Name fact stands only while the pane heading is cut (it then holds
+  // the whole name); beside a whole heading it would say the name twice.
+  const factsRef = useRef<HTMLDivElement>(null);
+  const [headingCut, setHeadingCut] = useState(false);
+  useLayoutEffect(() => {
+    const head = factsRef.current?.closest(".surface-pane-inspector")?.querySelector<HTMLElement>(".surface-pane-inspector-head .surface-inspector-name");
+    if (!head) { setHeadingCut(false); return; }
+    const read = () => setHeadingCut(!name.includes("…") && (head.firstChild?.nodeValue ?? "").includes("…"));
+    read();
+    const watch = new MutationObserver(read);
+    watch.observe(head, { childList: true, characterData: true, subtree: true });
+    return () => watch.disconnect();
+  }, [name]);
   if (header && heading !== name) return <PaneInspector object={object ?? (nameIsFile(name) ? <img src={objectSprite("artifact", name, "rest", 32)} alt="" draggable={false} /> : name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join(""))} nameMode={nameMode} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
-  return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}>{figures ? <InspectorFigures figures={figures} label={name} /> : null}<InspectorForm notice={notice}
-    rows={rows.filter(row => hasWords(row.value) && (row.label === "Name" || factText(row.value).trim() !== name.trim())).map(row => ({ ...row, control: factValue(row.value, row.paths) }))} /></div>;
+  return <div ref={factsRef} className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}>{figures ? <InspectorFigures figures={figures} label={name} /> : null}<InspectorForm notice={notice}
+    rows={rows.filter(row => hasWords(row.value) && (factText(row.value).trim() !== name.trim() || row.label === "Name" && headingCut)).map(row => ({ ...row, control: factValue(row.value, row.paths) }))} /></div>;
 }
 function factText(value: ReactNode): string {
   if (typeof value === "string" || typeof value === "number") return String(value);

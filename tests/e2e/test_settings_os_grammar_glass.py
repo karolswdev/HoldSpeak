@@ -14,22 +14,25 @@ from .test_settings_page_glass import TOKEN, _open_page
 from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS
 
 
-@pytest.mark.timeout(240)
+@pytest.mark.timeout(480)  # 200 s alone (2026-11-13); the whole suite shares the machine
 def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _settings_pane_shots(tmp_path, monkeypatch)
 
 
 @pytest.mark.timeout(240)
 def test_settings_repair_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts", "engines", "calls"))
+    # Accounts only: the Engines and Calls states grew past this test's 240 s
+    # (it died on the timeout and took its xdist worker with it). The two
+    # tests below walk the same Engines and Calls states.
+    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts",))
 
 
-@pytest.mark.timeout(240)
+@pytest.mark.timeout(480)  # 200 s alone (2026-11-13); the whole suite shares the machine
 def test_engine_library_long_names_and_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _settings_pane_shots(tmp_path, monkeypatch, only=("engines",))
 
 
-@pytest.mark.timeout(300)
+@pytest.mark.timeout(480)  # 200 s alone (2026-11-13); the whole suite shares the machine
 def test_send_settings_round_two_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _settings_pane_shots(tmp_path, monkeypatch, only=("engines", "calls"))
 

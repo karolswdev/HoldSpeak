@@ -101,7 +101,12 @@ def test_open_list_forms_keep_their_first_row_and_completion(tmp_path: Path, mon
             page.locator("nav[aria-label='Go menu']").get_by_role("menuitem", name="Automations", exact=True).evaluate("el=>el.click()")
             auto = page.locator("#surface-workbenches")
             auto.locator(f'[data-object-id="{automation}"]').click()
-            auto.get_by_role("button", name="Edit", exact=True).click()
+            edit = auto.get_by_role("button", name="Edit", exact=True)
+            if edit.count() and edit.is_visible(): edit.click()
+            else:
+                # At 393 Find shares the verb row (#2316): Edit is in Actions.
+                auto.get_by_role("button", name="Actions ▾", exact=True).click()
+                page.get_by_role("menuitem", name="Edit", exact=True).click()
             setup = auto.get_by_test_id("automation-setup")
             setup.wait_for()
             geometry(auto, "surface-workbenches")
