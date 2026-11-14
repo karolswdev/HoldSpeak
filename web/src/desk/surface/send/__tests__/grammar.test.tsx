@@ -4,6 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import recorded from "./fixtures/note-held-retry-return.json";
 import prepared from "./fixtures/icloud-prepared-send.json";
 import channelPreviews from "./fixtures/channel-previews-20261113.recorded.json";
+import siteDestinations from "../../../__tests__/fixtures/send-hub/destinations-before-send.json";
 import {previewOf, type Destination} from "../../../../features/channels/channels";
 
 const api = vi.fn();
@@ -521,4 +522,13 @@ it.each(Object.entries(channelPreviews.channels))("names %s in words at the Send
     expect(weekly).toHaveTextContent("Weekly report · Nov 12");
     expect(weekly).not.toHaveTextContent("*");
   }
+});
+
+
+it.each(siteDestinations.destinations.filter(d=>d.channel === "github" || d.channel === "jira"))("keeps $channel site in the plain Send confirmation", record => {
+  const destination=record as unknown as Destination;
+  render(<SendFace destination={destination} completion={{cancel:vi.fn(),primary:{label:"Send",testId:"send-verb",run:vi.fn()}}} />);
+  const actions=screen.getByTestId("send-verb").closest<HTMLElement>(".surface-inspector-actions")!;
+  expect(actions.querySelector(".surface-completion-state")).toHaveTextContent(`Send to ${destination.name} on ${destination.account.host || destination.account.site}`);
+  expect(actions.querySelector(".gadget-chip-egress")).toBeNull();
 });

@@ -173,7 +173,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             geometry = section.get_by_role("grid").evaluate_all(r"""grids => grids.map(grid => {
                                 const well=grid.querySelector('.object-list-rows'), box=well.getBoundingClientRect();
                                 const inset=getComputedStyle(well).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(/\s+/).map(parseFloat) || [];
-                                const b={top:box.top+well.clientTop+(inset[0]||0),bottom:box.top+well.clientTop+well.clientHeight-(inset[2]??inset[0]??0)};
+                                const b={top:box.top+Math.max(well.clientTop,inset[0]||0),bottom:Math.min(box.top+well.clientTop+well.clientHeight,box.bottom-(inset[2]??inset[0]??0))};
                                 const rows=[...well.querySelectorAll('[data-object-id]')].map(row=>{const r=row.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height,shown:Math.max(0,Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top))};});
                                 return {label:grid.getAttribute('aria-label'),height:b.bottom-b.top,floor:Math.min(grid.closest('[data-testid="settings-engines-library"]')?.querySelector('.surface-inspector-facts') ? 4 : 6,rows.length)*(rows[0]?.height || 0),whole:rows.filter(r=>r.shown>=r.height-.5).length,partial:rows.filter(r=>r.shown>.5 && r.shown<r.height-.5),columns:[...grid.querySelectorAll('[role=columnheader]')].map(c=>({column:c.dataset.col,width:c.getBoundingClientRect().width}))};
                             })""")
