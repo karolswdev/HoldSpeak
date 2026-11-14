@@ -54,7 +54,7 @@ import { requestAskReturn } from "../thought-workspace/askReturn";
 import { dropMarginAsk, putMarginAsk, updateMarginAsk } from "../thought-workspace/marginAsks";
 import { AskSourceFrame } from "./AskSourceFrame";
 import {
-  ASK_SPRITE, AskSources, AskClaims, AskNotAnswered, AskScope,
+  ASK_SPRITE, AskActions, AskSources, AskClaims, AskNotAnswered, AskScope,
   AskSendButton, askReasonLine, type AskReferenceRowData,
 } from "./AskWorkspace";
 import { chosenScopeWords, deskPrompts, wholeDeskWords } from "../askPrompts";
@@ -1114,7 +1114,7 @@ export function AskPanel() {
         const meta = [row.state ? word(row.state) : "", row.at ? humanTime(row.at) : ""].filter(Boolean).join(" · ");
         return { ...base, kind: "pr", meta: meta || undefined, lamp: row.state === "open" ? "info" : row.state === "merged" ? "ok" : undefined };
       }
-      default: return { ...base, kind: "note", meta: row.state ? word(row.state) : undefined };
+      default: return { ...base, kind: prefix, meta: row.state ? word(row.state) : undefined };
     }
   };
 
@@ -1174,28 +1174,32 @@ export function AskPanel() {
     ...(running ? [{ id: "stop", label: "Stop", enabled: () => true, run: stop }] : []),
     { id: "new", label: "New ask", key: "Mod+n", enabled: () => true, run: () => { startNew(); setAnswerKey(""); setPickedRecent(null); setRailSheet(false); promptRef.current?.focus(); } },
     { id: "about", label: "About", title: about.length ? about.map(row => row.title).join(", ") : "My whole desk", testId: "ask-context", enabled: () => true, run: () => { scopeAnchor.current = document.querySelector('[data-testid="ask-actions"]'); setScopeOpen(true); } },
-    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", enabled: () => true, run: returnToSource }] : []),
-    ...(activeTurn ? [{ id: "save", label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
+    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", toolbar: false, enabled: () => true, run: returnToSource }] : []),
+    ...(activeTurn ? [{ id: "again", toolbar: !running, label: "Ask again", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void askQuestion(activeTurn.question); } },
+    { id: "save", toolbar: !running, label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
       run: () => { if (activeTurn) { if (saved[activeTurn.key]) openRef(saved[activeTurn.key], { projectReturn: activeProjectReturn }); else void saveAsNote(activeTurn); } } },
-    { id: "task", label: "Make it a task", enabled: () => Boolean(activeTurn && threadId && !tasks[activeTurn.key] && !(activeTurn.used?.wrote ?? []).some(row => row.ref.startsWith("action_item:"))) && !running && !makingTask,
+    { id: "task", toolbar: false, label: "Make it a task", enabled: () => Boolean(activeTurn && threadId && !tasks[activeTurn.key] && !(activeTurn.used?.wrote ?? []).some(row => row.ref.startsWith("action_item:"))) && !running && !makingTask,
       run: () => { if (activeTurn) void makeTask(activeTurn); } },
-    { id: "send", label: "Send…", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void sendAnswer(activeTurn); } },
-    { id: "copy", label: "Copy", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void copy(activeTurn.answer); } },
-    { id: "again", label: "Ask again", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void askQuestion(activeTurn.question); } },
-    { id: "claims", label: activeTurn && groundedOpen[activeTurn.key] ? "Hide grounding" : "Show grounding", enabled: () => Boolean(activeTurn && supportedClaims(activeTurn.claims).length),
+    { id: "send", toolbar: false, label: "Send…", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void sendAnswer(activeTurn); } },
+    { id: "copy", toolbar: !running, label: "Copy", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void copy(activeTurn.answer); } },
+    { id: "claims", toolbar: false, label: activeTurn && groundedOpen[activeTurn.key] ? "Hide grounding" : "Show grounding", enabled: () => Boolean(activeTurn && supportedClaims(activeTurn.claims).length),
       run: () => { if (activeTurn) setGroundedOpen(current => ({ ...current, [activeTurn.key]: !current[activeTurn.key] })); } },
-    ...(fromNote ? [{ id: "append", label: activeTurn && added[activeTurn.key] ? "Undo add to note" : "Add to note", enabled: () => Boolean(activeTurn) && !running && !adding,
+    ...(fromNote ? [{ id: "append", toolbar: false, label: activeTurn && added[activeTurn.key] ? "Undo add to note" : "Add to note", enabled: () => Boolean(activeTurn) && !running && !adding,
       run: () => { if (activeTurn) { if (added[activeTurn.key]) void undoAdd(activeTurn); else void addToNote(activeTurn); } } }] : []),
     ] : []),
-    ...(threadId || turns.length ? [{ id: "forget", label: "Forget", enabled: () => Boolean(threadId || turns.length) && !running, run: forget }] : []),
-    { id: "engine", label: engine.state === "set" ? `Engine: ${engineDown || engine.down ? "Not answering" : engine.model}` : engine.state === "none" ? "No engine" : engine.state === "failed" ? "Engine not read" : "Engine",
+    ...(threadId || turns.length ? [{ id: "forget", toolbar: false, label: "Forget", enabled: () => Boolean(threadId || turns.length) && !running, run: forget }] : []),
+    { id: "engine", toolbar: false, label: engine.state === "set" ? `Engine: ${engineDown || engine.down ? "Not answering" : engine.model}` : engine.state === "none" ? "No engine" : engine.state === "failed" ? "Engine not read" : "Engine",
       testId: "engine-line", title: engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined,
       enabled: () => true, run: engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine },
-    ...(turns.length > 1 ? [{ id: "answer", label: `Answer: ${turns.findIndex(turn => turn.key === activeTurn?.key) + 1}`, enabled: () => true, run: () => {},
+    ...(turns.length > 1 ? [{ id: "answer", toolbar: false, label: `Answer: ${turns.findIndex(turn => turn.key === activeTurn?.key) + 1}`, enabled: () => true, run: () => {},
       items: turns.map((turn, index) => ({ id: turn.key, label: `${index + 1}. ${turn.question}`, enabled: () => true, run: () => setAnswerKey(turn.key) })) }] : []),
-    { id: "recent", label: "Recent", enabled: () => true, run: toggleRail },
+    { id: "recent", toolbar: false, label: "Recent", enabled: () => true, run: toggleRail },
   ];
   const selectedRecent = pickedRecent ?? (adoptedRef.current ? `pending:${adoptedRef.current}` : threadId);
+  const recentRows = railRows.map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: objectSprite("thread", row.id, "rest", 20),
+    detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
+    leadingLamp: { state: row.state === "writing" ? "working" as const : row.state === "not_answered" ? "failed" as const : "done" as const, label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }));
+  const recentVerbs: ListVerb[] = [...verbs, { id: "open", label: "Open", toolbar: false, run: row => { if (row) { setAnswerKey(""); setRailSheet(false); pickRail(row.id); } } }];
   return (
     <DeskWindowFrame id="ask" glyph="✦" label="Ask" className="desk-pullout" title="Ask"
       icon={<img src={ASK_SPRITE} alt="" width={24} height={24} draggable={false} />}
@@ -1211,15 +1215,12 @@ export function AskPanel() {
       }}>
         <AskMast line={[about.length ? about.map(row => row.title).join(", ") : "My whole desk", engine.model, running ? "Asking" : engineDown || engine.down ? "Not answering" : ""].filter(Boolean).join(" · ")} held={held.calls.length} asking={running ? runSeconds : undefined} />
         <ShowMe app="ask:desk" />
-        <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
-          list={<ListView label="Recent" ordered wholeRows empty={railShown ? "No recent asks" : undefined}
-            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: objectSprite("thread", row.id, "rest", 20),
-              detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
-              leadingLamp: { state: row.state === "writing" ? "working" : row.state === "not_answered" ? "failed" : "done", label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }))}
-            columns={[{ key: "name", word: "Recent" }]} selectedId={selectedRecent}
+        <AskActions verbs={recentVerbs} selection={recentRows.find(row => row.id === selectedRecent) ?? null} />
+        <ListPane deck={railShown} listShare={.3} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
+          list={railShown && recentRows.length ? <ListView label="Recent" ordered wholeRows externalToolbar
+            rows={recentRows} columns={[{ key: "name", word: "Recent" }]} selectedId={selectedRecent}
             onSelect={id => { setPickedRecent(id); }} onOpen={id => { setPickedRecent(id); setAnswerKey(""); setRailSheet(false); pickRail(id); }}
-            defaultVerb="open" verbs={[...verbs, { id: "open", label: "Open", run: row => { if (row) { setAnswerKey(""); setRailSheet(false); pickRail(row.id); } } }]}
-            toolbar={{ testId: "ask-actions" }} /> }>
+            defaultVerb="open" verbs={recentVerbs} /> : null}>
           <PreferencePane label="Answer"><PaneGroup label="">
           <AskScope rows={about} candidates={candidates} onPick={pickAbout} onRemove={row => removeAbout(row.ref)}
             onOpenRow={row => row.ref === THIS_WEEK ? undefined : () => openRef(row.ref, { projectReturn: activeProjectReturn })}
@@ -1262,7 +1263,7 @@ export function AskPanel() {
                   notice={heldFailure?.callId === call.call_id && heldFailure.revision === call.binding.revision ? <ActionNotice tone="danger" role="alert">{heldFailure.words}</ActionNotice> : undefined} actionId="decide-tool" question={`${call.words}?`} rows={[{ label: "Tool", control: <span data-feedback-redact="true">{call.words}</span> }, ...call.facts.map(fact => ({ label: fact.label, control: <span data-feedback-redact="true">{fact.value === "Hidden" ? <><Lamp state="off" label="Hidden" />{" "}</> : null}{fact.label === "Due" ? faceTimeWords(fact.value) : fact.value}</span> }))]} testId="ask-hold" cancelLabel="Deny" cancel={() => void decide(call, "deny")}
                   variant="brass" verb={{ label: "Allow once", busy: deciding === `${call.call_id}:${call.binding.revision}`, run: () => void decide(call, "approve") }} />) : null}
 
-          <Toolbar label="Ask" data-testid="ask-toolbar" className="object-list-toolbar" trailingStays
+          <Toolbar label="Ask" data-testid="ask-toolbar" trailingStays
             trailing={<AskSendButton disabled={running || !prompt.trim()} onClick={() => void ask()} />}>
             <PadGadget label="Ask about your work" micLabel="Speak your question" micDraftScope="desk-ask" rows={1} autoGrow value={prompt} placeholder={turns.length ? "Ask a follow-up" : "Ask about your work"}
               autoFocus inputRef={promptRef} onChange={setPrompt} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void ask(); } }} />

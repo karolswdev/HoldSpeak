@@ -47,7 +47,7 @@ the refinement Workbench for that Note. The UI calls the record a **Note**.
 **Thought** is a legacy domain term for the refinement flow.
 
 **Ask AI** opens the **Ask** window. Ask and Thread are one window. Start a
-new conversation with the first row in **Recent** or **⌘N**. The first
+new conversation with **New ask** or **⌘N**. The first
 question is kept as a Thread, and later questions continue that Thread. A
 separate Thread window is not the current navigation path.
 
@@ -119,8 +119,7 @@ once** or **Deny**. A refused or unavailable tool does not prove that its
 result exists. Read the receipt and the tool result.
 
 Ask retains completed exchanges as a Thread. Use the follow-up box to continue
-the conversation. Open **Recent** and select its first row to start a new
-conversation, or press **⌘N**.
+the conversation. Select **New ask** or press **⌘N** to start a new conversation.
 When Ask opens from a Note, **Add to note** can copy the answer into that Note.
 **Save as note** creates a separate editable Note from the answer.
 The current Ask does not expose the parked Thread window's mode, branching, slash-command, or call controls.

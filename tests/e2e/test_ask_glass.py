@@ -127,7 +127,6 @@ def _seat_failures(win, width):
           const box=edge(rows), visible=[...rows.querySelectorAll('[data-object-id]')].map(row=>row.getBoundingClientRect()).find(r=>r.top>=box.top-.5 && r.bottom<=Math.min(box.bottom,sr.bottom)+.5);
           if(width===1440 && visible && visible.top>bar.getBoundingClientRect().bottom+2) failures.push('A gap precedes the first Source row');
         }
-        if(width===1440) {const recent=win.querySelector('[data-testid=ask-recent] .object-list');if(recent?.getBoundingClientRect().width<win.getBoundingClientRect().width*.35) failures.push('Recent lost its previous width');}
       }
       if(!win.querySelector('[data-testid=ask-conversation]')) for(const b of win.querySelectorAll('[data-testid=ask-actions] button:disabled')) if(/^(Save as note|Make it a task|Send|Copy)/.test(b.textContent.trim())) failures.push('An empty ask shows an answer-only verb');
       for(const pre of win.querySelectorAll('pre.reading-code')) {
@@ -143,6 +142,14 @@ def _seat_failures(win, width):
         if(label) {const l=label.getBoundingClientRect();if(l.top>=r.top && l.bottom<=r.bottom && (l.left<scroll.left-1 || l.right>scroll.right+1)) failures.push('The code language leaves a blank band');}
         if(lastNode && scroller.scrollLeft>0 && scroller.scrollLeft>=scroller.scrollWidth-scroller.clientWidth-1) {const end=document.createRange();end.setStart(lastNode,lastNode.textContent.length-1);end.setEnd(lastNode,lastNode.textContent.length);const glyph=end.getBoundingClientRect();if(glyph.left<scroll.left-1 || glyph.right>scroll.right+1) failures.push('The code tail is not reachable');}
       }
+      const recent=win.querySelector('[data-testid=ask-recent]');
+      if(width===1440 && recent?.querySelector('.object-list')?.getBoundingClientRect().width>win.getBoundingClientRect().width*.3+1) failures.push('Recent takes more than 30 percent');
+      if(recent?.querySelector('.object-list[data-empty]')?.getBoundingClientRect().width) failures.push('Empty Recent keeps a list seat');
+      const actions=win.querySelector('[data-testid=ask-actions]');
+      const visibleVerbs=[...actions.querySelectorAll('[data-list-verb]')].filter(el=>el.getBoundingClientRect().width && !el.closest('[inert]'));
+      if(visibleVerbs.length>5) failures.push('The verb row has more than the default act and four more');
+      const composer=win.querySelector('[data-testid=ask-toolbar]'), send=composer?.querySelector('button[aria-label=Ask]'), pad=composer?.querySelector('.gadget-pad');
+      if(send && pad && send.getBoundingClientRect().left-pad.getBoundingClientRect().right>16) failures.push('The follow-up field leaves unused width before Ask');
       const scope=document.querySelector('[data-testid=ask-scope-menu] .object-list-rows');
       if(scope) {const box=edge(scope), rows=[...scope.querySelectorAll('[data-object-id]')];if(rows.length && !scope.getBoundingClientRect().height) failures.push('The scope rows have no visible seat');if(rows.some(row=>{const r=row.getBoundingClientRect();return r.top<box.bottom-.5 && r.bottom>box.bottom+.5;})) failures.push('The scope search ends in a partial row');}
       return failures;
@@ -297,7 +304,8 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 page.screenshot(path=str(shots / f"checks-empty-{stage}-{900 if width == 1440 else 393}.png"))
                 if width == 393:
                     window.get_by_role("button", name="Back from Ask", exact=True).click()
-                    expect(window.get_by_text("No recent asks", exact=True)).to_be_visible()
+                    expect(window.get_by_test_id("ask-recent")).to_have_count(0)
+                    expect(editor).to_be_visible()
                     page.screenshot(path=str(shots / f"checks-empty-recent-{stage}-393.png"))
                     window.get_by_role("button", name="Back from Ask", exact=True).click()
                 facts = window.evaluate("""el => {
@@ -477,7 +485,12 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                   const reading=win.querySelector('.surface-object-reading');if(!reading)return null;
                   const box=reading.getBoundingClientRect(), clip=getComputedStyle(reading).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(' ').map(parseFloat), top=box.top+(clip?.[0]||0), bottom=box.bottom-(clip?.[2]??clip?.[0]??0), ys=[];
                   for(const doc of reading.querySelectorAll('[data-testid=ask-turn] .reading-document')) {const walker=document.createTreeWalker(doc,NodeFilter.SHOW_TEXT);for(let node=walker.nextNode();node;node=walker.nextNode()){if(!node.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())if(r.top>=top-.5&&r.bottom<=bottom+.5&&!ys.some(y=>Math.abs(y-r.top)<1))ys.push(r.top);}}
-                  return {answer_lines:ys.length,line_tops:ys.sort((a,b)=>a-b),reader:box.toJSON(),painted_top:top,painted_bottom:bottom};
+                  const rect=el=>el?.getBoundingClientRect().toJSON();
+                  const menu=document.querySelector('[data-testid=ask-scope-menu]')?.closest('.surface-popover') || document.querySelector('.desk-work-menu[data-menu-owner=ask]');
+                  return {answer_lines:ys.length,line_tops:ys.sort((a,b)=>a-b),reader:box.toJSON(),painted_top:top,painted_bottom:bottom,
+                    recent:rect(win.querySelector('[data-testid=ask-recent] .object-list')),window:rect(win),
+                    field:rect(win.querySelector('[data-testid=ask-toolbar] .gadget-pad')),send:rect(win.querySelector('[data-testid=ask-toolbar] button[aria-label=Ask]')),
+                    menu:rect(menu),opener:rect(win.querySelector('[data-list-overflow][aria-expanded=true]') || win.querySelector('[data-testid=ask-context]')),heading:rect([...reading.querySelectorAll('h3')].find(el=>{const r=el.getBoundingClientRect();return r.top>=top && r.bottom<=bottom;}))};
                 }""")
                 (shots / f"{state}-{stage}-{900 if width == 1440 else 393}.json").write_text(json.dumps(metrics,indent=2))
 
@@ -503,7 +516,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 if target.count() and target.is_visible():
                     return target
                 win.get_by_test_id("ask-actions").get_by_role("button", name="Actions ▾", exact=True).click()
-                page.screenshot(path=str(shots / f"checks-actions-open-{stage}-{900 if width == 1440 else 393}.png"))
+                shot("actions-open")
                 return page.get_by_role("menuitem", name=name, exact=True)
 
             shot("empty-seeded")
@@ -652,8 +665,12 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
     recent = ThreadService(db, broadcast=lambda *_: None).list_threads()
     wire = Path(__file__).resolve().parents[2] / "web/src/test/wire"
     tools = json.loads((wire / "ask.tools.wire.json").read_text())
-    # These names and ids come from the same real note producer as the desk.
-    answer = {**tools["answer"], "output": _shaped_answer(), "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
+    # Project each kind through the same producer as Ask, regardless of its name.
+    from holdspeak.services.ask_service import reference_facts
+    refs = [{"ref": f"note:{note['id']}", "title": note["title"]} for note in notes]
+    refs[0] = {"ref": "artifact:ask-source-file", "title": PATH_SCOPE.replace("AskWorkspace.tsx", "AskSourceFrame.tsx")}
+    refs[2] = {"ref": "meeting:ask-source-meeting", "title": names[2]}
+    answer = {**tools["answer"], "output": _shaped_answer(), "looked_at": reference_facts(db, refs)}
     shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     pending, recent_requests = [], []
@@ -691,7 +708,12 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
                   const reading=win.querySelector('.surface-object-reading');if(!reading)return null;
                   const box=reading.getBoundingClientRect(), clip=getComputedStyle(reading).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(' ').map(parseFloat), top=box.top+(clip?.[0]||0), bottom=box.bottom-(clip?.[2]??clip?.[0]??0), ys=[];
                   for(const doc of reading.querySelectorAll('[data-testid=ask-turn] .reading-document')) {const walker=document.createTreeWalker(doc,NodeFilter.SHOW_TEXT);for(let node=walker.nextNode();node;node=walker.nextNode()){if(!node.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())if(r.top>=top-.5&&r.bottom<=bottom+.5&&!ys.some(y=>Math.abs(y-r.top)<1))ys.push(r.top);}}
-                  return {answer_lines:ys.length,line_tops:ys.sort((a,b)=>a-b),reader:box.toJSON(),painted_top:top,painted_bottom:bottom};
+                  const rect=el=>el?.getBoundingClientRect().toJSON();
+                  const menu=document.querySelector('[data-testid=ask-scope-menu]')?.closest('.surface-popover') || document.querySelector('.desk-work-menu[data-menu-owner=ask]');
+                  return {answer_lines:ys.length,line_tops:ys.sort((a,b)=>a-b),reader:box.toJSON(),painted_top:top,painted_bottom:bottom,
+                    recent:rect(win.querySelector('[data-testid=ask-recent] .object-list')),window:rect(win),
+                    field:rect(win.querySelector('[data-testid=ask-toolbar] .gadget-pad')),send:rect(win.querySelector('[data-testid=ask-toolbar] button[aria-label=Ask]')),
+                    menu:rect(menu),opener:rect(win.querySelector('[data-list-overflow][aria-expanded=true]') || win.querySelector('[data-testid=ask-context]')),heading:rect([...reading.querySelectorAll('h3')].find(el=>{const r=el.getBoundingClientRect();return r.top>=top && r.bottom<=bottom;}))};
                 }""")
                 (shots / f"{state}-{stage}-{900 if width == 1440 else 393}.json").write_text(json.dumps(metrics,indent=2))
 
@@ -711,7 +733,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             shot("1-recent-reading")
             assert recent_requests
             recent_requests.pop().fulfill(json={"threads": []})
-            expect(win.get_by_text("No recent asks", exact=True)).to_be_visible()
+            expect(win.get_by_role("grid", name="Recent", exact=True).locator("[data-object-id]")).to_have_count(0)
             shot("1-recent-empty")
             if width == 393:
                 win.get_by_role("button", name="Back from Ask", exact=True).click()
@@ -771,6 +793,12 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             pending.pop().fulfill(json=answer)
             expect(win.get_by_test_id("ask-turn")).to_be_visible()
             shot("3-many-sources")
+            source_rows = win.get_by_test_id("ask-looked-at")
+            for ref, kind in [("artifact:ask-source-file", "artifact"), ("note:ask-long-1", "note"), ("meeting:ask-source-meeting", "meeting")]:
+                if source_rows.locator(f'[data-object-id="{ref}"]').count():
+                    sprite = source_rows.locator(f'[data-object-id="{ref}"] img').first.get_attribute("src") or ""
+                    if f"/{kind}" not in sprite:
+                        seat_failures.append(("3-many-sources", f"{ref} does not wear its own {kind} object: {sprite}"))
             editor.fill("What must I read before the platform architecture review, and who owns the migration, the rollback record and the retained draft?")
             shot("3-many-sources-draft")
             editor.fill("")

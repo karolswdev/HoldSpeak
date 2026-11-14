@@ -385,7 +385,7 @@ def test_selected_note_ask_save_and_return(
             assert old_result.status == 409 and old_result.json()["reason"] == "source_changed", old_result.json()
             assert old_result.request.post_data_json["source_snapshot"] == sent["source_snapshot"]
             expect(ask.get_by_test_id("ask-not-answered")).to_contain_text("Source changed. Select it again")
-            expect(ask.get_by_role("button", name="Back to note")).to_be_visible()
+            expect(_ask_verb(ask, "Back to note")).to_be_visible()
             assert ask.get_by_role("button", name="Try again").count() == 0
             assert len(Model.requests) == 1, Model.requests
             page.screenshot(path=str(shots / f"note-source-refused-{width}.png"))
@@ -484,7 +484,7 @@ def test_selected_note_ask_save_and_return(
             # The fresh real Ask above already owns the front window.
             # Ask D1: New ask is the Recent rail's first row (a sheet at 393).
             if not ask.get_by_role("button", name="New ask").is_visible():
-                ask.get_by_role("button", name="Recent", exact=True).click()
+                _ask_verb(ask, "Recent").click()
             ask.get_by_role("button", name="New ask").click()
             display_answer = "These two references can be named, but not opened here."
             display_wire = {
