@@ -41,7 +41,12 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
       const assigned = ownEnd - suffix - bounds.top - border;
       let clipEnd = Infinity;
       for (let parent = well.parentElement; parent; parent = parent.parentElement) {
-        if (["hidden", "clip", "auto", "scroll"].includes(getComputedStyle(parent).overflowY)) {
+        const overflow = getComputedStyle(parent).overflowY;
+        // A scrolling ancestor (a form's field well) brings the list into
+        // view itself: its edge is not a clip, and nothing above it cuts
+        // the list either. Fitting to it left "Sources to add" with no row.
+        if (overflow === "auto" || overflow === "scroll") break;
+        if (overflow === "hidden" || overflow === "clip") {
           const rect = parent.getBoundingClientRect();
           clipEnd = Math.min(clipEnd, rect.top + parent.clientTop + parent.clientHeight);
         }
