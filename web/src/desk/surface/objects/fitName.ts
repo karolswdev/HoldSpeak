@@ -19,7 +19,7 @@ export function fitName(
   fits: (line: string) => boolean = (line) => line.length <= perLine,
   /** `end` (the floor, owner 2026-11-08): whole words, then ONE ellipsis at
    *  the end; never a cut in the middle. Default `middle`, as above. */
-  cut: "middle" | "end" = "middle",
+  cut: "middle" | "end" | "path" = "middle",
 ): string[] {
   const text = name.replace(/\s+/g, " ").trim();
   if (!text || perLine < 4 || lines < 1) return [text];
@@ -44,7 +44,20 @@ export function fitName(
     tail = (lines > 1 || lastPiece.length >= Math.min(8, capTail)) && lastPiece.length <= capTail && pieces.length > 1 && fits(`…${lastPiece}`) ? lastPiece : last.slice(-Math.max(2, Math.floor(perLine / 2)));
     joiner = "";
   }
+  if (cut === "path" && joiner === "" && joinPieces(last).length > 1) {
+    const wanted = last.length - tail.length;
+    let offset = 0;
+    const starts = joinPieces(last).map(piece => { const start = offset; offset += piece.length; return start; });
+    const start = starts.find(start => start >= wanted);
+    if (start !== undefined) tail = last.slice(start);
+  }
   const headSource = text.slice(0, text.length - tail.length).replace(/\s+$/, "");
+  for (let k = cut === "path" ? headSource.length : 0; k >= 1; k--) {
+    if (!/[\s_\-./:]/.test(headSource[k - 1])) continue;
+    const candidate = `${headSource.slice(0,k)}…${joiner}${tail}`;
+    const set = layout(candidate, fits);
+    if (set && set.length <= lines) return set;
+  }
   for (let k = headSource.length; k >= 1; k--) {
     const head = headSource.slice(0, k).replace(/[\s]+$/, "");
     if (!head) continue;

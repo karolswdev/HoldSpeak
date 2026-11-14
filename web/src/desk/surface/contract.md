@@ -741,11 +741,12 @@ so it stays out of the main barrel, which is wire-free.
   `features/channels/DestinationForm.tsx`, with its own `onSetUpAccount`.
 
 `SendFace` draws ordinary, frozen and Needs you sends: optional Document choice,
-channel tabs, the Destination pop-up with Add destination trailing in its row,
-a Preview group with target facts, the payload well, then completion. Only the
-payload scrolls. Edit or Discard is at completion's left, followed by the saved
-destination name and kind; Cancel and Send are at the right. External egress is
-inline there; a local file has no chip. A changed target needs a fresh preview.
+channel tabs, the Destination pop-up, target facts and the payload well.
+Preview is an accessible region with no repeated caption. The payload and a long
+envelope have their own bounded reading wells. Edit or Discard and Add destination
+stand in the completion verb row and its common overflow. Cancel and Send keep
+their seats. The completion's plain confirmation line names the destination
+and provider or device; no host or scope chip stands beside it. A changed target needs a fresh preview.
 The Meetings list and a selected Needs you send give this face the whole pane;
 Back returns the list. All hosts use the same library button rules and paper.
 Refusals keep the draft and Retry. Discard asks in the window, with Cancel
@@ -791,11 +792,11 @@ Rules the species holds (they are not the host's business):
   refusal newer than the latest send, REFUSED + its word + NOTHING SENT;
   LAST SEND UNKNOWN + its word; NO ANSWER · RESULT UNKNOWN. An open row
   shows the receipt under Send and keeps the one-chip summary on its line.
-- **The egress chip** rides every destination row, every open preview and
-  every waiting prepared row (UX-CANON: egress where egress happens).
-- **The Send composition** keeps Add destination in the SEND section head,
+- **Egress at Send** is a plain confirmation line naming the destination and
+  provider or device. It belongs to the Send completion, without a host chip.
+- **The Send composition** keeps Add destination in the completion verb row,
   including when the built-in folder is present. Pending reads and previews
-  use SurfaceState. PREVIEW names the frozen fields and payload; only the
+  use SurfaceState. The Preview region holds the frozen fields and payload; the
   payload sits in SurfaceWell, without an inner scrolling cap. Dispatch and
   its receipt follow outside that well. The host owns the one scroll region
   and its Back action.
@@ -2042,12 +2043,12 @@ The Live pieces gallery includes Failure notice and Form fit.
 Send owns its delivery status: New, Prepared, Sending, Sent at the kit clock,
 Result unknown, Refused or Failed. Hosts yield their ordinary status while Send is open.
 Prepared-by and document labels use facts. The frozen payload and editable body keep their bytes. Send previews opt into ReadingDocument date words through proseDateWords and faceTimeWords; code and paths keep their text. Preview text fills its well. Long envelope fields scroll inside their form so the message keeps reading space.
-File receipts use MiddleText on one line; a long path keeps both ends around a middle ellipsis. Hover and Copy path retain the full path.
+File receipts use `MiddleText cut="path"` on one line. Its shared fitter prefers separators at both sides of a middle ellipsis; unbroken words retain the existing fallback. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
 Settings' model library takes the engine work pane while its Jobs/Engines tabs stay in view. The Mast Back returns through Add and Inspect to the library, then to the installed list; Done also returns. Its primary roster uses ListPane outside the form.
-Inspect keeps the full engine name in redacted facts. The five engine kinds and the services use CycleGadget pop-ups. Nested Add rosters use ListPane's row floor. A server form has Cancel then
+Inspect keeps the full engine name in redacted facts. The normal library has no second heading or category row: its Library scope and Back share the list's verb row. At compact frame widths the Mast owns Back. The five engine kinds use `SegmentedTabs collapse="popup"`: all five segments when they fit, one CycleGadget pop-up when they do not. Services use a CycleGadget pop-up. Nested Add rosters use ListPane's row floor. A server form has Cancel then
 Check in its completion seat; the destination stays in the fixed notice above it.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
@@ -2318,6 +2319,24 @@ seat after padding, glyphs, lamps and meters.
   yields first when the measured gadget cannot hold both.
 - A selection list measures read-only columns from its header and visible facts;
   the name takes the remainder. Editable cells retain their declared minimum.
+
+### Send and Settings fits (2026-11-13, round 3)
+
+`ListView wholeRows` uses the shared row-edge fitter as well as its list height.
+The reading well keeps its scroll range and paints whole rows at rest.
+The engine and speech rosters share ListPane; speech setup stays in its form
+row above the roster, so a form row cannot cap the model list.
+
+`ReadingDocument` and `Material` accept `dialect="slack"`. The same Lezer AST
+and renderer handle Slack's single-marker bold, italic and strike delimiters;
+inline and fenced code remain literal. `previewOf` marks this local presentation
+as `body_kind="slack"`; frozen channel bytes and hashes do not change.
+
+The measured kind pop-up keeps the shared tab seat, without the strip marker or a strip border.
+
+Calls composes the normal CheckGadget with the kit StateChip for On or Off.
+Preference failure receipts inherit the ink strip's text colour. The status
+bar's existing failure lamp carries the state colour.
 
 ### Live facts and step names
 

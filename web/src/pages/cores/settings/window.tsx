@@ -177,7 +177,7 @@ export function PrefStatus({
       lamp: SAVE_LAMP[save.tone],
       text: (
         <span
-          className="pref-status-save prefs-receipt"
+          className="pref-status-save"
           data-tone={save.tone}
           role={save.tone === "danger" ? "alert" : undefined}
           title={save.reason || undefined}

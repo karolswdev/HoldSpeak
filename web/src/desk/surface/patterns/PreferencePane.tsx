@@ -9,7 +9,7 @@ import { Children, Fragment, createContext, useContext, cloneElement, isValidEle
 import { WorkMenu } from "../../components/DeskMenu";
 import { fitStrip } from "../fitStrip";
 import { Button } from "../../../components/signal/Signal";
-import { GadgetRow } from "../gadgets";
+import { GadgetRow, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 import { useGroupHeading } from "../groupHeading";
@@ -164,9 +164,10 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
 export function PaneActions({ children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <VerbRow {...props} as="div" className="surface-pane-actions">{children}</VerbRow>;
 }
-export function SegmentedTabs({label, value, onChange, tabs, children, showSingle = false}: {
+export function SegmentedTabs({label, value, onChange, tabs, children, showSingle = false, collapse = "more", placeholder}: {
   label: string; value: string; onChange(id: string): void;
   tabs: readonly { id: string; label: string }[]; children: ReactNode; showSingle?: boolean;
+  collapse?: "more" | "popup"; placeholder?: string;
 }) {
   const id = useId(), ref = useRef<HTMLDivElement>(null), probe = useRef<HTMLSpanElement>(null), anchor = useRef<HTMLButtonElement>(null);
   const signature = tabs.map(tab=>tab.id+tab.label).join("|");
@@ -190,15 +191,16 @@ export function SegmentedTabs({label, value, onChange, tabs, children, showSingl
   },[value,signature]);
   useLayoutEffect(()=>{if(keyFocus.current){const tab=ref.current?.querySelector<HTMLElement>('[aria-selected="true"]');if(tab){tab.focus();keyFocus.current=false;}}},[shown,value]);
   const folded=tabs.filter((_,i)=>!shown.includes(i)), rect=open?anchor.current?.getBoundingClientRect():null;
+  const popup = collapse === "popup" && folded.length > 0;
   return <>
-    {tabs.length>1||showSingle ? <div className="surface-segmented-tabs" role="tablist" data-joined-controls aria-label={label} ref={ref} onKeyDown={event=>{
+    {tabs.length>1||showSingle ? <div className={`surface-tab-seat${popup ? "" : " surface-segmented-tabs"}`} data-popup={popup || undefined} role={popup ? undefined : "tablist"} data-joined-controls aria-label={label} ref={ref} onKeyDown={event=>{
       if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
       event.preventDefault(); const at=tabs.findIndex(tab=>tab.id===value);
       const next=event.key==="Home"?0:event.key==="End"?tabs.length-1:(at+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
       keyFocus.current=true;onChange(tabs[next].id);
     }}>
-      {tabs.filter((_,i)=>shown.includes(i)).map(tab=><Button key={tab.id} variant="chrome" role="tab" id={`${id}-${tab.id}`} data-tab={tab.id} aria-selected={value===tab.id} aria-controls={`${id}-panel`} tabIndex={value===tab.id?0:-1} onClick={()=>onChange(tab.id)}>{tab.label}</Button>)}
-      {folded.length ? <Button variant="chrome" ref={anchor} aria-label={`${label} more`} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>More ▾</Button>:null}
+      {popup ? <CycleGadget label={label} roster value={value} options={[...(placeholder && !tabs.some(tab=>tab.id===value) ? [{value,label:placeholder}] : []), ...tabs.map(tab=>({value:tab.id,label:tab.label}))]} onChange={onChange} /> : tabs.filter((_,i)=>shown.includes(i)).map(tab=><Button key={tab.id} variant="chrome" role="tab" id={`${id}-${tab.id}`} data-tab={tab.id} aria-selected={value===tab.id} aria-controls={`${id}-panel`} tabIndex={value===tab.id || !tabs.some(tab=>tab.id===value) && tab===tabs[0] ?0:-1} onClick={()=>onChange(tab.id)}>{tab.label}</Button>)}
+      {!popup && folded.length ? <Button variant="chrome" ref={anchor} aria-label={`${label} more`} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>More ▾</Button>:null}
       <span ref={probe} className="surface-tabs-measure" aria-hidden="true" inert>{tabs.map(tab=><Button key={tab.id} variant="chrome" tabIndex={-1}>{tab.label}</Button>)}<Button variant="chrome" tabIndex={-1}>More ▾</Button></span>
       {rect?<WorkMenu label={`${label} more`} x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus onClose={()=>setOpen(false)} returnFocus={()=>ref.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus()}
         entries={folded.map(tab=>({type:"item",id:tab.id,label:tab.label,onSelect:()=>onChange(tab.id)}))}/>:null}

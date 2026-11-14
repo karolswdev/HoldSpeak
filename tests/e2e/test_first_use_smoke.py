@@ -396,7 +396,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             library.get_by_role("button", name="Add an engine", exact=True).click()
             # Betterment E4: Add an engine uses the kind pop-up; the LAN
             # fixture is "A server on my network", which asks for its address.
-            choose_toolbar(library, "Kind of engine", "lan")
+            kind=library.get_by_role("combobox",name="Kind of engine",exact=True)
+            if kind.count():
+                choose_toolbar(library,"Kind of engine","lan")
+            else:
+                library.locator('[role="tab"][data-tab="lan"]').click()
             address = page.locator("[data-testid='concierge-add-engine-row'] input").first
             endpoint = fixture_endpoint
             address.fill(endpoint)

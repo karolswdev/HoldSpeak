@@ -1,0 +1,22 @@
+/* Parked: Add destination belongs to the shared completion verb row and overflow. */
+[data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: nowrap; }
+[data-send="face"] [data-testid="send-add-destination"] { flex: none; }
+[data-send="prepared"] > [data-question] .surface-completion-leading { grid-column: 1 / -1; }
+  [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: wrap; }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) .gadget-cycle { flex: 1 0 170px; }
+  [data-send="face"] .surface-completion-leading { grid-column: 1 / -1; }
+  [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-label { align-self: start; padding-top: 0; }
+  [data-send="face"] .surface-completion-leading { grid-column: 1 / -1; width: 100%; }
+  .desk-next [data-send="face"] .surface-inspector-rows > .gadget-row:has([data-testid="send-add-destination"]) { grid-template-columns: minmax(0, 1fr); }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: wrap; }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) .surface-inspector-control > .gadget-cycle { flex: 1 0 100%; }
+
+/* The common verb row also owns completion layout and overflow. */
+[data-send="face"] .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
+[data-send="face"] .surface-completion-leading { flex-wrap: nowrap; margin-inline-end: 0; }
+[data-send="prepared"] > [data-question] > .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
+[data-send="prepared"] > [data-question] .surface-inspector-actions > button:first-of-type { grid-column: 2; }
+[data-send="prepared"] > [data-question] .surface-inspector-actions > button:last-of-type { grid-column: 3; }
+  [data-send="face"] .surface-inspector-actions { row-gap: 8px; }
+  [data-send="face"] .surface-inspector-actions > button { justify-self: end; }
+[data-send="face"] .surface-completion-leading { flex-wrap: wrap; }
