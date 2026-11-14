@@ -304,9 +304,6 @@ describe("Steward and review seats", () => {
     press("Edit and accept");
     expect(screen.getByRole("combobox", {name:"State"})).toHaveValue("open");
     expect(screen.queryByRole("button", {name:"Speak State"})).toBeNull();
-    const text = screen.getByRole("textbox", {name:"Text"});
-    expect(text.tagName).toBe("TEXTAREA");
-    expect(text).toHaveAttribute("rows", "4");
   });
   it("edits human fields with the same labels as the facts and preserves the wire patch", async () => {
     routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;

@@ -24,10 +24,8 @@ text and new values. It composes the stored sentence in its original section.
 It refuses changed claims and retains the other sections. Only the owner can
 use this edit form; an agent's existing separate-draft path stays the same.
 `room_claim_editor.compose` and `parse` own the stored item sentence. The
-deterministic item sections and the claim editor use the same codec. Review
-Text uses a four-row pad with its own scroll well. The kit's bottom padding
-still exposes part of the next line. Undo dismissal, Finish
-review and Close review are in Actions.
+deterministic item sections and the claim editor use the same codec. Undo
+dismissal, Finish review and Close review are in Actions.
 
 Each unsaved claim uses the Desk's existing draft store. Selection and Cancel
 retain it. Save clears only the values the hub acknowledged. Edit full text
