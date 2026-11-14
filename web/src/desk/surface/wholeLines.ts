@@ -26,8 +26,8 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         // Reserve the full seat while its field box ends at a whole row.
         // Clearing the previous fit above lets a changed form grow again.
         const height = Math.max(0, cut - box.top);
-        el.style.maxHeight = `${Math.floor(height)}px`;
-        el.style.marginBottom = `${Math.ceil(box.height - height)}px`;
+        el.style.maxHeight = `${height}px`;
+        el.style.marginBottom = `${box.height - height}px`;
         el.scrollTop = savedScroll;
         box = el.getBoundingClientRect();
         rectangles.splice(0, rectangles.length, ...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
@@ -35,7 +35,7 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         cut = Math.min(box.bottom, ...partial.map(rect => rect.top));
       }
       const start = rows ? Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom)) : box.top;
-      el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${Math.ceil(start - box.top)}px`} 0 ${Math.ceil(box.bottom - cut)}px 0)` : "";
+      el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${rows ? start - box.top : Math.ceil(start - box.top)}px`} 0 ${rows ? box.bottom - cut : Math.ceil(box.bottom - cut)}px 0)` : "";
     };
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;
     observer?.observe(el);

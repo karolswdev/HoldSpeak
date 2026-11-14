@@ -2323,7 +2323,8 @@ Ask composes `ListPane.listShare` for Sources beside its answer at wide sizes.
 Compact Sources reserve up to four rows above the answer. An absent list
 removes its seat while its reader stays mounted. `ObjectReader.wholeLines`
 uses the shared line fitter; `ObjectList.wholeRows` uses its row fitter, retaining
-all scrollable content. A long `InspectorQuestion bounded` keeps its heading,
+all scrollable content. Row edges retain fractional pixels without rounding into
+the adjacent row. A long `InspectorQuestion bounded` keeps its heading,
 notice and answer row in view while its facts scroll on whole rows. Mast facts
 retain a fitted first part when that part alone is longer than the state seat.
 

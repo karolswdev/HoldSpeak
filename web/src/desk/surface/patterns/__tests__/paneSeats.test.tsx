@@ -68,18 +68,18 @@ it("keeps sentences outside the short-label species in each label seat", () => {
   expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });
 
-it("paints only complete form rows while keeping the full field scroll range", async () => {
+it.each([40, 40.75])("paints complete %s-pixel form rows while keeping the full field scroll range", async (rowHeight) => {
   const { InspectorForm } = await import("../../index");
   vi.spyOn(HTMLElement.prototype,"clientHeight","get").mockReturnValue(115);
   vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockImplementation(function(this:HTMLElement) {
     if (this.classList.contains("surface-inspector-fields")) return new DOMRect(0,0,240,75);
-    if (this.classList.contains("gadget-row")) return new DOMRect(0,this.textContent?.includes("Second")?40:0,240,40);
+    if (this.classList.contains("gadget-row")) return new DOMRect(0,this.textContent?.includes("Second")?rowHeight:0,240,rowHeight);
     if (this.classList.contains("surface-inspector-actions")) return new DOMRect(0,75,240,40);
     return new DOMRect(0,0,240,120);
   });
   const {container}=render(<InspectorForm wholeRows rows={[{label:"First",control:"First value"},{label:"Second",control:"Second value"}]} completion={{cancel:()=>{},primary:{label:"Save",run:()=>{}}}} />);
   const fields=container.querySelector<HTMLElement>(".surface-inspector-fields")!;
-  expect(fields.style.maxHeight).toBe("40px");
+  expect(parseFloat(fields.style.maxHeight)).toBe(rowHeight);
   expect(fields.style.clipPath).not.toBe("");
   const bottom=75-parseFloat(fields.style.clipPath.split(" ")[2]);
   for (const row of fields.querySelectorAll(".gadget-row")) {
