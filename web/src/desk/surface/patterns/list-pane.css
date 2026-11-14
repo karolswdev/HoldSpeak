@@ -90,3 +90,6 @@
 .surface-list-pane[data-layout="stack"]:has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: none; min-height: 0; overflow: hidden; }
 .surface-list-pane[data-layout="stack"]:not(:has(> .surface-list-pane-list)),
 .surface-list-pane[data-layout="stack"]:has(> .surface-list-pane-list > .surface-disclosure:not([data-open])) { grid-template-rows: minmax(0, 1fr) auto; }
+
+/* A reading and its following selection list share one inset. */
+.surface-list-pane[data-layout="stack"]:has(> .surface-list-pane-preview > .surface-object-reader) > .surface-list-pane-list { padding-inline: var(--space-3); box-sizing: border-box; }

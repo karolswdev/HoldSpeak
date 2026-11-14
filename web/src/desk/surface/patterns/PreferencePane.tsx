@@ -124,7 +124,9 @@ function inspectorRows(children: ReactNode, prefix = ""): ReactNode[] {
     return [cloneElement(child, { key: `${prefix}${child.key}` }, <div className="surface-inspector-control">{child.props.children}</div>)];
   });
 }
-export function InspectorForm({ rows = [], children, completion, notice, testId, pendingChoice, facts, fit, wholeRows = false }: {
+export function InspectorForm({ rows = [], children, completion, notice, testId, pendingChoice, facts, fit, wholeRows = false, wholeLines = false }: {
+  /** Read-only multiline fields keep complete text lines at both edges. */
+  wholeLines?: boolean;
   /** A bounded row editor ends its field well at a complete row. */
   wholeRows?: boolean;
   /** Short standalone forms keep completion directly after their rows. */
@@ -141,7 +143,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const fieldsRef = useRef<HTMLDivElement>(null);
-  useWholeLines(fieldsRef, wholeRows, ":scope > .surface-inspector-rows > .gadget-row");
+  useWholeLines(fieldsRef, wholeRows || wholeLines, wholeRows ? ":scope > .surface-inspector-rows > .gadget-row" : undefined);
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
   const layout = [...rows.map(row => row.key ?? row.label), ...(facts?.rows.map(row => row.key ?? row.label) ?? [])].join("\0");

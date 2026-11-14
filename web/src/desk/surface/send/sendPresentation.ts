@@ -1,4 +1,4 @@
-import type { Destination, Preview } from "../../../features/channels/channels";
+import { failedWord, type Destination, type Preview } from "../../../features/channels/channels";
 
 /** A read-only face must not turn a credential pasted into a document or a
  * destination name into visible text, a title, or a link attribute. */
@@ -68,3 +68,12 @@ export const sendPreviewBlocked = (preview: Preview): boolean =>
 export const CREDENTIAL_WORD = "This text holds a credential. Edit it before you send.";
 
 export const EDIT_FAILED_WORD = "Could not make a note to edit · The preview stays here · Press Edit again";
+
+/** Recorded known non-deliveries; unrecorded reasons keep an honest next act. */
+export function failedSendSentence(reason: string): string {
+  switch (reason) {
+    case "permission_denied": return "Nothing was sent because access was refused; check permissions and try again.";
+    case "github_target_not_found": return "Nothing was sent because the issue was not found; check the destination and try again.";
+    default: return `Nothing was sent${reason ? ` (${safeSendText(failedWord(reason))})` : ""}; check the destination and try again.`;
+  }
+}

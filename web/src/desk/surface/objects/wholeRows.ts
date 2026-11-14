@@ -25,18 +25,33 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
     const read = () => {
       if (!active || moving || !list.isConnected || !well.isConnected) return;
       const box = list.getBoundingClientRect(), bounds = well.getBoundingClientRect();
+      if (!box.width || !bounds.width) return;
       const style = getComputedStyle(list), ws = getComputedStyle(well);
       const number = (value: string) => parseFloat(value) || 0;
       const border = number(ws.borderTopWidth) + number(ws.borderBottomWidth);
-      let end = box.bottom - number(style.paddingBottom) - number(style.borderBottomWidth);
-      // A dense list can keep a footer after its well. Prefix chrome is
-      // already included in the well's actual top: never subtract it twice.
+      const ownEnd = box.bottom - number(style.paddingBottom) - number(style.borderBottomWidth);
+      // Prefix chrome is already in the well's actual top. Reserve suffix
+      // chrome once, inside whichever box supplies the visible seat.
       const after = [...list.children].slice([...list.children].indexOf(well) + 1);
+      let suffix = 0;
       for (const child of after) {
         const cs = getComputedStyle(child);
-        if (cs.display !== "none" && !["absolute", "fixed"].includes(cs.position)) end -= child.getBoundingClientRect().height + number(cs.marginTop) + number(cs.marginBottom) + number(style.rowGap);
+        if (cs.display !== "none" && !["absolute", "fixed"].includes(cs.position)) suffix += child.getBoundingClientRect().height + number(cs.marginTop) + number(cs.marginBottom) + number(style.rowGap);
       }
-      const available = end - bounds.top - border;
+      const assigned = ownEnd - suffix - bounds.top - border;
+      let clipEnd = Infinity;
+      for (let parent = well.parentElement; parent; parent = parent.parentElement) {
+        if (["hidden", "clip", "auto", "scroll"].includes(getComputedStyle(parent).overflowY)) {
+          const rect = parent.getBoundingClientRect();
+          clipEnd = Math.min(clipEnd, rect.top + parent.clientTop + parent.clientHeight);
+        }
+        if (parent.matches('[data-layer="window"]')) break;
+      }
+      // Content can overflow zero-height flex wrappers. Their enclosing
+      // bounded pane still supplies a real seat; an unbounded recap does not.
+      const end = assigned > 0 ? Math.min(ownEnd, clipEnd)
+        : Number.isFinite(clipEnd) ? clipEnd : ownEnd;
+      const available = end - suffix - bounds.top - border;
       const budget = Math.max(0, available);
       const scroll = well.scrollTop, top = bounds.top + number(ws.borderTopWidth);
       const headings = new Map<Element, number>();
@@ -59,7 +74,7 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
       const target = follow && rows.find(row => row.node === follow);
       const picked = rows.find(row => row.node.getAttribute("aria-selected") === "true");
       const rowFloor = Math.max(rows[0]?.end ?? 0, target ? target.end - target.start + target.heading : 0, picked ? picked.end - picked.start + picked.heading : 0);
-      const floor = `${rows.length ? Math.max(0, box.height - available + rowFloor - boxInsets) : 0}px`;
+      const floor = `${rows.length ? Math.max(0, box.height - assigned + rowFloor - boxInsets) : 0}px`;
       const changeFloor = intrinsic && list.style.getPropertyValue("--object-list-row-floor") !== floor;
       let anchor = scroll, height = 0;
       if (rows.length && budget) {
@@ -110,6 +125,19 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resized);
     observer?.observe(list);
     for (const child of list.children) if (child !== well) observer?.observe(child);
+    const containers: HTMLElement[] = [];
+    for (let parent = list.parentElement; parent; parent = parent.parentElement) {
+      containers.push(parent);
+      if (parent.matches('[data-layer="window"]')) break;
+    }
+    const observeContainers = () => {
+      for (const parent of containers) {
+        observer?.observe(parent, { box: "border-box" });
+        // A notice can move the list without resizing its assigned box.
+        for (const child of parent.children) if (child !== well) observer?.observe(child, { box: "border-box" });
+      }
+    };
+    observeContainers();
     const mutations = new MutationObserver(changes => {
       // Width probes are inserted and removed in the same task. Their detached
       // clones do not change row geometry and must not sustain a frame loop.
@@ -118,17 +146,20 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
         if (change.type !== "childList") return true;
         const moved = [...change.addedNodes, ...change.removedNodes];
         if (moved.length && moved.every(node => node instanceof Element && node.hasAttribute("data-width-probe"))) return false;
+        if (!list.contains(change.target)) return true;
         if (change.target instanceof Element && change.target.closest(".object-list-row")) return true;
         return [...change.addedNodes, ...change.removedNodes].some(node => node instanceof Element && (
           node.matches(".object-list-row,.object-list-group,.object-list-head,.object-list-inner-toolbar") || node.querySelector(".object-list-row")
         ));
       });
       if (!relevant.length) return;
+      if (relevant.some(change => !list.contains(change.target))) { observeContainers(); resized(); }
       const selected = relevant.find(change => change.attributeName === "aria-selected" && (change.target as Element).getAttribute("aria-selected") === "true");
       if (selected) { followResize = true; follow = selected.target as HTMLElement; }
       schedule();
     });
     mutations.observe(list, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["aria-selected", "data-detail"] });
+    for (const parent of containers) mutations.observe(parent, { childList: true });
     well.addEventListener("scroll", scrolled, { passive: true });
     const offScrollEnd = onScrollEnd(well, ended);
     well.addEventListener("wheel", gesture, { passive: true });

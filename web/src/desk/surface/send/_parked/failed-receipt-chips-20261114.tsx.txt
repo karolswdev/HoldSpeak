@@ -1,0 +1,8 @@
+// Parked: one recovery sentence replaces the separate failed/reason/nothing-sent chips.
+        <StateChip state="failure" label="FAILED" />
+        <Token className="surface-token" data-chip>
+          {failedWord(s.reason ?? "")}
+        </Token>
+        <Token className="surface-token" data-chip>
+          {SEND_WORDS.nothingSent}
+        </Token>

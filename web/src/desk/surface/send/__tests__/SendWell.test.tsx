@@ -595,15 +595,12 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(within(failed).getByTestId("preview-retry").textContent).toBe("Retry");
   });
 
-  it("FAILED: the latest send's failure word and NOTHING SENT; no SENDS head for a failure", async () => {
+  it("a failed send names non-delivery, cause and next act in one sentence without history", async () => {
     routes["GET /api/channels/sends"] = () => ({ sends: [send({ state: "failed", reason: "permission_denied", proof: null })] });
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     const failed = await screen.findByTestId("send-failed");
-    expect(failed.textContent).toContain("Failed");
-    expect(failed.textContent).toContain("No permission");
-    expect(failed.textContent).toContain("Nothing sent");
-    expect(screen.getByTestId("send-failed").textContent).toContain("Failed");
+    expect(failed.textContent).toBe("Nothing was sent because access was refused; check permissions and try again.");
     expect(screen.queryByTestId("send-history")).toBeNull();
   });
 
@@ -764,7 +761,7 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
   };
   const rowOf = (_name: string) => screen.getByTestId("send-well");
 
-  it("FAILED, then the row is closed: the failure word, NOTHING SENT and the egress stay on the row", async () => {
+  it("a failed receipt keeps its recovery sentence after its destination is closed", async () => {
     let stored: Send[] = [];
     routes["GET /api/channels/sends"] = () => ({ sends: stored });
     routes["POST /api/channels/send"] = () => {
@@ -774,13 +771,11 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
     await pressSend();
-    expect((await screen.findByTestId("send-failed")).textContent).toContain("No permission");
+    expect((await screen.findByTestId("send-failed")).textContent).toContain("Nothing was sent because access was refused; check permissions and try again.");
     await clearDestination();
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Team folder");
-    expect(row.textContent).toContain("Failed");
-    expect(row.textContent).toContain("No permission");
-    expect(row.textContent).toContain("Nothing sent");
+    expect(row.textContent).toContain("Nothing was sent because access was refused; check permissions and try again.");
     expect(row.textContent).not.toContain("This device");
   });
 
