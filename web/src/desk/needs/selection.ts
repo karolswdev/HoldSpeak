@@ -48,7 +48,7 @@ export function needName(need: SelectedNeed): string {
   if (face.verbs.kind === "program") {
     const brief = need.item?.brief_words as {item_brief?: string} | undefined;
     const question = String(brief?.item_brief || need.item?.title || face.factTitle || face.name);
-    return question.replace(/\s*\([^)]*\/[^)]*\)/g, "").replace(/(?:[\w.-]+\/)+[\w.-]+\.\w+/g, "a file");
+    return question;
   }
   if (face.verbs.kind === "answer") return String(need.item?.question || face.fact || face.name);
   if (face.verbs.kind === "gate" || face.verbs.kind === "gate-cut") return "Allow a command?";

@@ -454,12 +454,13 @@
     display: flex;
   }
   /* One or two actual columns stay columns on the phone. The four-column
-     default retains its existing visual fold and accessible hidden cells. */
-  .object-list[data-compact-columns="true"] .object-list-head,
-  .object-list[data-compact-columns="true"] .object-list-row {
+     default retains its existing visual fold and accessible hidden cells.
+     Selection lists use their measured column tracks, including on the phone. */
+  .object-list[data-compact-columns="true"]:where(:not(.object-list--selection)) .object-list-head,
+  .object-list[data-compact-columns="true"]:where(:not(.object-list--selection)) .object-list-row {
     grid-template-columns: var(--object-list-phone-columns);
   }
-  .object-list[data-compact-columns="true"] .object-list-cell {
+  .object-list[data-compact-columns="true"]:where(:not(.object-list--selection)) .object-list-cell {
     position: static;
     width: auto;
     height: auto;
@@ -469,7 +470,7 @@
     clip-path: none;
     white-space: nowrap;
   }
-  .object-list[data-compact-columns="true"] .object-list-fold { display: none; }
+  .object-list[data-compact-columns="true"]:where(:not(.object-list--selection)) .object-list-fold { display: none; }
 }
 
 /* DELIGHT (2026-10-27, canvas canvases/delight-2026-10-27.html) — THE KIND

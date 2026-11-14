@@ -144,6 +144,7 @@ describe("Decisions: the rail", () => {
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes(detail.decision_text))!;
     expect(screen.queryByTestId("decision-reader")).toBeNull();
     expect(screen.queryByTestId("decisions-preview")).toBeNull();
+    expect(screen.getByTestId("decisions-status")).toHaveTextContent("4 decisions");
     fireEvent.click(row);
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByTestId("decision-summary")).toHaveTextContent(detail.rationale);
@@ -151,7 +152,7 @@ describe("Decisions: the rail", () => {
     expect(container.querySelector("[role=row] button")).toBeNull();
     expect(container.querySelector(".decisions-plate, .surface-spine")).toBeNull();
     expect(screen.getByTestId("decisions-preview").querySelector("button")).toBeNull();
-    expect(rail().getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Decision", "Project", "Decided", "State"]);
+    expect(rail().getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Decision", "Decided", "State"]);
     fireEvent.keyDown(row, { key: "Enter" });
     expect((await screen.findByTestId("decision-words")).textContent).toContain(detail.decision_text);
     expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${detail.id}`);

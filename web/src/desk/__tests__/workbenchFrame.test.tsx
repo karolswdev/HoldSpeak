@@ -276,3 +276,12 @@ describe("strips of choices: nothing clips, nothing scrolls sideways (§3a)", ()
     }
   });
 });
+
+it("keeps the compact chevron when a pane supplies Back", () => {
+  setCompact(true);
+  const back=vi.fn();
+  render(<MemoryRouter><DeskWindowFrame id="compact-step" title="Programs" open onClose={()=>{}} onBack={back} backLabel="Back"><div>Step</div></DeskWindowFrame></MemoryRouter>);
+  const button=screen.getByRole("button",{name:"Back"});
+  expect(button).toHaveTextContent("‹ Back");
+  fireEvent.click(button);expect(back).toHaveBeenCalledOnce();
+});

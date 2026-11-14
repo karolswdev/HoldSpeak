@@ -117,7 +117,8 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
                 _settle(page)
 
             shot("list")
-            expect(window.get_by_test_id("recordings-document")).to_have_count(0)
+            expect(window.get_by_role("region", name="Recordings facts", exact=True)).to_have_count(0)
+            expect(window.get_by_test_id("recordings-status")).to_contain_text("recordings")
             row = select(ready["id"])
             shot("ready")
             tabs = window.get_by_role("tablist", name="Recording details", exact=True)

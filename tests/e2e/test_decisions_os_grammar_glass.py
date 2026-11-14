@@ -100,10 +100,12 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                     }"""), state
                     page.screenshot(path=str(shots / f"decisions-{state}-{suffix}-after.png"))
 
-                expect(window.get_by_test_id("decisions-preview")).to_have_count(0)
+                expect(window.get_by_role("region", name="Decisions facts", exact=True)).to_have_count(0)
+                expect(window.get_by_test_id("decisions-status")).to_contain_text("decisions")
                 assert window.locator('[role="row"] button, .decisions-plate, .surface-spine').count() == 0
                 assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
                 shot("list")
+                expect(rows.filter(has_text="Review the storage choice")).to_be_in_viewport(ratio=1)
                 for title, state in (("Adopt OpenTelemetry", "proposed"), ("Use the shared runners", "decided"),
                     ("Move the release to Friday", "committed"), ("Keep the nightly export", "retired"),
                     ("Review the storage choice", "disputed"), ("Keep the old worker", "superseded")):
@@ -203,6 +205,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                 expect(folded_scope).to_have_attribute("aria-checked", "false")
                 folded_scope.click()
                 scope_row.evaluate("el => el.removeAttribute('style')")
+                _settle(page)
                 check=window.get_by_role("checkbox",name="Current only",exact=True)
                 if check.count():expect(check).to_be_checked()
                 else:

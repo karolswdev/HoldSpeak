@@ -44,16 +44,7 @@ export function draftWords(engine: { state: string; model: string }): string {
   return `${engine.state === "set" && engine.model ? engine.model : "HoldSpeak"} drafts from the sources · you send`;
 }
 export function updateName(row: ProjectUpdate): string {
-  return (
-    row.title?.trim() ||
-    [
-      wireDayClock(row.publishedAt || row.updatedAt || row.createdAt),
-      row.audience,
-    ]
-      .filter(Boolean)
-      .join(" · ") ||
-    "Project update"
-  );
+  return [wireDayClock(row.publishedAt || row.updatedAt || row.createdAt), row.audience || row.deliveries.map(delivery => delivery.deliveredTo).filter(Boolean).join(", ") || "Audience not named"].filter(Boolean).join(" · ") || "Project update";
 }
 export function UpdatePosture({
   ctrl,
@@ -142,15 +133,6 @@ export function UpdatePosture({
             id: row.id,
             name: updateName(row),
             kind: "artifact",
-            when: row.title ? wireDayClock(row.publishedAt) : "",
-            cells: {
-              to:
-                row.audience ||
-                row.deliveries
-                  .map((delivery) => delivery.deliveredTo)
-                  .filter(Boolean)
-                  .join(" · "),
-            },
             facts: [
               { label: "State", value: lifecycleLabel(row.lifecycle) },
               {
@@ -422,9 +404,7 @@ export function UpdatePosture({
         seat === "claims" || seat === "sources"
           ? undefined
           : [
-              { key: "when", word: "Sent", priority: 8 },
               { key: "name", word: "Update", priority: 10, minWidth: 220 },
-              { key: "to", word: "To", priority: 4 },
             ]
       }
       selectedId={

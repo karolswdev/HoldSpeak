@@ -348,6 +348,7 @@ function ProgramDeck({ preset }: { preset: LivePreset }) {
             selected={selected}
             onSelect={setSelected}
             label="Program steps"
+            showNames={false}
           />
         ) : null}
         <LivePane

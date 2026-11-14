@@ -94,7 +94,7 @@ export function AutomationsCore(_props: CoreProps) {
     id:detail.id,kind:"automation",name:detail.name || "Automation",nameTestId:"automation-home-name",
     cells:{runs:runsWhen(detail),last:lastRun(detail),next:nextWords(detail.next_run_at)?.replace(/^Next: /,"") ?? ""},
   });
-  const fresh = automations.reduce((n,row) => n + endedRuns(row).filter((result) => result.new).length,0);
+  const fresh = app.visible.filter(row => endedRuns(row).some(result => result.new)).length;
   const attention = automations.filter((row) => endedRuns(row)[0]?.status === "failed" || row.when_needs_reset || row.sources_shown?.some((source) => source.missing) || row.program?.latest?.state === "waiting" || row.results?.some((result) => result.program?.state === "waiting")).length;
   const toggleStarts = (detail: AutomationDetail, enabled: boolean) => void act(detail.id,"save",async () => {
     if (detail.schedule) await updateWorkbenchField(detail.id,{schedule_enabled:enabled});
@@ -112,19 +112,19 @@ export function AutomationsCore(_props: CoreProps) {
           cancel={() => { setDeleting(null); setError(""); }} verb={{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); app.drop(id); setReceipt(`Automation deleted · ${deleting.name}`); })}} />
       : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} initialTab={editTab} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
       : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts data-feedback-redact="true" name={selected.name} testId="automation-summary" notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : selected.sources_shown?.some(source=>source.missing) ? <ActionNotice role="alert" tone="danger" action={{label:"Edit sources",disabled:setupPending||Boolean(pending[`delete:${selected.id}`]),onClick:()=>{view.current+=1;setEditTab("about");setEditing(true);setMaking(false);setDeleting(null);}}}>Source missing</ActionNotice> : undefined} rows={[
-        {label:"Name",value:selected.name}, {label:"Runs",value:runsWhen(selected)},
+        {label:"Runs",value:runsWhen(selected)},
         {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || ""},
         ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",value:selected.instruction}] : []),
         {label:"About",value:eventSubjectWords(selected) || selected.sources_shown?.filter(source=>!source.missing).map(source=>source.label).join(", ") || ""},
         {label:"With",value:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",value:<PutValue target={selected.output_target} />}]),
         {label:"Last run",value:lastRun(selected,false)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
-      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
+      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"Starts",control:<CheckGadget variant="state" label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
     </> : null}
     status={[
       app.loading && !app.page ? {key:"loading",lamp:"info",text:"Loading automations…"} : null,
-      automations.length ? {key:"count",text:countWords(automations.length,"automation"),testId:"automation-home-count"} : null,
-      fresh ? {key:"new",lamp:"info",text:`${fresh} new`} : null,
+      automations.length ? {key:"count",text:countWords(app.visible.length,"automation"),testId:"automation-home-count"} : null,
+      fresh ? {key:"new",lamp:"info",text:`${fresh} with new results`} : null,
       attention ? {key:"attention",lamp:"ask",text:`${attention} ${attention === 1 ? "needs" : "need"} you`} : null,
       receipt ? {key:"receipt",text:receipt} : null,
       error && !selected ? {key:"failure",lamp:"fail",text:error} : null,

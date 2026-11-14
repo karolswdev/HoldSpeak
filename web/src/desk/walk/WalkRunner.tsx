@@ -319,7 +319,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
       }
       const folded = targetName?.match(/^\[data-testid="([^"]+)"\] button\[aria-label="([^"]+)"\]$/);
       if (!target && folded) {
-        const disclosure = owner.querySelector<HTMLElement>(`[data-testid="${folded[1]}"] .object-list-toolbar-strip > button[aria-haspopup="menu"]`);
+        const disclosure = owner.querySelector<HTMLElement>(`[data-testid="${folded[1]}"] [data-list-overflow]`);
         if (disclosure && isDrawn(disclosure) && canGuidePress(disclosure)) {
           if (disclosure.getAttribute("aria-expanded") !== "true") disclosure.click();
           guideMenu.current = disclosure;
