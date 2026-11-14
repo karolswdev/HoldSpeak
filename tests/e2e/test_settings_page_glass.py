@@ -14,7 +14,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="Settings page glass needs Playwright")
 
@@ -291,7 +291,7 @@ def test_engines_pane_chain_editor_library_and_old_link(
             _settle(page)
             page.screenshot(path=str(shots / f"library-{width}.png"))
             library.get_by_role("button", name="Add an engine", exact=True).click()
-            library.get_by_test_id("runson-kind-lan").click()
+            choose_toolbar(library, "Kind of engine", "lan")
             expect(library.get_by_role("textbox", name="Server address", exact=True)).to_be_visible()
             assert errors == [], errors
             browser.close()

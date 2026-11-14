@@ -68,8 +68,10 @@ export function PrefWindow({
   const compact = useCompactViewport();
   const hosted = useHasWindowBack();
   const viaFrame = frameBack && hosted && compact;
+  const back = useRef(onBack);
+  back.current = onBack;
   useWindowBack(
-    frameBack && paneOpen && holdFrameBack ? { onBack, testId: "settings-back" } : null,
+    frameBack && paneOpen && holdFrameBack ? { onBack: () => back.current(), testId: "settings-back" } : null,
     [frameBack, paneOpen, holdFrameBack],
   );
   const current = items.find((item) => item.id === selected);

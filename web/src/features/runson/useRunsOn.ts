@@ -238,6 +238,7 @@ function isConflict(err: unknown): boolean {
 }
 
 export function useRunsOn(scope?: string) {
+  const [lastRead, setLastRead] = useState<Date | null>(null);
   const [roster, setRoster] = useState<Roster | null>(null);
   const [detection, setDetection] = useState<Detection | null>(null);
   const [error, setError] = useState("");
@@ -281,7 +282,7 @@ export function useRunsOn(scope?: string) {
   const loadRoster = useCallback(async () => {
     try {
       const next = await readRoster();
-      if (mounted.current) setRoster(next);
+      if (mounted.current) { setRoster(next); setLastRead(new Date()); setError(""); }
       return next;
     } catch (err) {
       if (mounted.current) setError(err instanceof Error ? err.message : "Could not read the engines.");
@@ -1122,9 +1123,10 @@ export function useRunsOn(scope?: string) {
 
   return {
     roster,
+    lastRead,
     detection,
     detectionFailed,
-    readAgain: () => void loadDetection(true),
+    readAgain: () => { void loadRoster(); void loadDetection(true); },
     error,
     engines,
     selected,

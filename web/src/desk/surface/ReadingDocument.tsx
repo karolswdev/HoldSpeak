@@ -6,6 +6,7 @@ import type { SyntaxNode } from "@lezer/common";
 import { Button } from "../../components/signal/Signal";
 import { refOpener } from "../openObject";
 import { ScrollHint } from "./Surface";
+import { proseDateWords } from "./format";
 import { FoldGadget } from "./gadgets";
 import "./reading-document.css";
 
@@ -57,7 +58,7 @@ function ReadingOverflow({ children, label }: { children: ReactNode; label: stri
 }
 
 type NoteDoors = Record<string, () => void>;
-type Context = { source: string; noteDoors: NoteDoors };
+type Context = { source: string; noteDoors: NoteDoors; formatDates?: boolean };
 
 /** Only real Markdown links to objects the Desk can open. Code, images and
  * HTML are words in the editable Note, never implicit navigation. */
@@ -102,7 +103,7 @@ function plainLines(text: string, key: string): ReactNode {
 
 function contents(node: SyntaxNode, context: Context): ReactNode[] {
   return readingSegments(node, context.source).map((part, i) => typeof part === "string"
-    ? <span key={`${node.from}.${i}`}>{plainLines(part, `${node.from}.${i}`)}</span>
+    ? <span key={`${node.from}.${i}`}>{plainLines(context.formatDates ? proseDateWords(part) : part, `${node.from}.${i}`)}</span>
     : renderNode(part, context));
 }
 
@@ -171,7 +172,7 @@ function renderNode(node: SyntaxNode, context: Context): ReactNode {
   }
 }
 
-export function ReadingDocument({ children, className, noteDoors = {}, "data-testid": testId }: { children: string; className?: string; noteDoors?: NoteDoors; "data-testid"?: string }) {
+export function ReadingDocument({ children, className, noteDoors = {}, formatDates = false, "data-testid": testId }: { children: string; className?: string; noteDoors?: NoteDoors; formatDates?: boolean; "data-testid"?: string }) {
   if (!children.trim()) return null;
-  return <div className={`reading-document${className ? ` ${className}` : ""}`} data-testid={testId}>{renderNode(parseReading(children), { source: children, noteDoors })}</div>;
+  return <div className={`reading-document${className ? ` ${className}` : ""}`} data-testid={testId}>{renderNode(parseReading(children), { source: children, noteDoors, formatDates })}</div>;
 }

@@ -1,4 +1,5 @@
-import { wireClock } from "../format";
+import { parseReading, readingChildren, readingContent } from "../ReadingDocument";
+import { proseDateWords, wireDayClock, wireClock } from "../format";
 /* One Send species for every stored document. The kit owns channel tabs,
  * saved-destination choices, form rows, the completion row and the question.
  * Hosts keep the same public props and the shared per-document press store.
@@ -14,7 +15,7 @@ import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useL
 import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
-  PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, type ListVerb } from "../index";
+  PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, objectSprite, type ListVerb } from "../index";
 import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
@@ -195,7 +196,7 @@ export function PreviewWell({ preview, testid }: {
     <PaneGroup label="Preview"><InspectorForm>
       {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell wholeLines><div className="send-preview-body" data-testid="send-preview-body">
-      {safe.body_kind === "markdown" ? <Material>{safe.body}</Material> : safe.body}
+      {safe.body_kind === "markdown" ? <Material formatDates>{safe.body}</Material> : proseDateWords(safe.body)}
     </div></SurfaceWell></GadgetRow></PaneGroup>
   </div>;
 }
@@ -1109,6 +1110,15 @@ function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,
   );
 }
 
+/** Name the frozen document, not the destination shared by many receipts. */
+function sentDocumentName(send: Send): string {
+  const title = send.document_json?.title || send.preview.title || send.preview.subject;
+  if (typeof title === "string" && title.trim()) return safeSendText(title);
+  const text = String(send.preview.markdown ?? send.preview.text ?? "");
+  const heading = readingChildren(parseReading(text)).find(node => /^(ATX|Setext)Heading/.test(node.name));
+  return safeSendText(heading ? readingContent(heading, text) : "Document name not reported");
+}
+
 /** The shared sheet's one receipt list: SENT, with no counter at zero. */
 export const HISTORY_HEAD = "SENT";
 
@@ -1140,17 +1150,19 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
     },
   ] : [];
   return (
-    <div data-send="history" data-species="send" data-testid="send-history" className="surface-preference-pane">
+    <div data-send="history" data-species="send" data-testid="send-history" data-feedback-redact="true" className="surface-preference-pane">
       <ListPane
         label="Send receipt"
         list={
           <ListView
+            ordered
             label="Sent"
             rows={rows.map((s) => ({
               id: s.id,
               kind: "note",
-              name: safeSendText(s.destination_name ?? "Destination"),
-              when: stateWords(stateWords(stamp(s.settled_at))),
+              name: sentDocumentName(s),
+              detail: safeSendText(s.destination_name ?? "Destination"),
+              when: wireDayClock(s.settled_at || s.dispatch_started_at),
               cells: {
                 result: (
                   <span data-testid="history-word">
@@ -1168,10 +1180,10 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               },
             }))}
             columns={[
-              { key: "name", word: "Destination" },
+              { key: "when", word: "When", priority: 1, track: "138px" },
+              { key: "name", word: "Document" },
               { key: "result", word: "Result", priority: 3 },
               ...(tag ? [{ key: "form", word: "Form", priority: 2 as const }] : []),
-              { key: "when", word: "When", priority: 1 },
             ]}
             selectedId={selected}
             onSelect={id => { setSelected(id); const send = rows.find(s => s.id === id); if(send) publishPick?.(send); }}
@@ -1180,18 +1192,19 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
             defaultVerb="check-send"
             rowProps={(row) => ({
               "data-testid": "history-row",
-              "data-to": row.name,
+              "data-to": sends.find(send => send.id === row.id)?.destination_name,
             })}
           />
         }
       >
         {current ? (
           <InspectorFacts
+            object={current.channel === "file" ? <img src={objectSprite("directory", String(current.target.folder ?? current.destination_id), "rest", 32)} width={32} height={32} alt="" draggable={false} /> : undefined}
             name={safeSendText(current.destination_name ?? "Destination")}
             rows={[
               { label: "Result", value: <LatestReceipt s={current} /> },
               { label: "When", value: stateWords(stamp(current.settled_at)) },
-              { label: "Document", value: tag?.(current)?.word ? stateWords(tag(current)!.word) : null },
+              { label: "Document", value: sentDocumentName(current) },
               { label: "Prepared", value: byWord(current) },
             ]}
           />
