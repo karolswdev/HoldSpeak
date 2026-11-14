@@ -149,6 +149,7 @@ describe("Settings ▸ Calls", () => {
     const toggle = screen.getByRole("checkbox", { name: "Calls on" });
     const switchRow = toggle.closest(".gadget-row")!;
     expect(switchRow).toHaveTextContent("On");
+    expect(within(switchRow as HTMLElement).getByRole("status",{name:"On"})).toBeVisible();
     fireEvent.click(toggle);
     await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"enabled":false}}'));
     await waitCallsSettings();

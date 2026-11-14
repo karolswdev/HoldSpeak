@@ -136,7 +136,7 @@ describe("Projects selection list", () => {
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     expect(within(vendor).getByTestId("projects-not-read")).toHaveTextContent("Not read");
     fireEvent.click(vendor);
-    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Not read");
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Project facts not read");
     failed = false; fireEvent.keyDown(vendor, { key: "r" }); await settle();
     expect(vendor).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("projects-next")).toBeNull();
@@ -154,7 +154,10 @@ describe("Projects selection list", () => {
     expect(within(rows()[0]).getByTestId("projects-state")).toHaveTextContent("At risk");
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     fireEvent.click(vendor);
-    expect(screen.getByTestId("projects-next")).toHaveTextContent("Not read");
+    expect(screen.queryByTestId("projects-next")).toBeNull();
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Project facts not read");
+    const state = within(screen.getByTestId("projects-pane")).getByText("State", { selector: ".gadget-row-label" });
+    expect(state.closest(".gadget-row")).toHaveTextContent("On track");
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 
@@ -182,4 +185,54 @@ describe("Projects selection list", () => {
   fireEvent.click(rows()[0]);
   expect(screen.queryByText("No date set")).toBeNull();
   expect(screen.getByTestId("projects-pane")).toHaveTextContent("Vendor review");
+ });
+
+ it("keeps the read Room facts for a selected project, without rows for unknown facts", async () => {
+  seed(); render(<ProjectsCore />); await settle();
+  fireEvent.click(rows()[0]);
+  const pane = screen.getByTestId("projects-pane");
+  for (const label of ["State", "Sources", "Last update", "Open items"])
+    expect(within(pane).getByText(label, {selector:".gadget-row-label"})).toBeVisible();
+  expect(within(pane).getByText("No sources")).toBeVisible();
+  expect(within(pane).getByText("1 open item")).toBeVisible();
+  expect(within(pane).queryByText("Next meeting", {selector:".gadget-row-label"})).toBeNull();
+  expect(pane).toHaveTextContent("Update drafted");
+  fireEvent.click(rows()[1]);
+  expect(pane).toHaveTextContent("New");
+  expect(pane).toHaveTextContent("No updates");
+  expect(pane).toHaveTextContent("No open items");
+  expect(apiFetch.mock.calls.filter(([path]) => path === `/api/projects/${WIRE.vendor}/room`)).toHaveLength(1);
+ });
+
+ it("does not use a total that includes closed or omitted items as the open-item count", async () => {
+  seed();
+  apiFetch.mockImplementation((path: string) => {
+    const raw=structuredClone(gets[path]) as Record<string,unknown>;
+    if(path===`/api/projects/${WIRE.payments}/room`) {
+      const items=raw.items as {total:number;focus:{lifecycle:string}[]};
+      items.focus[0].lifecycle="closed";
+    }
+    if(path===`/api/projects/${WIRE.vendor}/room`) (raw.items as {total:number}).total=50;
+    return Promise.resolve(raw);
+  });
+  render(<ProjectsCore />);await settle();
+  fireEvent.click(rows()[0]);
+  expect(screen.getByTestId("projects-pane")).toHaveTextContent("No open items");
+  fireEvent.click(rows()[1]);
+  expect(within(screen.getByTestId("projects-pane")).queryByText("Open items",{selector:".gadget-row-label"})).toBeNull();
+ });
+
+ it.each([["sources", "Sources", "No sources"], ["items", "Open items", "No open items"]])("omits an unavailable %s count and keeps its retry", async (field, labelWord, emptyWord) => {
+  seed();let failed=true;
+  apiFetch.mockImplementation((path: string) => {
+    const raw=structuredClone(gets[path]) as Record<string,unknown>;
+    if(path===`/api/projects/${WIRE.vendor}/room` && failed) raw[field]={state:"degraded",error_code:"project_store_unavailable"};
+    return Promise.resolve(raw);
+  });
+  render(<ProjectsCore />);await settle();fireEvent.click(rows().find(row=>row.textContent?.includes("Vendor review"))!);
+  expect(within(screen.getByTestId("projects-pane")).queryByText(labelWord,{selector:".gadget-row-label"})).toBeNull();
+  expect(screen.getByTestId("projects-pane")).toHaveTextContent("Project facts not read");
+  failed=false;fireEvent.click(screen.getByRole("button",{name:"Retry"}));await settle();
+  const label=within(screen.getByTestId("projects-pane")).getByText(labelWord,{selector:".gadget-row-label"});
+  expect(label.closest('.gadget-row')).toHaveTextContent(emptyWord);
  });

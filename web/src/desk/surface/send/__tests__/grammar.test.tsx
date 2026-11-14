@@ -3,6 +3,9 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeEach, expect, it, vi } from "vitest";
 import recorded from "./fixtures/note-held-retry-return.json";
 import prepared from "./fixtures/icloud-prepared-send.json";
+import channelPreviews from "./fixtures/channel-previews-20261113.recorded.json";
+import siteDestinations from "../../../__tests__/fixtures/send-hub/destinations-before-send.json";
+import {previewOf, type Destination} from "../../../../features/channels/channels";
 
 const api = vi.fn();
 vi.mock("../../../../lib/api", async () => ({
@@ -13,7 +16,7 @@ vi.mock("../../../../pages/cores/connections/api", async () => ({
   ...(await vi.importActual<object>("../../../../pages/cores/connections/api")),
   fetchConnections: () => Promise.resolve({ tools: [] }),
 }));
-import { PreviewWell, ProofCell, SendWell, SendWells, retryInline, resetSendStore } from "..";
+import { SendFace, PreviewWell, ProofCell, SendWell, SendWells, retryInline, resetSendStore } from "..";
 
 let destinations = recorded.destinations;
 let preview: unknown = recorded.old_preview;
@@ -55,17 +58,18 @@ it("keeps Cancel then Send in the kit completion row, with no top action bar or 
     within(actions as HTMLElement)
       .getAllByRole("button")
       .map((b) => b.textContent),
-  ).toEqual(["Edit", "Cancel", "Send"]);
+  ).toEqual(["Edit", "Add destination", "Cancel", "Send"]);
   expect(screen.queryByTestId("send-sheet-header")).toBeNull();
   expect(document.querySelector(".send-destination-chip")).toBeNull();
   expect(screen.getByRole("combobox", { name: "Destination" })).toBeInTheDocument();
   expect(within(actions as HTMLElement).getByTestId("send-destination-word")).toHaveTextContent(
     destinations.destinations[0].name,
   );
-  expect(screen.getByTestId("send-add-destination").closest(".gadget-row")).toBe(
+  expect(screen.getByTestId("send-add-destination").closest(".gadget-row")).not.toBe(
     screen.getByRole("combobox", { name: "Destination" }).closest(".gadget-row"),
   );
-  expect(screen.getByRole("heading", { name: "Preview" })).toBeVisible();
+  expect(screen.getByTestId("send-add-destination").closest("[data-verb-row]")).not.toBeNull();
+  expect(screen.getByRole("region", { name: "Preview" })).toBeVisible();
   expect(screen.queryByRole("tab", { name: "Folder" })).toBeNull();
   expect(posts).toEqual([]);
 });
@@ -491,4 +495,40 @@ it.each(["Weekly report · 2026-11-12", "*Weekly report · 2026-11-12*"])("uses 
   render(<PreviewWell preview={{fields:[],body_kind:"text",body}} testid="plain-preview" />);
   expect(screen.getByTestId("send-preview-body")).toHaveTextContent("Weekly report · Nov 12");
   expect(screen.getByTestId("send-preview-body")).not.toHaveTextContent("2026-11-12");
+});
+
+
+it("shows Slack bold through the shared reader and keeps code literal", () => {
+  const body="*Weekly report · 2026-11-12*\n\n`*keep these stars*`";
+  render(<PreviewWell preview={{fields:[],body_kind:"slack",body}} testid="slack-preview" />);
+  const preview=screen.getByTestId("send-preview-body");
+  expect(preview.querySelector("strong")).toHaveTextContent("Weekly report · Nov 12");
+  expect(preview.querySelector("strong")).not.toHaveTextContent("*");
+  expect(preview.querySelector("code")).toHaveTextContent("*keep these stars*");
+  expect(body).toContain("2026-11-12");
+});
+
+
+it.each(Object.entries(channelPreviews.channels))("names %s in words at the Send act, without a host chip", (_channel, recording) => {
+  const destination=recording.destination as unknown as Destination;
+  render(<SendFace destination={destination} preview={previewOf(destination.channel,destination.target,destination.account,recording.reply.preview)} completion={{cancel:vi.fn(),primary:{label:"Send",testId:"send-verb",run:vi.fn()}}} />);
+  const actions=screen.getByTestId("send-verb").closest<HTMLElement>(".surface-inspector-actions")!;
+  expect(actions).toHaveTextContent(destination.name);
+  expect(actions).toHaveTextContent(destination.channel === "email" ? "via Resend" : "on Slack");
+  expect(screen.queryByText("api.resend.com")).toBeNull();
+  expect(screen.queryByText("hooks.slack.com")).toBeNull();
+  if (destination.channel === "slack") {
+    const weekly=[...screen.getByTestId("send-preview-body").querySelectorAll("strong")].find(e=>e.textContent?.includes("Weekly report"));
+    expect(weekly).toHaveTextContent("Weekly report · Nov 12");
+    expect(weekly).not.toHaveTextContent("*");
+  }
+});
+
+
+it.each(siteDestinations.destinations.filter(d=>d.channel === "github" || d.channel === "jira"))("keeps $channel site in the plain Send confirmation", record => {
+  const destination=record as unknown as Destination;
+  render(<SendFace destination={destination} completion={{cancel:vi.fn(),primary:{label:"Send",testId:"send-verb",run:vi.fn()}}} />);
+  const actions=screen.getByTestId("send-verb").closest<HTMLElement>(".surface-inspector-actions")!;
+  expect(actions.querySelector(".surface-completion-state")).toHaveTextContent(`Send to ${destination.name} on ${destination.account.host || destination.account.site}`);
+  expect(actions.querySelector(".gadget-chip-egress")).toBeNull();
 });

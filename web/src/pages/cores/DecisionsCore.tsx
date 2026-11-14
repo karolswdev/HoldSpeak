@@ -292,7 +292,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     </div>
   </div>;
 
-  return <ListApp app={app} label="Decisions"
+  return <ListApp app={app} label="Decisions" listShare={.6}
     ids={{ windowTestId: "decisions-window", listTestId: "decisions-rail", paneTestId: "decisions-preview", toolbarTestId: "decisions-toolbar", statusTestId: "decisions-status", loadingTestId: "decisions-loading" }}
     words={{ find: "Find a decision", empty: current ? "No current decisions" : "No decisions yet", noMatch: "No decisions match this search", select: "Select a decision." }}
     row={row => {

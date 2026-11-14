@@ -174,7 +174,11 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         _press(page, win, "View: Caught so far")
         expect(win.get_by_test_id("live-caught")).to_be_visible()
         assert not win.get_by_role("button", name="Done", exact=True).count()
-        expect(win.get_by_role("columnheader", name="At", exact=True)).to_be_visible()
+        # The caught rows of this rig carry no time, and the list seat is under
+        # 520 px: a column that is empty in every row in view is not declared
+        # (#2319). The name column head stands.
+        expect(win.get_by_test_id("live-caught").get_by_role("columnheader")).to_have_count(1)
+        expect(win.get_by_role("columnheader", name="At", exact=True)).to_have_count(0)
         if width == 393:
             expect(win.get_by_role("button", name="Back", exact=True)).to_have_count(0)
             expect(win.get_by_test_id("live-room").get_by_test_id("live-caught")).to_be_visible()

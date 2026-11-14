@@ -45,6 +45,7 @@ import { Meter, type MeterProps } from "../live/Meter";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetLabelContext, SelectionFieldContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
+import { useWholeRows } from "./wholeRows";
 import { listSprite } from "../../sprites";
 import { stateTone, Toolbar, DotWord, VERB_OVERFLOW_WORD } from "../kit";
 import { useStripFit } from "../stripMenu";
@@ -243,7 +244,7 @@ export interface ObjectListProps {
   verbs?: readonly ListVerb[];
   /** A row menu can use a subset of the same declared verbs. */
   rowVerbs?: readonly ListVerb[];
-  /** Keep a bounded grouped list on whole row edges. */
+  /** End a bounded well on whole rows; on by default for every list. */
   wholeRows?: boolean;
   /** The object window draws the published selection entries in its toolbar. */
   externalToolbar?: boolean;
@@ -287,7 +288,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
-  rowVerbs, wholeRows = false,
+  rowVerbs, wholeRows = true,
   toolbar, externalToolbar,
   defaultVerb,
   ordered = false,
@@ -308,27 +309,7 @@ export function ObjectList({
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   useRovingRows(bodyRef, { selector: selection ? ".object-list-row" : ".object-list-open" });
-  useLayoutEffect(() => {
-    const list = listRef.current, well = bodyRef.current;
-    if (!wholeRows || !list || !well) return;
-    let frame = 0;
-    const fit = () => {
-      const chrome = [...list.children].filter(child => child !== well && getComputedStyle(child).position !== "absolute").reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
-      const available = list.clientHeight - chrome;
-      const top = well.getBoundingClientRect().top;
-      const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
-      const end = Math.max(0, ...ends.map(edge => edge + well.scrollTop));
-      well.style.flex = "none";
-      // A short well ends at its last row. Overflow keeps a partial row as its cue.
-      well.style.height = `${Math.max(0, Math.min(available, end))}px`;
-    };
-    const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
-    observer?.observe(list); well.addEventListener("scrollend", schedule);
-    fit();
-    return () => {observer?.disconnect(); well.removeEventListener("scrollend", schedule); cancelAnimationFrame(frame);};
-  }, [wholeRows, rows]);
-
+  useWholeRows(listRef, bodyRef, wholeRows);
   const [localSelected, setLocalSelected] = useState<string | null>(null);
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;
@@ -429,7 +410,8 @@ export function ObjectList({
         if (cell.querySelector("button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) controls.add(cell.dataset.col!);
         if (controls.has(cell.dataset.col!) || cell.querySelector(".kit-dotword, .object-list-dot-word")) facts.add(cell.dataset.col!);
         if (cell.dataset.col === "name" || !cell.textContent?.trim()) return;
-        if (viewport.ids.length && !viewport.ids.includes(cell.closest<HTMLElement>("[data-object-id]")!.dataset.objectId!)) return;
+        // Every row counts, in view or not: a fact column that follows the rows
+        // in view changes its width during a scroll and cuts the pills below.
         next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, intrinsic(cell));
       });
       setRequiredColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
@@ -463,8 +445,11 @@ export function ObjectList({
   const keptColumns = new Set(columns.map(column=>column.key));
   let shown = [...declaredColumns];
   const dropOrder = declaredColumns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || declaredColumns.indexOf(b) - declaredColumns.indexOf(a));
-  const fitRules = dropOrder.map((column) => {
-    const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
+  const fitRules = dropOrder.map((column, index) => {
+    // A leading time that folds under the name always folds in a compact
+    // list (520 px), also when its measured width would fit beside the name.
+    const fits = shown.reduce((sum, entry) => sum + minimum(entry), 2);
+    const threshold = index === 0 && foldIntoName && ["when", "with"].includes(column.key) ? Math.max(fits, 521) : fits;
     shown = shown.filter((entry) => entry !== column);
     const scope = `[data-list-layout="${layoutId}"]`;
     const folded = foldIntoName && ["when", "with"].includes(column.key) ? `${scope} [data-folded-col="${column.key}"] { display: inline; } ${scope} .object-list-row[data-has-when] { height: var(--object-list-two-line-height); min-height: var(--object-list-two-line-height); }` : "";
@@ -648,6 +633,7 @@ export function ObjectList({
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
       className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
       data-list-layout={selection ? layoutId : undefined}
+      data-whole-rows={wholeRows || undefined}
       data-empty={(!rows.length && !groups?.some(group => group.more && typeof group.count === "number" && group.count > 0)) || undefined}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}

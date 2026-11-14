@@ -37,7 +37,14 @@ function route(url: string, init: { method?: string } = {}) {
   return {};
 }
 function press(name: string) { fireEvent.click(screen.getAllByRole("button", { name }).at(-1)!); }
-function choose(label: string, value: string) { fireEvent.change(screen.getByRole("combobox", { name: label }), { target: { value } }); }
+function choose(label: string, value: string) {
+  const update = screen.queryByRole("button", {name:"Update view"});
+  if (label === "View" && update) {
+    fireEvent.click(update);
+    const word = value === "updates" ? "Text" : value[0].toUpperCase() + value.slice(1);
+    fireEvent.click(screen.getByRole("menuitem", {name:word}));
+  } else fireEvent.change(screen.getByRole("combobox", { name: label }), { target: { value } });
+}
 function Updates({ published = false }: { published?: boolean }) {
   const ctrl = useUpdateController(TAPE.DRAFT.update.project_id, () => {});
   useEffect(() => { ctrl.openUpdate(decodeUpdate(published ? TAPE.UPDATES_AFTER_SENDS.updates[0] : TAPE.DRAFT.update)); }, []);
@@ -77,9 +84,9 @@ describe("Update seats", () => {
     fireEvent.click(source);
     const facts = document.querySelector(".surface-inspector-facts")!;
     expect(facts).toHaveTextContent("Project plan");
-    expect(facts).toHaveTextContent("Not supplied");
+    expect(within(facts as HTMLElement).queryByText("Read time", {exact: true})).toBeNull();
   });
-  it("gives frozen project sources their kind, origin and read-time fact", async () => {
+  it("gives frozen project sources their saved kind and origin without an unknown read-time row", async () => {
     function Produced() {
       const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
       useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
@@ -90,7 +97,7 @@ describe("Update seats", () => {
     expect(source.querySelector('[data-col="kind"]')).toHaveTextContent("Risk");
     fireEvent.click(source);
     expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Project plan");
-    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Not supplied");
+    expect(within(document.querySelector(".surface-inspector-facts") as HTMLElement).queryByText("Read time", {exact: true})).toBeNull();
   });
   it("reads produced claims as words and names their sources without opaque references", async () => {
     function Produced() {
@@ -226,7 +233,18 @@ describe("Preparation seats", () => {
   });
   it("keeps sources, carried decisions, omitted records, claims and kept briefs as records", async () => {
     render(<Prepare />); await screen.findByRole("textbox", { name: "Purpose" });
-    for (const value of ["sources", "carried", "kept"]) { choose("View", value); expect(screen.getByRole("grid", { name: "Prepare" })).toBeInTheDocument(); }
+    for (const value of ["sources", "carried", "kept"]) {
+      choose("View", value);
+      const grid = screen.getByRole("grid", {name:"Prepare"});
+      expect(grid).toBeInTheDocument();
+      if (value === "sources") {
+        const jira = TAPE.PREP2_MANIFEST.manifest.sources.find(row => row.kind === "jira")!;
+        fireEvent.click(grid.querySelector(`[data-object-id="${jira.source_id}"]`)!);
+        const facts = within(document.querySelector(".surface-inspector-facts") as HTMLElement);
+        expect(facts.queryByText("Project name", {exact:true})).toBeNull();
+        expect(facts.getByText("Last read", {exact:true})).toBeVisible();
+      }
+    }
   });
 });
   it("says the run state once in its row", async () => {

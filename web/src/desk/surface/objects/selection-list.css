@@ -167,3 +167,8 @@
 @container surface (max-width: 520px) {
   .object-list.object-list--selection:has(> .object-list-head .object-list-sort) { --material-list-head-height: 46px; }
 }
+
+/* Whole-row fitting owns the border once; unused room stays on the ground. */
+.object-list[data-whole-rows] { background: transparent; }
+.object-list[data-whole-rows]:not(.object-list--selection) > .object-list-rows { background: var(--wb-paper); }
+.object-list[data-whole-rows] > .object-list-rows { box-sizing: border-box; flex: none; border-bottom: 0; }

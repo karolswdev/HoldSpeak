@@ -11,25 +11,29 @@ import pytest
 
 from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _settle, clear_hub_windows_http
 from .test_settings_page_glass import TOKEN, _open_page
-from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS
+from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS, _contrast
+from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST
 
 
-@pytest.mark.timeout(240)
+@pytest.mark.timeout(480)  # 200 s alone (2026-11-13); the whole suite shares the machine
 def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _settings_pane_shots(tmp_path, monkeypatch)
 
 
 @pytest.mark.timeout(240)
 def test_settings_repair_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts", "engines", "calls"))
+    # Accounts only: the Engines and Calls states grew past this test's 240 s
+    # (it died on the timeout and took its xdist worker with it). The two
+    # tests below walk the same Engines and Calls states.
+    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts",))
 
 
-@pytest.mark.timeout(240)
+@pytest.mark.timeout(480)  # 200 s alone (2026-11-13); the whole suite shares the machine
 def test_engine_library_long_names_and_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _settings_pane_shots(tmp_path, monkeypatch, only=("engines",))
 
 
-@pytest.mark.timeout(300)
+@pytest.mark.timeout(480)  # 200 s alone (2026-11-13); the whole suite shares the machine
 def test_send_settings_round_two_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _settings_pane_shots(tmp_path, monkeypatch, only=("engines", "calls"))
 
@@ -162,22 +166,33 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             state = f"settings-{state}"
                         _settle(page)
                         if pane == "engines" or pane == "calls" and state in {"calls-calls", "calls-passphrase"}:
-                            polish = root / ".tmp/evidence-shots/send-engines14r2"
+                            polish = root / ".tmp/evidence-shots/send-engines14r3"
                             polish.mkdir(parents=True, exist_ok=True)
                             page.screenshot(path=str(polish / f"{state}-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
                         _bounded(window)
+                        if pane == "engines":
+                            metrics = root / ".tmp/evidence-shots/send-engines-r3-metrics"
+                            metrics.mkdir(parents=True, exist_ok=True)
+                            geometry = section.get_by_role("grid").evaluate_all(r"""grids => grids.map(grid => {
+                                const well=grid.querySelector('.object-list-rows'), box=well.getBoundingClientRect();
+                                const inset=getComputedStyle(well).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(/\s+/).map(parseFloat) || [];
+                                const b={top:box.top+Math.max(well.clientTop,inset[0]||0),bottom:Math.min(box.top+well.clientTop+well.clientHeight,box.bottom-(inset[2]??inset[0]??0))};
+                                const rows=[...well.querySelectorAll('[data-object-id]')].map(row=>{const r=row.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height,shown:Math.max(0,Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top))};});
+                                return {label:grid.getAttribute('aria-label'),height:b.bottom-b.top,floor:Math.min(grid.closest('[data-testid="settings-engines-library"]')?.querySelector('.surface-inspector-facts') ? 4 : 6,rows.length)*(rows[0]?.height || 0),whole:rows.filter(r=>r.shown>=r.height-.5).length,partial:rows.filter(r=>r.shown>.5 && r.shown<r.height-.5),columns:[...grid.querySelectorAll('[role=columnheader]')].map(c=>({column:c.dataset.col,width:c.getBoundingClientRect().width}))};
+                            })""")
+                            (metrics / f"{state}-{width}-{os.environ.get('SEND_GRAMMAR_PHASE','after')}.json").write_text(json.dumps(geometry,indent=2))
                         if os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after":
-                            if state == "engines-library-engines":
-                                fit = section.get_by_role("grid", name="Model library", exact=True).evaluate("""grid => {
-                                    const well=grid.querySelector('.object-list-rows'), rows=[...well.querySelectorAll('[data-object-id]')];
-                                    return {height:well.clientHeight, floor:Math.min(4,rows.length)*(rows[0]?.getBoundingClientRect().height || 0)};
-                                }""")
-                                assert fit["height"] >= fit["floor"] - 1, fit
+                            if state in {"engines-library-engines", "engines-library-inspect"}:
+                                fit = next(grid for grid in geometry if grid["label"] == "Model library")
+                                if width == 1440:
+                                    assert fit["height"] >= fit["floor"] - 1, fit
+                                assert not fit["partial"], fit
                             if state == "engines-add-lan":
                                 expect(section.get_by_role("checkbox", name="My server", exact=True).locator("..")).to_be_in_viewport(ratio=1)
                                 expect(section.get_by_test_id("runson-kind-find-lan")).to_be_in_viewport(ratio=1)
                             if state == "engines-library-speech":
-                                expect(section.get_by_role("grid", name="Phone speech", exact=True).locator("[data-object-id]").first).to_be_in_viewport(ratio=1)
+                                for model in section.get_by_role("grid", name="Phone speech", exact=True).locator("[data-object-id]").all():
+                                    expect(model).to_be_in_viewport(ratio=1)
                             if state == "engines-library-search":
                                 expect(section.get_by_text("State", exact=True).last).to_be_in_viewport(ratio=1)
                                 expect(section.get_by_text("Off", exact=True).last).to_be_in_viewport(ratio=1)
@@ -188,8 +203,13 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 expect(check).to_be_in_viewport(ratio=1)
                                 assert check.locator("xpath=ancestor::*[contains(@class, 'surface-inspector-actions')]").count() == 1
                             if state == "engines-add":
-                                expect(section.get_by_role("combobox", name="Kind of engine", exact=True)).to_be_in_viewport(ratio=1)
-                                expect(section.get_by_role("combobox", name="Kind of engine", exact=True).get_by_role("option", name="Another HoldSpeak", exact=True)).to_have_count(1)
+                                if width == 1440:
+                                    choices=section.get_by_role("tablist",name="Kind of engine",exact=True)
+                                    for choice in choices.get_by_role("tab").all():
+                                        expect(choice).to_be_in_viewport(ratio=1)
+                                else:
+                                    expect(section.get_by_role("combobox", name="Kind of engine", exact=True)).to_be_in_viewport(ratio=1)
+                                    expect(section.get_by_role("combobox", name="Kind of engine", exact=True).get_by_role("option", name="Another HoldSpeak", exact=True)).to_have_count(1)
                             if state.startswith("engines-library-") or state == "engines-read-failed":
                                 assert not re.search(r"\b\d+ engines?\b", window.locator(".kit-statusbar").inner_text())
                             if state.startswith("engines-library-"):
@@ -363,13 +383,14 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             list_verb("Model library")
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
-                                choose_toolbar(library,'Model library category',tab.lower())
+                                if tab != "Engines":
+                                    choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',tab.lower(),word=tab)
                                 _settle(page)
                                 shot(f"engines-library-{tab.lower()}")
                                 page.screenshot(path=str(lane_shots / f"10-engines-library-{tab.lower()}-{900 if width == 1440 else 393}.png"))
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
                             if only:
-                                choose_toolbar(library,'Model library category',"engines")
+                                choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',"engines",word="Engines")
                                 # Reach the end of the recorded roster with long identities.
                                 for engine in detection["engines"]:
                                     expect(library.get_by_test_id(f"settings-engine-{engine.get('profileId') or engine['id']}")).to_have_count(1)
@@ -379,12 +400,16 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 library.get_by_role("button", name="Inspect", exact=True).click()
                                 expect(library.locator(".surface-inspector-facts")).to_contain_text(detection["engines"][-1]["name"])
                                 shot("engines-library-inspect")
-                                section.locator(".surface-pane-inspector").get_by_role("button", name="Done", exact=True).click()
+                                library.get_by_role("button", name="Done", exact=True).click()
                                 library.get_by_role("button", name="Add an engine", exact=True).click()
-                                expect(library.get_by_role("combobox", name="Kind of engine", exact=True)).to_be_in_viewport(ratio=1)
+                                if width == 393 or os.environ.get("SEND_GRAMMAR_PHASE") == "before":
+                                    expect(library.get_by_role("combobox", name="Kind of engine", exact=True)).to_be_in_viewport(ratio=1)
                                 shot("engines-add")
                                 for kind in ("agent", "service", "lan", "local", "mesh"):
-                                    choose_toolbar(library, "Kind of engine", kind)
+                                    if library.get_by_role("combobox",name="Kind of engine",exact=True).count():
+                                        choose_toolbar(library,"Kind of engine",kind)
+                                    else:
+                                        library.locator(f'[role="tab"][data-tab="{kind}"]').click()
                                     shot(f"engines-add-{kind}")
                                     if kind == "service":
                                         choose_toolbar(library, "Service", "openai")
@@ -393,7 +418,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                         library.get_by_role("button", name="Inspect", exact=True).click()
                                         expect(library.locator(".surface-inspector-facts")).to_contain_text(detection["engines"][-1]["name"])
                                         shot("engines-library-inspect-local")
-                                        section.locator(".surface-pane-inspector").get_by_role("button", name="Done", exact=True).click()
+                                        library.get_by_role("button", name="Done", exact=True).click()
                                         library.get_by_role("button", name="Add an engine", exact=True).click()
                                 section.get_by_role("region", name="Add engine", exact=True).get_by_role("button", name="Done", exact=True).click()
                             if os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after":
@@ -403,6 +428,19 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                     page.get_by_test_id("settings-back").click()
                                     expect(section.get_by_role("grid", name="Engines on this desk", exact=True)).to_be_visible()
                                     list_verb("Model library")
+                            if only:
+                                if width == 1440 and os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after":
+                                    expect(library.get_by_role("button", name="Back", exact=True)).to_be_in_viewport(ratio=1)
+                                shot("engines-library-back")
+                                if width == 393:
+                                    page.get_by_test_id("settings-back").click()
+                                elif library.get_by_role("button", name="Back", exact=True).count():
+                                    library.get_by_role("button", name="Back", exact=True).click()
+                                else:
+                                    section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
+                                expect(section.get_by_role("grid",name="Engines on this desk",exact=True)).to_be_visible()
+                                shot("engines-installed-returned")
+                                list_verb("Model library")
                             section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
                             if only:
                                 for endpoint in ("/api/concierge/detect", "/api/inference/assignments"):
@@ -651,3 +689,28 @@ SETTINGS_GROUPS_JS = r"""section => {
   }
   return failures;
 }"""
+
+
+@pytest.mark.parametrize("width", [1440,393])
+@pytest.mark.timeout(90)
+def test_engine_failure_strip_contrast(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """The failed read uses the sweep's contrast measure on the real ink strip."""
+    from playwright.sync_api import sync_playwright, expect
+    _ensure_build()
+    server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch()
+            page=browser.new_page(viewport={"width":width,"height":900 if width==1440 else 852})
+            page.route("**/api/inference/assignments",lambda route:route.abort("connectionfailed"))
+            _open_page(page,base)
+            page.get_by_test_id("settings-index-engines").click()
+            strip=page.get_by_test_id("settings-status")
+            expect(strip).to_contain_text("Engines not read")
+            colours=strip.locator(".pref-status-save").evaluate(r"""e=>{const rgb=v=>v.match(/[\d.]+/g).slice(0,3).map(Number);return {ink:rgb(getComputedStyle(e).color),ground:rgb(getComputedStyle(e.closest('.kit-statusbar')).backgroundColor)};}""")
+            assert _contrast(colours["ink"],colours["ground"])>=4.5,colours
+            measured=page.evaluate(_MEASURE,page.evaluate(_FAINT_JS))
+            assert not [c for c in measured["contrast"] if c["kind"] in GATED_CONTRAST and "Engines not read" in c["text"]]
+            browser.close()
+    finally:
+        server.stop()

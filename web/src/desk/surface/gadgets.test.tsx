@@ -69,6 +69,16 @@ describe("gadget kit", () => {
     expect(onChange).toHaveBeenLastCalledWith(false);
   });
 
+  it("state checks name their switch visibly and pair their value with the shared lamp", () => {
+    const {rerender}=render(<CheckGadget variant="state" label="Automatic starts" checked={false} onChange={()=>{}}/>);
+    const box=screen.getByRole("checkbox",{name:"Automatic starts"});
+    expect(screen.getByText("Automatic starts")).toBeVisible();
+    expect(box.closest("label")!.querySelector('.surface-lamp')).toHaveAttribute("data-state","off");
+    rerender(<CheckGadget variant="state" label="Automatic starts" checked onChange={()=>{}}/>);
+    expect(box.closest("label")!.querySelector('.surface-lamp')).toHaveAttribute("data-state","done");
+    expect(screen.getByText("On")).toBeVisible();
+  });
+
   it("disabled state checks retain their value and reject pointer and keyboard changes", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

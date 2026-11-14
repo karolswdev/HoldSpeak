@@ -10,7 +10,7 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / '.tmp/evidence-shots/programs-group14'
+OUT = ROOT / '.tmp/evidence-shots/programs-group14-r3'
 TOKEN = 'programs-group-polish'
 LONG_NAME = ('web/src/desk/programs/ProgramWindow.tsx: keep the selected step and its saved revision together '
              'while a newer answer arrives and the owner reads the next requirement before starting work')
@@ -62,7 +62,7 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
                     heads:[...el.querySelectorAll('.surface-pane-inspector-head strong')].map(e=>({text:e.textContent,width:e.clientWidth,scroll:e.scrollWidth})),
                     wells:[...el.querySelectorAll('.surface-preference-well')].map(e=>({height:e.clientHeight,scroll:e.scrollHeight})),
                     columns:[...el.querySelectorAll('[role=columnheader]')].map(e=>e.textContent)}; }''')
-                (ROOT / '.tmp/programs-group14' / f'{name}-{width}-{phase}.json').write_text(json.dumps(metrics, indent=2))
+                (OUT / f'{name}-{width}-{phase}.json').write_text(json.dumps(metrics, indent=2))
                 if metrics['body'][1] > metrics['body'][0] + 1: faults.append((name, 'body overflow', metrics))
                 if any(head['scroll'] > head['width'] + 1 for head in metrics['heads']): faults.append((name, 'heading overflow', metrics))
                 return metrics
@@ -102,6 +102,14 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
             repeats = win.locator('.surface-list-pane-preview').get_by_text(LONG_NAME, exact=True).count()
             if repeats > 1: faults.append(('programs', 'repeated step sentence', repeats))
             if not facts['wells']: faults.append(('programs', 'no scrollable reading well'))
+            if width == 393:
+                win.get_by_role('button', name='Back', exact=True).click()
+                expect(win.get_by_role('grid', name='Programs', exact=True)).to_be_visible()
+                shot(win, 'programs-list')
+                win.get_by_test_id('programs-list').locator('[data-object-id]').first.click()
+                expect(win.get_by_role('tab', name='Now', exact=True)).to_be_visible()
+            else:
+                shot(win, 'programs-list')
             win.get_by_role('button', name='New program', exact=True).click()
             expect(win.get_by_role('region', name='New program', exact=True)).to_be_visible()
             shot(win, 'programs-form')
@@ -131,6 +139,7 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
     from playwright.sync_api import sync_playwright, expect
     _ensure_build()
     OUT.mkdir(parents=True, exist_ok=True)
+    phase = os.environ.get("POLISH_PHASE", "after")
     decisions = json.loads((ROOT / 'web/src/test/wire/decisions.honest-faces.wire.json').read_text())['wire']
     template = decisions['decisions'][0]
     decisions['decisions'] = [{**template, 'id': f'long-decision-{i}', 'record_id': None, 'text': LONG_NAME} for i in range(50)]
@@ -167,13 +176,14 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
                 page.reload(wait_until='load')
                 _normal_chair(page)
                 win = page.locator(f'[id="{window_id}"]')
+                win.locator(".object-list-row[data-object-id]").first.wait_for(state="attached")
                 expect(win.get_by_test_id(count_id)).to_have_count(50)
                 for state in ['list', 'selected']:
                     if state == 'selected': win.get_by_test_id(count_id).first.click()
                     _settle(page)
-                    page.screenshot(path=str(OUT / f'{app}-long-{state}-{900 if width == 1440 else 393}-after.png'))
+                    page.screenshot(path=str(OUT / f'{app}-long-{state}-{900 if width == 1440 else 393}-{phase}.png'))
                     seat = win.evaluate('''el=>({rect:el.getBoundingClientRect().toJSON(),scrolls:[...document.querySelectorAll('*')].filter(e=>e.scrollLeft && (e.contains(el) || el.contains(e))).map(e=>({tag:e.tagName,cls:e.className,left:e.scrollLeft,width:e.clientWidth,scroll:e.scrollWidth}))})''')
-                    (ROOT / '.tmp/programs-group14' / f'{app}-{state}-{width}-seat.json').write_text(json.dumps(seat, indent=2))
+                    (OUT / f'{app}-{state}-{width}-seat.json').write_text(json.dumps(seat, indent=2))
                     if width == 393: assert seat['rect']['x'] >= -1 and seat['rect']['right'] <= width + 1 and not seat['scrolls'], seat
                     assert win.evaluate('''el=>{const body=el.querySelector('.desk-surface-body, .chair-window-body');return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1;}''')
                     assert win.locator('[data-object-id][aria-selected="true"]').count() == (1 if state == 'selected' else 0)

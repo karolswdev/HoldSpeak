@@ -17,7 +17,6 @@ import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
   PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, objectSprite, type ListVerb } from "../index";
 import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
-import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
 import { DotWord } from "../kit";
@@ -27,7 +26,7 @@ import { fetchConnections, type ConnectionsResponse } from "../../../pages/cores
 import { accountChip } from "../../../features/channels/accountChip";
 export { accountChip };
 import { useDesk } from "../../store";
-import { CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide,
+import { emailProvider, CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide,
   noAnswerWords, previewOf, refusalSize, refusedWord, sentWord, stamp, targetToken, unknownWord,
   wire, Refusal, type Channel, type Destination, type Preview, type Send, type WirePreview, type EmailProvider } from "../../../features/channels/channels";
 import "./send-well.css";
@@ -192,17 +191,17 @@ export function PreviewWell({ preview, testid }: {
   preview: Preview; testid: string;
 }) {
   const safe = safeSendPreview(preview);
-  return <div data-send="preview" data-testid={testid} data-feedback-redact="true">
-    <PaneGroup label="Preview"><InspectorForm>
+  return <div data-send="preview" data-testid={testid} data-feedback-redact="true" role="region" aria-label="Preview">
+    <PaneGroup label=""><InspectorForm>
       {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell wholeLines><div className="send-preview-body" data-testid="send-preview-body">
-      {safe.body_kind === "markdown" ? <Material formatDates>{safe.body}</Material> : proseDateWords(safe.body)}
+      {safe.body_kind !== "text" ? <Material formatDates dialect={safe.body_kind}>{safe.body}</Material> : proseDateWords(safe.body)}
     </div></SurfaceWell></GadgetRow></PaneGroup>
   </div>;
 }
 
 export function SendDestinationWord({name,channel,empty = false}: {name?: string; channel?: string; empty?: boolean}) {
-  return <span data-testid="send-destination-word">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}</span>;
+  return <span data-testid="send-destination-word" data-feedback-redact="true">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}</span>;
 }
 
 /** One edit transition for ordinary, prepared and Needs you previews. */
@@ -238,16 +237,15 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
   const leading = <>{secondary}{editAction ?? (blocked && destination && preview ? <Button dense variant="secondary" data-testid="send-edit" loading={editing} onClick={() => {
     setEditing(true); setEditFailed(false);
     void editSendPreview("Draft", editDestinationId ?? destination.id, preview).catch(() => setEditFailed(true)).finally(() => setEditing(false));
-  }}>Edit</Button> : null)}<SendDestinationWord name={destination?.name} channel={destination?.channel} empty={destinations?.length === 0} />
-    {destination && eg && (destination.channel !== "file" || destination.synced) ? <EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} /> : null}</>;
+  }}>Edit</Button> : null)}<Button dense variant="secondary" data-verb-secondary data-testid="send-add-destination" disabled={"primary" in completion && completion.primary.busy} onClick={()=>onAddDestination ? onAddDestination() : setAdding(true)}>Add destination</Button></>;
+  const confirmation = <>{destination?.channel === "file" ? "Save in " : destination ? "Send to " : ""}<SendDestinationWord name={destination?.name} channel={destination?.channel} empty={destinations?.length === 0} />{destination?.channel === "email" ? ` via ${emailProvider(destination.account).word}` : destination?.channel === "file" ? eg?.scope === "cloud" ? ` · ${safeSendText(eg.title)}` : " on this device" : destination ? ` on ${destination.channel === "slack" ? CHANNEL_WORD.slack : safeSendText(eg?.title || CHANNEL_WORD[destination.channel])}` : ""}</>;
   const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,
     disabled:blocked || completion.primary.disabled, run:() => {if (!blocked) completion.primary.run();}}} : completion;
   return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={confirming ? undefined : { ...guarded, leading,
-    state:editFailed ? <DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord> : blocked ? <DotWord tone="fail">{CREDENTIAL_WORD}</DotWord> : undefined }} notice={notice}>
+    state:<>{confirmation}{editFailed || blocked ? <><br /><DotWord tone="fail">{editFailed ? EDIT_FAILED_WORD : CREDENTIAL_WORD}</DotWord></> : null}</> }} notice={notice}>
     <GadgetRow label="Destination"><CycleGadget label="Destination" roster value={destination?.id ?? ""} disabled={!onDestination}
       options={[{value:"",label:"Choose a destination"}, ...(destinations ?? (destination ? [destination] : [])).map(d => ({value:d.id,label:safeSendText(d.name)}))]}
       onChange={id => onDestination?.(id)} />
-      <Button dense variant="secondary" data-testid="send-add-destination" disabled={"primary" in completion && completion.primary.busy} onClick={() => onAddDestination ? onAddDestination() : setAdding(true)}>Add destination</Button>
     </GadgetRow>
     <GadgetRow label="" wide><div data-send="inspection" data-testid={destination ? previewTestId === "prepared-preview" ? "prepared-open" : "send-open" : undefined} data-destination={destination ? name : undefined} data-feedback-redact="true">
       {preview ? <PreviewWell preview={preview} testid={previewTestId} /> : children}
@@ -377,7 +375,7 @@ function ProofValue({ channel, proof, target, account }: ProofProps) {
   const {copy, state} = useCopyReceipt();
   if (channel === "file")
     return (
-      <span className="surface-pane-actions send-proof"><MiddleText className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
+      <span className="surface-pane-actions send-proof"><MiddleText cut="path" className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
     );
   if (channel === "email")
     return (
@@ -1205,6 +1203,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               { label: "Result", value: <LatestReceipt s={current} /> },
               { label: "When", value: stateWords(stamp(current.settled_at)) },
               { label: "Document", value: sentDocumentName(current) },
+              { label: "Kind", value: tag?.(current)?.word ? stateWords(tag(current)!.word) : null },
               { label: "Prepared", value: byWord(current) },
             ]}
           />

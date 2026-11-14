@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { fitName, textMeasure } from "./objects/fitName";
 /** Measured text keeps both ends. File names keep all text when they need another line. */
-export function MiddleText({value, title = value, className, testId, keepFileName = false, cut = "middle", lines = 1}: {value: string; title?: string; className?: string; testId?: string; keepFileName?: boolean; cut?: "middle" | "end"; lines?: number}) {
+export function MiddleText({value, title = value, className, testId, keepFileName = false, cut = "middle", lines = 1}: {value: string; title?: string; className?: string; testId?: string; keepFileName?: boolean; cut?: "middle" | "end" | "path"; lines?: number}) {
   const ref=useRef<HTMLSpanElement>(null), probe=useRef<HTMLSpanElement>(null), [shown,setShown]=useState(value);
   useLayoutEffect(() => {
     const node=ref.current; if(!node)return;

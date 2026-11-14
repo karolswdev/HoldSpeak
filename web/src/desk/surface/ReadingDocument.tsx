@@ -1,7 +1,7 @@
 /** Shared Markdown reading species. Lezer owns the grammar; React owns the DOM.
  * HTML stays text and images stay alt text. No content is fetched on render. */
 import { createElement, useMemo, useRef, type ReactNode } from "react";
-import { parser as commonmark, Emoji, GFM, Subscript, Superscript } from "@lezer/markdown";
+import { parser as commonmark, Emoji, GFM, Subscript, Superscript, type DelimiterType } from "@lezer/markdown";
 import type { SyntaxNode } from "@lezer/common";
 import { Button } from "../../components/signal/Signal";
 import { refOpener } from "../openObject";
@@ -14,6 +14,19 @@ import "./reading-document.css";
  *  the same parser and extensions, without the editor's fold and indent props
  *  and without CodeMirror, so reading stays out of the editor's chunk. */
 const readingParser = commonmark.configure([GFM, Subscript, Superscript, Emoji]);
+const slackMarks: Record<number, DelimiterType> = {
+  42: {resolve:"StrongEmphasis",mark:"EmphasisMark"},
+  95: {resolve:"Emphasis",mark:"EmphasisMark"},
+  126: {resolve:"Strikethrough",mark:"StrikethroughMark"},
+};
+const slackParser = readingParser.configure({remove:["Emphasis","Strikethrough"], parseInline:[{
+  name:"SlackEmphasis", after:"InlineCode",
+  parse(cx,next,pos) {
+    const mark=slackMarks[next];
+    if(!mark)return -1;
+    return cx.addDelimiter(mark,pos,pos+1,!/\s/.test(cx.slice(pos+1,pos+2)),pos>cx.offset && !/\s/.test(cx.slice(pos-1,pos)));
+  },
+}]});
 
 export function parseReading(source: string): SyntaxNode {
   return readingParser.parse(source).topNode;
@@ -172,7 +185,7 @@ function renderNode(node: SyntaxNode, context: Context): ReactNode {
   }
 }
 
-export function ReadingDocument({ children, className, noteDoors = {}, formatDates = false, "data-testid": testId }: { children: string; className?: string; noteDoors?: NoteDoors; formatDates?: boolean; "data-testid"?: string }) {
+export function ReadingDocument({ children, className, noteDoors = {}, formatDates = false, dialect = "markdown", "data-testid": testId }: { children: string; className?: string; noteDoors?: NoteDoors; formatDates?: boolean; dialect?: "markdown" | "slack"; "data-testid"?: string }) {
   if (!children.trim()) return null;
-  return <div className={`reading-document${className ? ` ${className}` : ""}`} data-testid={testId}>{renderNode(parseReading(children), { source: children, noteDoors, formatDates })}</div>;
+  return <div className={`reading-document${className ? ` ${className}` : ""}`} data-testid={testId}>{renderNode(dialect === "slack" ? slackParser.parse(children).topNode : parseReading(children), { source: children, noteDoors, formatDates })}</div>;
 }

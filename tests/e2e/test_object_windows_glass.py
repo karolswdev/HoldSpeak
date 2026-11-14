@@ -215,7 +215,7 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                 verb(page,win,"Edit")
                 back=win.get_by_test_id("automation-inspector-back")
                 def back_ink():
-                    expect(back.locator("span")).to_have_text("‹ Back")
+                    expect(back).to_have_text("‹ Back")
                     assert back.evaluate("""button => {
                       const word=button.querySelector('span'), face=getComputedStyle(button,'::before');
                       return Number(getComputedStyle(word).zIndex) > Number(face.zIndex);

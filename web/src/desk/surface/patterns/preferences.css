@@ -53,7 +53,7 @@
   min-width: 0;
   font: 600 13px / 20px var(--font-sans);
 }
-.surface-segmented-tabs {
+.surface-tab-seat {
   display: flex;
   align-self: flex-start;
   align-items: stretch;
@@ -68,7 +68,7 @@
   overflow: visible;
   flex-wrap: nowrap;
 }
-.desk-next .surface-segmented-tabs .btn--chrome {
+.desk-next .surface-tab-seat .btn--chrome {
   flex: none;
   min-height: 26px;
   padding: 2px 14px;
@@ -79,12 +79,12 @@
   font: 500 13px / 20px var(--font-sans);
   white-space: nowrap;
 }
-.desk-next .surface-segmented-tabs .btn--chrome[aria-selected="true"] {
+.desk-next .surface-tab-seat .btn--chrome[aria-selected="true"] {
   background: var(--wb-paper);
   box-shadow: inset 0 0 0 1px var(--wb-rule-soft);
   border-radius: var(--radius-sm);
 }
-.desk-next .surface-segmented-tabs .btn--chrome:focus-visible {
+.desk-next .surface-tab-seat .btn--chrome:focus-visible {
   outline: 2px solid var(--wb-sel);
   outline-offset: -2px;
 }
@@ -139,7 +139,7 @@
   gap: 12px;
 }
 @container surface (max-width: 520px) {
-  .desk-next .surface-segmented-tabs .btn--chrome {
+  .desk-next .surface-tab-seat .btn--chrome {
     min-height: 44px;
     padding-inline: 10px;
   }
@@ -307,13 +307,10 @@
   clip-path: inset(50%);
 }
 .desk-next .pref-status-bar .pref-status-save {
-  color: var(--wb-ink);
+  color: inherit;
   font: inherit;
   text-transform: none;
   letter-spacing: 0;
-}
-.desk-next .pref-status-bar .pref-status-save[data-tone="danger"] {
-  color: var(--wb-danger-ink);
 }
 @container surface (max-width: 520px) {
   .desk-next .surface-preference-window .pref-pane-back {
@@ -489,7 +486,8 @@
 .surface-pane-inspector:has(> .surface-pane-actions) > .surface-inspector-form > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .surface-pane-inspector > .surface-pane-actions { flex: none; margin-top: auto; }
 
-.surface-completion-state { grid-column: 1 / -1; flex-basis: 100%; }
+.surface-completion-state { grid-column: 1 / -1; flex: 0 1 100%; min-width: 0; }
+.surface-inspector-actions.surface-verb-row:has(> .surface-completion-state) { flex-wrap: wrap; }
 
 .surface-tab-panel > .surface-pane-actions { padding: 0 12px 8px; }
 
@@ -514,11 +512,11 @@
 .surface-inspector-facts[data-headerless] { flex: 1 1 auto; min-height: 0; overflow: auto; }
 
 /* A direct detail composition keeps the same tab and form insets as an inspector. */
-.surface-list-pane-preview > .surface-inspector-body > .surface-segmented-tabs { margin: 8px 12px 0; max-width: calc(100% - 24px); }
+.surface-list-pane-preview > .surface-inspector-body > .surface-tab-seat { margin: 8px 12px 0; max-width: calc(100% - 24px); }
 .surface-list-pane-preview > .surface-inspector-body > .surface-tab-panel > .surface-inspector-form { padding: 0 12px 8px; box-sizing: border-box; }
 
 /* Whole tabs fit one row; the shared menu carries overflow. */
-.surface-segmented-tabs { position: relative; overflow: visible; max-width: 100%; box-sizing: border-box; flex-wrap: nowrap; }
+.surface-tab-seat { position: relative; overflow: visible; max-width: 100%; box-sizing: border-box; flex-wrap: nowrap; }
 .surface-tabs-measure { position: absolute; display: flex; gap: inherit; visibility: hidden; pointer-events: none; width: 0; height: 0; overflow: hidden; }
 .surface-pane-views { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; min-width: 0; }
 
@@ -532,7 +530,7 @@
 .surface-inspector-facts[data-headerless] { padding: 8px 12px; box-sizing: border-box; }
 .surface-pane-inspector .surface-inspector-facts[data-headerless] { padding: 0; }
 
-.surface-preference-pane > .surface-segmented-tabs { margin-block-start: 8px; margin-inline: 12px; max-width: calc(100% - 24px); }
+.surface-preference-pane > .surface-tab-seat { margin-block-start: 8px; margin-inline: 12px; max-width: calc(100% - 24px); }
 
 /* D uses the same inspector and form grid. Their scrolling seats do not change. */
 .surface-pane-inspector { background: var(--hs-plate); box-shadow: var(--material-top-light); }
@@ -543,16 +541,16 @@
 .surface-inspector-object { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--material-mast-fill); color: var(--material-mast-ink); font: var(--material-name-weight) var(--material-name-size) / 1 var(--font-sans); box-shadow: var(--material-object-shadow), var(--material-top-light); }
 
 .surface-pane-inspector-head:has(.surface-inspector-object) { justify-content: flex-start; }
-.surface-segmented-tabs { align-self: stretch; padding: 0; gap: 4px; border: 0; border-bottom: 1px solid var(--hs-rule); border-radius: 0; background: var(--hs-plate); }
-.desk-next .surface-segmented-tabs .btn--chrome { min-height: 32px; padding: 3px 9px 0; font-weight: 600; border-bottom: 3px solid transparent; border-radius: 0; }
-.desk-next .surface-segmented-tabs .btn--chrome[aria-selected="true"] { background: transparent; box-shadow: none; border-radius: 0; border-bottom-color: var(--hs-steel); font-weight: 700; }
+.surface-tab-seat { align-self: stretch; padding: 0; gap: 4px; border: 0; border-bottom: 1px solid var(--hs-rule); border-radius: 0; background: var(--hs-plate); }
+.desk-next .surface-tab-seat .btn--chrome { min-height: 32px; padding: 3px 9px 0; font-weight: 600; border-bottom: 3px solid transparent; border-radius: 0; }
+.desk-next .surface-tab-seat .btn--chrome[aria-selected="true"] { background: transparent; box-shadow: none; border-radius: 0; border-bottom-color: var(--hs-steel); font-weight: 700; }
 .desk-next .surface-tabs-measure .btn--chrome { font-weight: 700; }
 .surface-pane-inspector:has(> .surface-inspector-form) { border-top: 2px solid var(--hs-ink); }
 .surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head strong { font-size: var(--material-form-title-size); }
 .surface-pane-inspector:has(> .surface-inspector-form) { padding-block: 8px; gap: 10px; }
 .surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head { line-height: 1.2; }
 .surface-inspector-form { gap: 8px; }
-@container surface (max-width: 520px) { .desk-next .surface-segmented-tabs .btn--chrome { min-height: 44px; } }
+@container surface (max-width: 520px) { .desk-next .surface-tab-seat .btn--chrome { min-height: 44px; } }
 
 .surface-inspector-heading { flex: 1 1 0; min-width: 0; }
 .surface-inspector-heading > strong { display: block; margin: 0; overflow-wrap: anywhere; }
@@ -587,7 +585,7 @@
 .surface-pane-inspector:has(> .surface-tab-panel > .surface-inspector-form) { gap: 4px; }
 
 /* Short recaps keep facts directly after the rows; long lists still yield. */
-.surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: 0; }
+.surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: var(--object-list-row-floor, 0px); }
 
 /* Questions keep their answers with their last line. Programmatic focus
    has the same visible ring after a pointer opens the question. */
@@ -614,3 +612,7 @@
 
 /* Object names use the shared measured fitter; facts keep the complete value. */
 .surface-inspector-facts .gadget-row-gadget { overflow-wrap: anywhere; }
+
+/* A choice roster keeps one pop-up when its complete segments do not fit. */
+.surface-tab-seat[data-popup] { display: flex; border: 0; padding: 0; }
+.surface-tab-seat[data-popup] > .gadget-cycle { width: 100%; }

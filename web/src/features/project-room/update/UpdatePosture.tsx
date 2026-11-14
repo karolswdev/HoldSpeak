@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   InspectorForm,
+  PaneViews,
   ObjectReader,
   ReadingDocument,
   PadGadget,
@@ -54,7 +55,11 @@ export function UpdatePosture({
   sendUpdateId,
   linkFailure,
   onSendState,
+  projectViews = [],
+  onProjectView,
 }: {
+  projectViews?: readonly {id: string; label: string}[];
+  onProjectView?(id: string): void;
   ctrl: UpdateController;
   projectActions?: ListVerb[];
   sourceItems?: readonly Pick<RoomEntry, "id" | "kind">[];
@@ -122,7 +127,6 @@ export function UpdatePosture({
                   { label: "Kind", value: kind },
                   { label: "From", value: ref.startsWith("item:") ? "Project plan" : refIdentityLabel(ref) },
                   { label: "Revision", value: revision },
-                  { label: "Read time", value: "Not supplied" },
                   { label: "Checked", value: checkedAt },
                 ],
                 open: refOpener(ref) ?? undefined,
@@ -397,6 +401,10 @@ export function UpdatePosture({
           </ObjectReader>
       );
   return (
+    <PaneViews label="Update view" value={seat === "edit" ? "updates" : seat}
+      tabs={[{id:"updates",label:"Text"},{id:"claims",label:"Claims"},{id:"sources",label:"Sources"},{id:"send",label:"Send"},{id:"delivery",label:"Delivery"},
+        ...projectViews.map(view => ({id:`project:${view.id}`,label:view.label}))]}
+      onChange={id => id.startsWith("project:") ? onProjectView?.(id.slice(8)) : setSeat(id)}>
     <RoomList
       label="Updates"
       rows={rows}
@@ -422,17 +430,6 @@ export function UpdatePosture({
       }}
       verbs={verbs}
       field={field}
-      scopes={[{
-        id: "update-view", kind: "cycle", label: "View", value: seat === "edit" ? "updates" : seat,
-        onChange: setSeat,
-        options: [
-          { value: "updates", label: "Text" },
-          { value: "claims", label: "Claims" },
-          { value: "sources", label: "Sources" },
-          { value: "send", label: "Send" },
-          { value: "delivery", label: "Delivery" },
-        ],
-      }]}
       loading={ctrl.loading || ctrl.draftBusy}
       error={
         linkFailure
@@ -459,5 +456,6 @@ export function UpdatePosture({
           />
         ) : undefined)}
     </RoomList>
+    </PaneViews>
   );
 }

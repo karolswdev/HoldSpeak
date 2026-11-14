@@ -112,14 +112,14 @@ export function AutomationsCore(_props: CoreProps) {
           cancel={() => { setDeleting(null); setError(""); }} verb={{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); app.drop(id); setReceipt(`Automation deleted · ${deleting.name}`); })}} />
       : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} initialTab={editTab} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
       : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts data-feedback-redact="true" name={selected.name} testId="automation-summary" notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : selected.sources_shown?.some(source=>source.missing) ? <ActionNotice role="alert" tone="danger" action={{label:"Edit sources",disabled:setupPending||Boolean(pending[`delete:${selected.id}`]),onClick:()=>{view.current+=1;setEditTab("about");setEditing(true);setMaking(false);setDeleting(null);}}}>Source missing</ActionNotice> : undefined} rows={[
-        {label:"Runs",value:runsWhen(selected)},
+        {label:"Name",value:selected.name}, {label:"Runs",value:runsWhen(selected)},
         {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || ""},
         ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",value:selected.instruction}] : []),
         {label:"About",value:eventSubjectWords(selected) || selected.sources_shown?.filter(source=>!source.missing).map(source=>source.label).join(", ") || ""},
         {label:"With",value:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",value:<PutValue target={selected.output_target} />}]),
         {label:"Last run",value:lastRun(selected,false)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
-      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"Starts",control:<CheckGadget variant="state" label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
+      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"Automatic starts",control:<CheckGadget variant="state" label="Automatic starts" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
     </> : null}
     status={[
       app.loading && !app.page ? {key:"loading",lamp:"info",text:"Loading automations…"} : null,

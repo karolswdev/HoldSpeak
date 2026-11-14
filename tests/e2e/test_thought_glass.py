@@ -610,7 +610,9 @@ class TestTheThoughtSends:
                 proof = receipt.get_by_test_id("proof")
                 expect(proof).to_have_attribute("aria-label", f"~/Documents/HoldSpeak/Sent/{path.name}")
                 expect(proof).to_have_attribute("title", str(path))
-                expect(proof).to_contain_text(path.name)
+                # The text is the kit's middle cut: the start and the end stand.
+                shown = proof.inner_text().strip()
+                assert shown.startswith("~/") and shown.endswith(path.name[-8:]) and ("…" in shown or shown.endswith(path.name)), shown
                 expect(receipt.get_by_role("button", name="Copy path", exact=True)).to_be_visible()
                 receipt.scroll_into_view_if_needed()
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-saved-{width}.png"))

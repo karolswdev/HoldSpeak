@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from .programs_group_rows_rig import row_faults
 from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk as sweep_desk, pw_browser as sweep_browser
 
@@ -106,6 +107,7 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
                     assert facts["question"] and facts["question"]["whole"],facts
                     assert all(row["whole"] for row in facts["question"]["verbs"]),facts
                     assert [row["word"] for row in facts["question"]["verbs"]] == ["Park","Go on"]
+                assert not row_faults(win,name), row_faults(win,name)
                 assert not page.evaluate(LIST_GRAMMAR_JS,"#surface-programs")
                 assert not page.evaluate(CLIPPED_JS,"#surface-programs")
                 assert not errors,errors
@@ -314,6 +316,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
                 page.screenshot(path=str(path.with_suffix(".png")))
                 path.with_suffix(".json").write_text(json.dumps(facts, indent=2))
                 assert facts["status"]
+                assert not row_faults(win,name), row_faults(win,name)
                 assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-programs")
                 assert not page.evaluate(CLIPPED_JS, "#surface-programs")
                 assert win.locator('.surface-live-content .gadget-row-label').evaluate_all("labels=>labels.every(el=>el.scrollWidth<=el.clientWidth+1)"), 'Live fact labels keep their whole words'

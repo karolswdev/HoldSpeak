@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import json
+import re
 import threading
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -136,8 +137,12 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                     expect(text).to_contain_text("Weekly report")
                     fit = text.locator(".reading-document").evaluate("el => ({reading:el.clientWidth,well:el.parentElement.clientWidth})")
                     assert fit["reading"] >= fit["well"] - 1, fit
+                    if phase == "after" and width == 393:
+                        reading=text.evaluate("""el=>{const well=el.closest('.surface-well-body'),p=el.querySelector('.reading-document > p');return {height:well.getBoundingClientRect().bottom-p.getBoundingClientRect().top,line:parseFloat(getComputedStyle(p).lineHeight)};}""")
+                        assert reading["height"] >= 4*reading["line"]-1,reading
                 if phase == "after" and state in {"ready", "prepared"}:
-                    expect(win.get_by_test_id("send-add-destination")).to_be_in_viewport(ratio=1)
+                    expect(win.get_by_test_id("send-add-destination")).to_be_attached()
+                    assert win.get_by_test_id("send-add-destination").locator('xpath=ancestor::*[contains(@class,"surface-inspector-actions")]').count()==1
                     fit = win.get_by_role("combobox", name="Destination", exact=True).evaluate("""el => {
                         const style=getComputedStyle(el), canvas=document.createElement('canvas'), ctx=canvas.getContext('2d');
                         ctx.font=`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
@@ -166,7 +171,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                     facts = send_face_facts(win, six_lines=width == 1440 and state in {"ready", "prepared"})
                     (shots / f"send-{state}-{width}-facts.json").write_text(json.dumps(facts, indent=2))
                 (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions,.surface-well-body,.send-preview-body,.reading-heading")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow,clip:getComputedStyle(e).clipPath,visibility:getComputedStyle(e).visibility,opacity:getComputedStyle(e).opacity,color:getComputedStyle(e).color,scrollTop:e.scrollTop,font:getComputedStyle(e).font,fontReady:document.fonts.status,html:e.matches(".reading-heading") ? e.outerHTML : undefined}))"""),indent=2))
-                polish = shots.parent / "send-engines14r2"
+                polish = shots.parent / "send-engines14r3"
                 polish.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(polish / f"send-{state}-{900 if width == 1440 else 393}-{phase}.png"))
                 page.screenshot(path=str(shots / f"1-7-send-{state}-{900 if width == 1440 else 393}.png"))
@@ -192,10 +197,13 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             for tab_name, channel in (("Folder", "file"), ("Email", "email"), ("Slack", "slack")):
                 well.get_by_role("tab", name=tab_name, exact=True).click()
                 choices = [row for row in destinations if row["channel"] == channel]
+                if phase == "before" and width == 1440 and channel in {"email", "slack"}:
+                    wire = _api(page, "POST", "/api/channels/preview", {"document_ref":ref,"destination_id":choices[-1]["id"]}, token=TOKEN)
+                    (shots.parents[1] / f"r3-{channel}-preview.json").write_text(json.dumps({"destination":choices[-1],"reply":wire},indent=2))
                 choose_toolbar(well, "Destination", choices[-1]["id"])
                 well.get_by_test_id("send-preview-body").first.wait_for()
                 _settle(page)
-                page.screenshot(path=str(shots.parent / "send-engines14r2" / f"send-{channel}-destination-{900 if width == 1440 else 393}-{phase}.png"))
+                page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-{channel}-destination-{900 if width == 1440 else 393}-{phase}.png"))
                 if phase == "after" and channel in {"email", "slack"}:
                     body = well.get_by_test_id("send-preview-body").first
                     expect(body).to_contain_text("Nov 12")
@@ -220,21 +228,23 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             _normal_chair(page)
             well = open_send()
             _settle(page)
-            page.screenshot(path=str(shots.parent / "send-engines14r2" / f"send-ready-path-title-{900 if width == 1440 else 393}-{phase}.png"))
+            page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-ready-path-title-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_test_id("send-back").click()
             save_body(long_title)
             page.reload()
             _normal_chair(page)
             well = open_send()
-            well.get_by_test_id("send-add-destination").click()
+            press_verb(well, "Add destination")
             expect(well.get_by_test_id("dest-form")).to_be_visible()
             page.screenshot(path=str(shots / f"6-send-add-destination-{900 if width == 1440 else 393}.png"))
-            page.screenshot(path=str(shots.parent / "send-engines14r2" / f"send-add-destination-{900 if width == 1440 else 393}-{phase}.png"))
+            page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-add-destination-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_test_id("dest-cancel").click()
             well.get_by_test_id("send-preview-body").wait_for()
             if phase == "after":
                 completion = well.locator(".surface-inspector-actions").first
-                assert completion.get_by_role("button").all_text_contents() == ["Edit", "Cancel", "Send"]
+                expect(completion.get_by_role("button",name="Cancel",exact=True)).to_be_in_viewport(ratio=1)
+                expect(completion.get_by_test_id("send-verb")).to_be_in_viewport(ratio=1)
+                expect(completion.get_by_test_id("send-add-destination")).to_be_attached()
                 assert well.locator(".send-sheet-header").count() == 0
                 box = completion.bounding_box()
                 assert box and box["y"] + box["height"] <= page.viewport_size["height"]
@@ -271,10 +281,19 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 if width == 393:
                     expect(well.get_by_test_id("history-row").first.locator('[data-folded-col="when"]')).to_be_visible()
             page.screenshot(path=str(shots / f"1-3-send-history-{900 if width == 1440 else 393}.png"))
-            page.screenshot(path=str(shots.parent / "send-engines14r2" / f"send-history-{900 if width == 1440 else 393}-{phase}.png"))
-            well.get_by_test_id("history-row").first.click()
+            page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-history-{900 if width == 1440 else 393}-{phase}.png"))
+            saved = well.get_by_test_id("history-row").filter(has=page.get_by_test_id("history-word").filter(has_text=re.compile("^Saved$"))).first
+            saved.click()
+            _settle(page)
+            proof = well.get_by_test_id("proof").first
+            expect(proof).to_have_attribute("title", re.compile(r"\.md$"))
+            if phase == "after" and "…" in proof.inner_text():
+                head, tail = proof.inner_text().split("…", 1)
+                full = proof.get_attribute("aria-label")
+                assert full and full.startswith(head) and full.endswith(tail), (full, head, tail)
+                assert head[-1] in "/:_-. " and full[len(full)-len(tail)-1] in "/:_-. ", (full, head, tail)
             page.screenshot(path=str(shots / f"1-3-send-receipt-{900 if width == 1440 else 393}.png"))
-            page.screenshot(path=str(shots.parent / "send-engines14r2" / f"send-receipt-{900 if width == 1440 else 393}-{phase}.png"))
+            page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-receipt-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_role("tab", name="Folder", exact=True).click()
             # A stale press crosses the real hub boundary and is refused;
             # the transport itself is never called for this request.
@@ -367,7 +386,7 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
             secret_ref = note("Token: github_pat_hiddenValue123\n\nRead the report before you send.")
             win = seat(secret_ref)
             expect(win.get_by_test_id("send-verb")).to_be_disabled()
-            expect(win.locator(".surface-completion-state")).to_have_text("This text holds a credential. Edit it before you send.")
+            expect(win.locator(".surface-completion-state").get_by_text("This text holds a credential. Edit it before you send.", exact=True)).to_be_visible()
             expect(win.get_by_test_id("send-edit")).to_be_enabled()
             send_face_facts(win)
             page.screenshot(path=str(shots / f"send-credential-{size}-after.png"))
@@ -475,7 +494,7 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             assert not __import__("re").search(r"\d{4}-\d{2}-\d{2}", title.inner_text())
             send_face_facts(win, six_lines=width == 1440)
             page.screenshot(path=str(shots / f"1-5-room-send-{900 if width == 1440 else 393}.png"))
-            polish = shots.parent / "send-engines14r2"
+            polish = shots.parent / "send-engines14r3"
             polish.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(polish / f"1-5-room-send-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             win.get_by_test_id("send-back").click()
@@ -483,7 +502,7 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             to = win.get_by_role("textbox", name="Delivered to", exact=True)
             expect(to).to_have_attribute("placeholder", "No recipient")
             page.screenshot(path=str(shots / f"6-room-custody-empty-{900 if width == 1440 else 393}.png"))
-            polish = shots.parent / "send-engines14r2"
+            polish = shots.parent / "send-engines14r3"
             polish.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(polish / f"6-room-custody-empty-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             to.fill("Steering group")
@@ -495,13 +514,13 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             expect(win.get_by_role("button", name="Try again", exact=True)).to_be_visible()
             expect(win.get_by_text("Result unknown · Try again", exact=True)).to_have_count(0)
             page.screenshot(path=str(shots / f"7-room-custody-unknown-{900 if width == 1440 else 393}.png"))
-            polish = shots.parent / "send-engines14r2"
+            polish = shots.parent / "send-engines14r3"
             polish.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(polish / f"7-room-custody-unknown-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             win.get_by_role("button", name="Try again", exact=True).click()
             expect(to).to_have_value("")
             page.screenshot(path=str(shots / f"6-room-custody-saved-{900 if width == 1440 else 393}.png"))
-            polish = shots.parent / "send-engines14r2"
+            polish = shots.parent / "send-engines14r3"
             polish.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(polish / f"6-room-custody-saved-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             browser.close()

@@ -1,4 +1,4 @@
-// Parked in round 3; #2332 replaces the snap alternative. The independent round 2 guard is live again.
+// Parked: main's wholeRows.ts now owns row reveal and fit; no ListPane scroll writer remains.
       const row = seat?.querySelector<HTMLElement>(
         '[data-object-id][aria-selected="true"]',
       );

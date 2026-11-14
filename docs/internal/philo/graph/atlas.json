@@ -7828,10 +7828,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "activity-finished"
+            "value": "activity-list"
           },
-          "observe_at": "[data-testid=activity-finished]",
-          "why": "Search Activity opened the current Finished receipt surface."
+          "observe_at": "[data-testid=activity-list]",
+          "why": "Search Activity opened the Activity list, where finished receipts are rows."
         },
         {
           "kind": "check",
@@ -7947,7 +7947,7 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
           "adapter": "ui-pointer"
         }
       ],
@@ -7978,7 +7978,7 @@
       "trigger": {
         "kind": "ui",
         "action": "press",
-        "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+        "selector": "[id='activity-receipt-{sweep_projection_id}']",
         "key": "Enter",
         "adapter": "ui-keyboard",
         "timeout_s": 15,
@@ -7988,9 +7988,16 @@
             "kind": "ui",
             "action": "click_role",
             "role": "tab",
-            "name": "When",
+            "name": "What it sends",
             "adapter": "ui-pointer",
-            "why": "Reach keeps Quiet hours in When, beside Channels, Calls and Brief."
+            "why": "Reach keeps Quiet hours under What it sends (2026-11-13), in When to reach you."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "#surface-settings [data-object-id='when']",
+            "adapter": "ui-pointer",
+            "why": "The row When to reach you shows the quiet hours."
           }
         ]
       }
@@ -8110,13 +8117,13 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
           "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "press",
-          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
+          "selector": "[id='activity-receipt-{sweep_projection_id}']",
           "key": "Enter",
           "adapter": "ui-keyboard",
           "timeout_s": 15,
@@ -8138,7 +8145,7 @@
         }
       ],
       "expected": {
-        "observe_at": "#surface-activity.is-front [id='activity-receipt-{sweep_projection_id}'] button",
+        "observe_at": "#surface-activity.is-front [id='activity-receipt-{sweep_projection_id}']",
         "predicate": {
           "kind": "all_of",
           "predicates": [

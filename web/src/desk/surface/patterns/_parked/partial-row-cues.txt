@@ -1,0 +1,25 @@
+Parked 2026-11-13: selection wells now end on whole rows; a partial row is no longer a scroll cue.
+
+        if (!image && rows.length > rowCount) rowsHeight += Math.min(14, rowHeight / 3);
+
+            if (rows.length > rowCount && minimum + 14 <= chrome + contentFloor) minimum += 14;
+
+        if (well && rows.length && !image && getComputedStyle(pane!).display !== "grid") {
+          const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + well.clientTop;
+          const room = minimum - base;
+          const boxes = [...rows].map(row=>{const r=row.getBoundingClientRect(),top=well.getBoundingClientRect().top;return {start:r.top-top+well.scrollTop,end:r.bottom-top+well.scrollTop,height:r.height};});
+          if (boxes.at(-1)!.end > room+1) {
+            const edge = boxes.find(row=>row.end > room+1);
+            if (edge && room < edge.start+Math.min(14,edge.height/3)) minimum += edge.start+Math.min(14,edge.height/3)-room;
+            if (minimum > formBudget) {
+              const last = boxes.filter(row=>base+row.start+Math.min(14,row.height/3)<=formBudget).at(-1);
+              if (last) minimum = Math.max(base+Math.min(rowHeight,boxes[0].height),base+last.start+Math.min(14,last.height/3));
+            }
+          }
+        }
+
+            // A group heading can stand between rows. Put the edge inside
+            // the next row, rather than fourteen pixels after the last one.
+            const cues=boxes.slice(1).map(row=>row.start+Math.min(14,row.height/3));
+            const fitting=cues.filter(cue=>base+cue<=budget);
+            minimum=base+Math.max(boxes[0].end,...fitting);

@@ -154,7 +154,8 @@ def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monkey
                     elif state == "read-failed":
                         row = window.get_by_test_id("projects-row").first
                         row.click()
-                        expect(window.get_by_test_id("projects-next")).to_have_text("Not read")
+                        expect(window.get_by_test_id("projects-next")).to_have_count(0)
+                        expect(window.get_by_test_id("projects-pane")).to_contain_text("Project facts not read")
                         expect(window.get_by_role("button", name="Retry", exact=True)).to_be_enabled()
                         shoot("read-failed-selected")
                         # The selected-object recovery stays in the same window.

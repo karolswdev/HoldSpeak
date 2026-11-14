@@ -3,7 +3,8 @@
  *  `lines` lines.
  *
  *  Break priority: between words (spaces) first. A word that cannot fit on
- *  a line breaks after one of its joins (`_ - . / :`), never inside a run of
+ *  a line breaks after a join (`_ - . / :`). Paths break at separators and
+ *  keep their basename and extension together. Other words never split a run of
  *  letters. When the name needs more lines than the label has, it is cut in
  *  the MIDDLE: the start stays, then `…`, then the end (the last word, or
  *  the last part of a single long word). Two names that differ only at the
@@ -19,7 +20,7 @@ export function fitName(
   fits: (line: string) => boolean = (line) => line.length <= perLine,
   /** `end` (the floor, owner 2026-11-08): whole words, then ONE ellipsis at
    *  the end; never a cut in the middle. Default `middle`, as above. */
-  cut: "middle" | "end" = "middle",
+  cut: "middle" | "end" | "path" = "middle",
 ): string[] {
   const text = name.replace(/\s+/g, " ").trim();
   if (!text || perLine < 4 || lines < 1) return [text];
@@ -44,7 +45,21 @@ export function fitName(
     tail = (lines > 1 || lastPiece.length >= Math.min(8, capTail)) && lastPiece.length <= capTail && pieces.length > 1 && fits(`…${lastPiece}`) ? lastPiece : last.slice(-Math.max(2, Math.floor(perLine / 2)));
     joiner = "";
   }
+  if (cut === "path" && joiner === "" && joinPieces(last).length > 1) {
+    const wanted = last.length - tail.length;
+    // A middle cut may keep a suffix of a long basename. Its word joins
+    // differ from line breaks, which keep the basename and extension together.
+    const starts = [0, ...Array.from(last.matchAll(/[_\-./:\\](?=.)/g), match => match.index + 1)];
+    const start = starts.find(start => start >= wanted);
+    if (start !== undefined) tail = last.slice(start);
+  }
   const headSource = text.slice(0, text.length - tail.length).replace(/\s+$/, "");
+  for (let k = cut === "path" ? headSource.length : 0; k >= 1; k--) {
+    if (!/[\s_\-./:]/.test(headSource[k - 1])) continue;
+    const candidate = `${headSource.slice(0,k)}…${joiner}${tail}`;
+    const set = layout(candidate, fits);
+    if (set && set.length <= lines) return set;
+  }
   for (let k = headSource.length; k >= 1; k--) {
     const head = headSource.slice(0, k).replace(/[\s]+$/, "");
     if (!head) continue;
@@ -61,6 +76,9 @@ export function fitName(
 /** A word's pieces: it may break after each `_ - . / :` join (the join stays
  *  at the end of its piece). */
 function joinPieces(word: string): string[] {
+  // A path keeps its basename and extension together on the next line.
+  if (/[/\\]/.test(word)) return word.split(/(?<=[/\\])(?=.)/);
+  if (nameIsFile(word) && word.includes(".")) return [word];
   return word.split(/(?<=[_\-./:])(?=.)/);
 }
 

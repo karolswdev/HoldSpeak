@@ -204,7 +204,10 @@ existing material and layout. They add no schema, form state, or save behavior.
 - `GadgetDivider()`: an exported semantic `hr` with the native etched rule.
   Use it between related rows within one sheet.
 - `CheckGadget.variant="state"`: the same real checkbox and square well plus
-  a visible On/Off word in its label. The native input covers the whole label,
+  a `Lamp` and a visible On/Off word in the body face. This is the one switch
+  with a state word: use `CheckGadget variant="state" label="Automatic starts"`
+  rather than composing a checkbox and `StateChip`. Outside a `GadgetRow` its
+  label is visible; within a row the row supplies that visible label. The native input covers the whole label,
   including decorations and word; at a narrow width the target is at least
   44 px high. The word is `aria-hidden` so the native checkbox retains one
   accessible name. Focus, disabled state, keyboard operation, and change
@@ -741,11 +744,12 @@ so it stays out of the main barrel, which is wire-free.
   `features/channels/DestinationForm.tsx`, with its own `onSetUpAccount`.
 
 `SendFace` draws ordinary, frozen and Needs you sends: optional Document choice,
-channel tabs, the Destination pop-up with Add destination trailing in its row,
-a Preview group with target facts, the payload well, then completion. Only the
-payload scrolls. Edit or Discard is at completion's left, followed by the saved
-destination name and kind; Cancel and Send are at the right. External egress is
-inline there; a local file has no chip. A changed target needs a fresh preview.
+channel tabs, the Destination pop-up, target facts and the payload well.
+Preview is an accessible region with no repeated caption. The payload and a long
+envelope have their own bounded reading wells. Edit or Discard and Add destination
+stand in the completion verb row and its common overflow. Cancel and Send keep
+their seats. The completion's plain confirmation line names the destination
+and provider or device; no host or scope chip stands beside it. A changed target needs a fresh preview.
 The Meetings list and a selected Needs you send give this face the whole pane;
 Back returns the list. All hosts use the same library button rules and paper.
 Refusals keep the draft and Retry. Discard asks in the window, with Cancel
@@ -791,11 +795,11 @@ Rules the species holds (they are not the host's business):
   refusal newer than the latest send, REFUSED + its word + NOTHING SENT;
   LAST SEND UNKNOWN + its word; NO ANSWER · RESULT UNKNOWN. An open row
   shows the receipt under Send and keeps the one-chip summary on its line.
-- **The egress chip** rides every destination row, every open preview and
-  every waiting prepared row (UX-CANON: egress where egress happens).
-- **The Send composition** keeps Add destination in the SEND section head,
+- **Egress at Send** is a plain confirmation line naming the destination and
+  provider or device. It belongs to the Send completion, without a host chip.
+- **The Send composition** keeps Add destination in the completion verb row,
   including when the built-in folder is present. Pending reads and previews
-  use SurfaceState. PREVIEW names the frozen fields and payload; only the
+  use SurfaceState. The Preview region holds the frozen fields and payload; the
   payload sits in SurfaceWell, without an inner scrolling cap. Dispatch and
   its receipt follow outside that well. The host owns the one scroll region
   and its Back action.
@@ -2042,12 +2046,12 @@ The Live pieces gallery includes Failure notice and Form fit.
 Send owns its delivery status: New, Prepared, Sending, Sent at the kit clock,
 Result unknown, Refused or Failed. Hosts yield their ordinary status while Send is open.
 Prepared-by and document labels use facts. The frozen payload and editable body keep their bytes. Send previews opt into ReadingDocument date words through proseDateWords and faceTimeWords; code and paths keep their text. Preview text fills its well. Long envelope fields scroll inside their form so the message keeps reading space.
-File receipts use MiddleText on one line; a long path keeps both ends around a middle ellipsis. Hover and Copy path retain the full path.
+File receipts use `MiddleText cut="path"` on one line. Its shared fitter prefers separators at both sides of a middle ellipsis; unbroken words retain the existing fallback. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
 Settings' model library takes the engine work pane while its Jobs/Engines tabs stay in view. The Mast Back returns through Add and Inspect to the library, then to the installed list; Done also returns. Its primary roster uses ListPane outside the form.
-Inspect keeps the full engine name in redacted facts. The five engine kinds and the services use CycleGadget pop-ups. Nested Add rosters use ListPane's row floor. A server form has Cancel then
+Inspect keeps the full engine name in redacted facts. The normal library has no second heading or category row: its Library scope and Back share the list's verb row. At compact frame widths the Mast owns Back. The five engine kinds use `SegmentedTabs collapse="popup"`: all five segments when they fit, one CycleGadget pop-up when they do not. Services use a CycleGadget pop-up. Nested Add rosters use ListPane's row floor. A server form has Cancel then
 Check in its completion seat; the destination stays in the fixed notice above it.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
@@ -2092,7 +2096,7 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
-Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
+Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets the wide list's share (0–1): width in a deck, or whole-row height above a short facts pane. Forms and media retain their measured seats; omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
 
 Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
 
@@ -2222,9 +2226,9 @@ answer verbs of a question it shows. App callers still own that declaration.
   yield rows (Calls numbers declares one); normal lists keep four. A short
   `fit="rows"` form does not grow to
   take the space of a list below it. More rows
-  leave a partly visible next row as the scroll cue. A short list ends at
+  scroll inside a well that ends on a complete row. A short list ends at
   its last row. Inspectors scroll within the remaining well. An open form can use more
-  of that well; its list leaves a partial row when it must yield to whole fields.
+  of that well; its list yields complete rows before fields or completion are cut.
 - `VerbRow` measures mounted Buttons and emits container rules from the same
   `fitStrip` algorithm used by selection toolbars. Resizing does not remount
   or move a control. A folded verb returns focus to Actions; a menu act
@@ -2319,6 +2323,24 @@ seat after padding, glyphs, lamps and meters.
 - A selection list measures read-only columns from its header and visible facts;
   the name takes the remainder. Editable cells retain their declared minimum.
 
+### Send and Settings fits (2026-11-13, round 3)
+
+`ListView wholeRows` uses ObjectList's one height-and-anchor fitter.
+The well keeps its scroll range and ends on whole rows at rest.
+The engine and speech rosters share ListPane; speech setup stays in its form
+row above the roster, so a form row cannot cap the model list.
+
+`ReadingDocument` and `Material` accept `dialect="slack"`. The same Lezer AST
+and renderer handle Slack's single-marker bold, italic and strike delimiters;
+inline and fenced code remain literal. `previewOf` marks this local presentation
+as `body_kind="slack"`; frozen channel bytes and hashes do not change.
+
+The measured kind pop-up keeps the shared tab seat, without the strip marker or a strip border.
+
+Calls composes the normal CheckGadget with the kit StateChip for On or Off.
+Preference failure receipts inherit the ink strip's text colour. The status
+bar's existing failure lamp carries the state colour.
+
 ### Live facts and step names
 
 A live pane puts its screen and facts in a whole-line reading well; the question
@@ -2338,3 +2360,26 @@ inside a word. A supplied compact Back label keeps the frame's chevron.
 
 A sortable selection header reserves the compact Button target plus its bottom
 rule. A plain caption keeps the standard material header height.
+
+Selection lists end their bounded wells on complete row edges. At rest the top
+starts on a row boundary below any sticky group heading. Selection and resize
+keep the selected row whole. Group Load more verbs retain their whole seats.
+`CheckGadget variant="state"` keeps its native named checkbox, draws On/Off with
+`Lamp` in the body face, and shows its label when no GadgetRow already names it.
+A path-led inspector heading breaks at path separators; a basename keeps its
+extension. Full names remain available through the existing title and aria name.
+
+### Whole list rows
+
+`ObjectList` / `ListView` has `wholeRows` on by default, including dense lists.
+The well takes every complete row its allocated seat holds. Its remainder is
+below the well on the surface ground, smaller than one row. Group headings
+and borders count once. `ListPane` reserves a seat; it never writes scrollTop.
+Seat and well measurements share `rowLayout`: one requestAnimationFrame reads
+all queued geometry before any writes. Resize and content changes schedule a
+frame; a native scroll defers fitting until scrollend. Focus and selection
+reveal their row without pulling an old selection back after a manual scroll.
+
+An `InspectorBody fit="rows"` list uses that same fitter's measured first-row
+floor, so its well cannot paint through the facts which follow it. A bounded
+window can yield its list floor; an intrinsic pop-up keeps its row floor.

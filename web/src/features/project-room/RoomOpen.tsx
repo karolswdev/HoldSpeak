@@ -24,7 +24,7 @@ import type { RoomSnapshot, RoomNeedsYouItem } from "./model";
 import type { RoomAsk } from "./core/Ask";
 import { RoomList, roomFacts, type RoomEntry } from "./RoomList";
 import { GenericNudgeCard, NudgeCard } from "./NudgeCard";
-import { needsYouWhyWords, whyFaceWords } from "./model";
+import { planItemOpen, needsYouWhyWords, whyFaceWords } from "./model";
 import {
   useAgentFlights,
   flightForItem,
@@ -120,15 +120,7 @@ export function roomOpenEntries(
     ...items
       .filter(
         (row) =>
-          ![
-            "closed",
-            "resolved",
-            "done",
-            "retired",
-            "mitigated",
-            "reached",
-            "dropped",
-          ].includes(String(row.cells?.state).toLowerCase()),
+          planItemOpen(String(row.cells?.state)),
       )
       .map((row) => ({ ...row, id: `item:${row.id}` })),
     ...(room.decisions.state === "ok"
