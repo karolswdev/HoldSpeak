@@ -2,7 +2,7 @@
  * The older composer exports in askFace still serve Memory and the Room. */
 import { useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
-import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, faceTimeWords } from "../surface";
+import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, faceTimeWords } from "../surface";
 import { spriteUrl } from "../sprites";
 import { nameIsFile } from "../surface/objects/fitName";
 import { agentWordsPlain } from "./AgentWords";
@@ -39,13 +39,13 @@ export function AskScope({ rows, candidates, onPick, onRemove, onOpenRow, contro
     <Popover align={align} anchor={anchor} open={open} onClose={close} ariaLabel="About">
       <PreferencePane label="About" testId="ask-scope-menu">
         <StringGadget label="Find a meeting, note, person" placeholder="Find a source" value={query} onChange={setQuery} />
-        <ListPane label="About" list={<ListView label="About" ordered columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
+        <PaneGroup label="" grow={false}><ListPane label="About" list={<ListView label="About" ordered columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
           rows={choices.map(row => ({ id: row.ref, kind: row.kind, name: row.label, sprite: nameIsFile(row.label) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: rows.some(known => known.ref === row.ref) ? "Chosen" : undefined }))}
           defaultVerb="choose" verbs={[
             { id: "choose", label: "Choose", run: row => { if (row) choose(row.id); } },
             { id: "remove", label: "Remove", enabled: row => Boolean(row && rows.some(known => known.ref === row.id)), run: row => { const known = rows.find(known => known.ref === row?.id); if (known) onRemove(known); } },
             { id: "open", label: "Open", enabled: row => Boolean(row && rows.some(known => known.ref === row.id && onOpenRow?.(known))), run: row => { const known = rows.find(known => known.ref === row?.id); if (known) onOpenRow?.(known)?.(); } },
-          ]} />} />
+          ]} />} /></PaneGroup>
       </PreferencePane>
     </Popover>
   </>;
