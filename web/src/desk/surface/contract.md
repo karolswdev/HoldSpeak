@@ -2332,6 +2332,8 @@ and renderer handle Slack's single-marker bold, italic and strike delimiters;
 inline and fenced code remain literal. `previewOf` marks this local presentation
 as `body_kind="slack"`; frozen channel bytes and hashes do not change.
 
+The measured kind pop-up keeps the shared tab seat, without the strip marker or a strip border.
+
 Calls composes the normal CheckGadget with the kit StateChip for On or Off.
 Preference failure receipts inherit the ink strip's text colour. The status
 bar's existing failure lamp carries the state colour.

@@ -35,3 +35,19 @@ it("cycles fixed words and opens a pop-up for a roster or more than three choice
   view.rerender(<CycleGadget label="Review depth" value="Secure" options={[...words,{value:"Deep"}]} onChange={change}/>);
   expect(view.container.querySelector('[data-cycle]')).toBeNull();
 });
+
+
+it("a fitted kind pop-up keeps its choices without drawing an empty tab strip",()=>{
+  vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockImplementation(function(this:HTMLElement){
+    const width=this.tagName === "BUTTON"?100:250;
+    return {width,height:44,left:0,right:width,top:0,bottom:44} as DOMRect;
+  });
+  render(<SegmentedTabs label="Kind of engine" collapse="popup" value="agent" onChange={()=>{}} tabs={["Agent","Service","My network","This Mac","Another HoldSpeak"].map(label=>({id:label.toLowerCase(),label}))}><p>Engine fields</p></SegmentedTabs>);
+  const choice=screen.getByRole("combobox",{name:"Kind of engine"});
+  expect(choice.closest(".surface-segmented-tabs")).toBeNull();
+  expect(screen.queryByRole("tablist",{name:"Kind of engine"})).toBeNull();
+  expect(screen.queryByRole("button",{name:"Kind of engine more"})).toBeNull();
+  fireEvent.click(choice);
+  expect(screen.getByRole("listbox")).toHaveTextContent("Another HoldSpeak");
+  expect(screen.getByRole("tabpanel")).toHaveTextContent("Engine fields");
+});

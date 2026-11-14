@@ -193,7 +193,7 @@ export function SegmentedTabs({label, value, onChange, tabs, children, showSingl
   const folded=tabs.filter((_,i)=>!shown.includes(i)), rect=open?anchor.current?.getBoundingClientRect():null;
   const popup = collapse === "popup" && folded.length > 0;
   return <>
-    {tabs.length>1||showSingle ? <div className="surface-segmented-tabs" data-popup={popup || undefined} role={popup ? undefined : "tablist"} data-joined-controls aria-label={label} ref={ref} onKeyDown={event=>{
+    {tabs.length>1||showSingle ? <div className={`surface-tab-seat${popup ? "" : " surface-segmented-tabs"}`} data-popup={popup || undefined} role={popup ? undefined : "tablist"} data-joined-controls aria-label={label} ref={ref} onKeyDown={event=>{
       if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
       event.preventDefault(); const at=tabs.findIndex(tab=>tab.id===value);
       const next=event.key==="Home"?0:event.key==="End"?tabs.length-1:(at+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
