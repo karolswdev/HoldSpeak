@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import json
+import re
 import threading
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -281,7 +282,16 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                     expect(well.get_by_test_id("history-row").first.locator('[data-folded-col="when"]')).to_be_visible()
             page.screenshot(path=str(shots / f"1-3-send-history-{900 if width == 1440 else 393}.png"))
             page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-history-{900 if width == 1440 else 393}-{phase}.png"))
-            well.get_by_test_id("history-row").first.click()
+            saved = well.get_by_test_id("history-row").filter(has=page.get_by_test_id("history-word").filter(has_text=re.compile("^Saved$"))).first
+            saved.click()
+            _settle(page)
+            proof = well.get_by_test_id("proof").first
+            expect(proof).to_have_attribute("title", re.compile(r"\.md$"))
+            if phase == "after" and "…" in proof.inner_text():
+                head, tail = proof.inner_text().split("…", 1)
+                full = proof.get_attribute("aria-label")
+                assert full and full.startswith(head) and full.endswith(tail), (full, head, tail)
+                assert head[-1] in "/:_-. " and full[len(full)-len(tail)-1] in "/:_-. ", (full, head, tail)
             page.screenshot(path=str(shots / f"1-3-send-receipt-{900 if width == 1440 else 393}.png"))
             page.screenshot(path=str(shots.parent / "send-engines14r3" / f"send-receipt-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_role("tab", name="Folder", exact=True).click()
