@@ -43,7 +43,6 @@ import { fitStrip } from "../fitStrip";
 import { createPortal } from "react-dom";
 import { Lamp, type LampProps } from "../live/Lamp";
 import { Meter, type MeterProps } from "../live/Meter";
-import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetLabelContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -79,11 +78,11 @@ export interface ObjectListColumn {
   key: string;
   /** The header word, sentence case (`Length`, `Summary`). */
   word: string;
-  /** The grid track (default `minmax(0, 1fr)` for name, `120px` else). */
+  /** Dense-list track. Selection-list facts use their measured content width. */
   track?: string;
   /** Larger numbers stay longer when this list's own container narrows. */
   priority?: number;
-  /** Smallest readable track, including its cell padding. The header may raise it. */
+  /** Minimum for editable cells and dense lists, including cell padding. */
   minWidth?: number;
 }
 
@@ -393,7 +392,7 @@ export function ObjectList({
     let frame = 0;
     const update = () => {
       const compact = list.clientWidth > 0 && list.clientWidth <= 520, box = well.getBoundingClientRect();
-      const ids = compact ? [...well.querySelectorAll<HTMLElement>(".object-list-row")].filter(row => {const r=row.getBoundingClientRect();return r.bottom>box.top+1 && r.top<box.bottom-1;}).map(row=>row.dataset.objectId!) : [];
+      const ids = [...well.querySelectorAll<HTMLElement>(".object-list-row")].filter(row => {const r=row.getBoundingClientRect();return r.bottom>box.top+1 && r.top<box.bottom-1;}).map(row=>row.dataset.objectId!);
       setViewport(old => old.compact===compact && old.ids.join("\0")===ids.join("\0") ? old : {compact,ids});
     };
     const schedule = () => {cancelAnimationFrame(frame); frame=requestAnimationFrame(update);};
@@ -408,34 +407,49 @@ export function ObjectList({
   const layoutId = `list-${useId().replace(/:/g, "")}`;
   const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
   const [requiredColumns,setRequiredColumns] = useState<string[]>(["state"]);
+  const [controlColumns,setControlColumns] = useState<string[]>([]);
   const columnKey = columns.map((column) => `${column.key}:${column.word}`).join("|");
   useLayoutEffect(() => {
     if (!selection || !listRef.current) return;
     const measure = () => {
       const next: Record<string, number> = {};
-      const facts = new Set(["state"]);
-      listRef.current?.querySelectorAll<HTMLElement>("[data-measure-col]").forEach((label) => {
-        next[label.dataset.measureCol!] = Math.ceil(label.getBoundingClientRect().width + (onSort ? 46 : 24));
+      const facts = new Set(["state"]), controls = new Set<string>();
+      const intrinsic = (node: HTMLElement) => {
+        const copy = node.cloneNode(true) as HTMLElement;
+        copy.style.cssText = "position:absolute;visibility:hidden;display:flex;width:max-content;max-width:none";
+        // Keep the real row/header inheritance, padding and control styles.
+        node.parentElement!.append(copy);
+        const width = Math.ceil(copy.getBoundingClientRect().width);
+        copy.remove();
+        return width;
+      };
+      listRef.current?.querySelectorAll<HTMLElement>(".object-list-th[data-col]").forEach(header => {
+        next[header.dataset.col!] = intrinsic(header);
       });
       // Pills are facts, not optional clipped text. Reserve their whole intrinsic width.
       listRef.current?.querySelectorAll<HTMLElement>(".object-list-row [data-col]").forEach(cell=>{
-        if (cell.querySelector(".kit-dotword, .object-list-dot-word, button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) facts.add(cell.dataset.col!);
+        if (cell.querySelector("button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) controls.add(cell.dataset.col!);
+        if (controls.has(cell.dataset.col!) || cell.querySelector(".kit-dotword, .object-list-dot-word")) facts.add(cell.dataset.col!);
         if (cell.dataset.col === "name" || !cell.textContent?.trim()) return;
-        const copy=cell.cloneNode(true) as HTMLElement;
-        copy.style.cssText="position:absolute;visibility:hidden;display:flex;width:max-content;max-width:none";
-        listRef.current!.append(copy);
-        next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, Math.ceil(copy.getBoundingClientRect().width));
-        copy.remove();
+        if (viewport.ids.length && !viewport.ids.includes(cell.closest<HTMLElement>("[data-object-id]")!.dataset.objectId!)) return;
+        next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, intrinsic(cell));
       });
       setRequiredColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
-      setHeaderWidths((old) => JSON.stringify(old) === JSON.stringify(next) ? old : next);
+      setControlColumns(old=>old.join("|")===[...controls].join("|")?old:[...controls]);
+      // A hidden pane has no geometry. Wait for its allocation before fitting.
+      if (listRef.current?.clientWidth) setHeaderWidths((old) => JSON.stringify(old) === JSON.stringify(next) ? old : next);
     };
     measure();
     let current = true;
     void document.fonts?.ready.then(() => { if (current) measure(); });
-    return () => { current = false; };
-  }, [selection, columnKey, sort.key, sort.dir, rows]);
-  const minimum = (column: ObjectListColumn) => Math.max(
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(listRef.current);
+    document.fonts?.addEventListener("loadingdone", measure);
+    return () => { current = false; observer?.disconnect(); document.fonts?.removeEventListener("loadingdone", measure); };
+  }, [selection, columnKey, sort.key, sort.dir, rows, viewport.ids.join("\0")]);
+  const minimum = (column: ObjectListColumn) => selection && column.key !== "name" && !controlColumns.includes(column.key) && headerWidths[column.key]
+    ? headerWidths[column.key]
+    : Math.max(
     column.minWidth ?? (/^\d+px$/.test(column.track ?? "") ? parseFloat(column.track!) : column.key === "name" ? 96 : 112),
     headerWidths[column.key] ?? column.word.length * 8 + 24,
   );
@@ -644,7 +658,7 @@ export function ObjectList({
       aria-label={label}
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
-      {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} data-caption={labelCaption(column.word)} />)}</div></> : null}
+      {selection ? <style>{fitRules}</style> : null}
       {!rows.length && empty ? <PaneNotice>{empty}</PaneNotice> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
@@ -743,26 +757,10 @@ function ListSortVerb({
       >
         Sort ▾
       </Button>
-      <Popover anchor={anchor} open={open} onClose={() => setOpen(false)} ariaLabel="Sort by" placement="below" align="end">
-        <span className="object-list-sortmenu" role="group" aria-label="Sort by">
-          {columns.map((column) => {
-            const on = column.key === sort.key;
-            return (
-              <Button
-                key={column.key}
-                dense
-                variant="ghost"
-                aria-pressed={on ? "true" : "false"}
-                data-col={column.key}
-                onClick={() => { onSort(column.key); setOpen(false); }}
-              >
-                <span className="object-list-sortmenu-word">{column.word}</span>
-                {on ? <span className="object-list-sort-mark" aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span> : null}
-              </Button>
-            );
-          })}
-        </span>
-      </Popover>
+      {open && anchor.current ? <WorkMenu label="Sort by" x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom}
+        opener={anchor.current} autoFocus onClose={() => {setOpen(false);anchor.current?.focus();}} returnFocus={() => anchor.current?.focus()}
+        entries={columns.map(column => ({type:"item", id:column.key, label:column.word, checked:column.key === sort.key,
+          title:column.key === sort.key ? dirWord : undefined, onSelect:() => onSort(column.key)}))} /> : null}
     </span>
   );
 }

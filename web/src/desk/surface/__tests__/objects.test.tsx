@@ -255,12 +255,13 @@ const ROWS: ObjectListRow[] = [
   { id: "r3", kind: "note", name: "Ledger cutover risks", when: "OCT 5", whenSort: 1 },
 ];
 
-function ListHost(props: { onOpen?(id: string): void }) {
+function ListHost(props: { onOpen?(id: string): void; dense?: boolean }) {
   const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
   const [sel, setSel] = useState<string | null>(null);
   return (
     <ObjectList
       label="Payments ledger cutover"
+      density={props.dense ? "dense" : undefined}
       rows={ROWS}
       sort={sort}
       onSort={(key) => setSort((s) => ({ key, dir: s.key === key && s.dir === "asc" ? "desc" : "asc" }))}
@@ -308,6 +309,25 @@ describe("ObjectList", () => {
     await userEvent.keyboard("{Enter}");
     expect(onSelect).toHaveBeenCalledWith("r2");
     expect(onOpen).toHaveBeenCalledExactlyOnceWith("r2");
+  });
+
+  it("the narrow Sort uses the shared menu and changes the rendered order", async () => {
+    // JSDOM has no container queries; expose the phone's Sort slot.
+    render(<><style>{".object-list-sortline { display: flex; }"}</style><ListHost dense /></>);
+    const button = screen.getByRole("button", {name:"Sort: Name, ascending"});
+    await userEvent.click(button);
+    const menu = screen.getByRole("menu", {name:"Sort by"});
+    expect(within(menu).getByRole("menuitemcheckbox", {name:"Name"})).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(within(menu).getByRole("menuitemcheckbox", {name:"When"}));
+    expect(screen.queryByRole("menu", {name:"Sort by"})).toBeNull();
+    expect(screen.getByRole("columnheader", {name:/^When/})).toHaveAttribute("aria-sort", "ascending");
+    expect(screen.getByRole("grid").querySelector("[data-object-id]")).toHaveAttribute("data-object-id", "r3");
+    expect(button).toHaveFocus();
+    await userEvent.click(button);
+    await userEvent.click(within(screen.getByRole("menu", {name:"Sort by"})).getByRole("menuitemcheckbox", {name:"When"}));
+    expect(screen.getByRole("columnheader", {name:/^When/})).toHaveAttribute("aria-sort", "descending");
+    expect(screen.getByRole("grid").querySelector("[data-object-id]")).toHaveAttribute("data-object-id", "r1");
+    expect(button).toHaveFocus();
   });
 
   it("a header press sorts; a second press flips the direction", async () => {
