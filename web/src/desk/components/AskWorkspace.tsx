@@ -2,7 +2,7 @@
  * The older composer exports in askFace still serve Memory and the Room. */
 import { useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
-import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, faceTimeWords } from "../surface";
+import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, Disclosure, faceTimeWords } from "../surface";
 import { spriteUrl } from "../sprites";
 import { nameIsFile } from "../surface/objects/fitName";
 import { agentWordsPlain } from "./AgentWords";
@@ -78,12 +78,14 @@ export function AskNotAnswered({ reason, words, verb }: { reason: string; words:
 }
 
 export function AskSources({ rows, children, compact, targetId }: { rows: readonly AskReferenceRowData[]; children: ReactNode; compact: boolean; targetId: string }) {
+  const [reveal, setReveal] = useState<{ targetId: string; open: boolean } | null>(null);
+  const sourceOpen = reveal?.targetId === targetId && reveal.open;
   const [selection, setSelection] = useState<{ targetId: string; id: string } | null>(null);
   const picked = selection?.targetId === targetId ? selection.id : null;
-  const list = <ListView label="Sources" ordered wholeRows
-    columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }]}
-    rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: row.meta }))} selectedId={picked} onSelect={id => setSelection({ targetId, id })}
+  const list = <ListView label="Sources" ordered wholeRows headerless caption={compact ? undefined : `Sources · ${rows.length}`}
+    columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }, { key: "fact", word: "Detail" }]}
+    rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, cells: { fact: row.meta } }))} selectedId={picked} onSelect={id => setSelection({ targetId, id })}
     defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />;
-  return <PreferencePane label="Answer and sources" data-feedback-redact="true"><ListPane label="Answer and sources" deck={!compact} open hostBack listShare={.4}
-    listTestId="ask-looked-at" list={rows.length ? list : null}>{children}</ListPane></PreferencePane>;
+  return <PreferencePane label="Answer and sources" data-feedback-redact="true"><ListPane label="Answer and sources" listPosition="after" listShare={.4}
+    listTestId="ask-looked-at" list={rows.length ? compact ? <Disclosure label="Sources" token={rows.length} ariaLabel={`Sources ${rows.length}`} open={Boolean(sourceOpen)} onOpenChange={open => setReveal({ targetId, open })} bounded>{list}</Disclosure> : list : null}>{children}</ListPane></PreferencePane>;
 }

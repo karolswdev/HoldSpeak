@@ -136,8 +136,8 @@ it("keeps a fitted scope when the first Mast fact is wider than its seat", () =>
 });
 
 
-it("an optional source list leaves the reader and its position control mounted", () => {
-  const pane = (listed: boolean) => <ListPane deck label="Answer" listTestId="sources" list={listed ? <ListView label="Sources" rows={[{id:"n",kind:"note",name:"Review"}]} columns={[{key:"name",word:"Sources"}]} /> : null}><ObjectReader label="Conversation"><input aria-label="Reading position" defaultValue="First line" /></ObjectReader></ListPane>;
+it.each(["before", "after"] as const)("an optional %s source list leaves the reader and its position control mounted", listPosition => {
+  const pane = (listed: boolean) => <ListPane deck listPosition={listPosition} label="Answer" listTestId="sources" list={listed ? <ListView label="Sources" rows={[{id:"n",kind:"note",name:"Review"}]} columns={[{key:"name",word:"Sources"}]} /> : null}><ObjectReader label="Conversation"><input aria-label="Reading position" defaultValue="First line" /></ObjectReader></ListPane>;
   const {rerender} = render(pane(false));
   const position = screen.getByRole("textbox", {name:"Reading position"});
   expect(screen.queryByTestId("sources")).toBeNull();
@@ -149,4 +149,46 @@ it("an optional source list leaves the reader and its position control mounted",
   expect(screen.queryByTestId("sources")).toBeNull();
   expect(screen.getByRole("textbox", {name:"Reading position"})).toBe(position);
   expect(position).toHaveValue("Kept line");
+});
+
+it("keeps a partial first reading line outside the visible edge without moving scroll", () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => new DOMRect(0,0,300,45));
+  vi.spyOn(document, "createRange").mockImplementation(() => ({selectNodeContents:()=>{},getClientRects:()=>[new DOMRect(0,-5,300,18),new DOMRect(0,20,300,18)]}) as unknown as Range);
+  const {container}=render(<SurfaceWell wholeLines>Keep both lines reachable.</SurfaceWell>);
+  const well=container.querySelector<HTMLElement>(".surface-well-body")!;
+  expect(well.style.clipPath).toMatch(/^inset\(13px /);
+  expect(well.scrollTop).toBe(0);
+  expect(well).toHaveTextContent("Keep both lines reachable.");
+});
+
+
+it("a reading-first list follows the reader in DOM and shares its existing verb row", () => {
+  const {container}=render(<ListPane label="Answer" listPosition="after" listShare={.4} listTestId="sources" list={<ListView label="Sources" headerless caption="Sources · 3" rows={[{id:"n",kind:"note",name:"Review"}]} columns={[{key:"name",word:"Sources"}]} verbs={[{id:"open",label:"Open source",run:()=>{}}]} selectedId={null} onSelect={()=>{}} />}><ObjectReader label="Conversation">The answer</ObjectReader></ListPane>);
+  const pane=container.querySelector(".surface-list-pane")!;
+  expect(pane).toHaveAttribute("data-layout","stack");
+  expect(pane.firstElementChild).toHaveClass("surface-list-pane-preview");
+  const caption=screen.getByText("Sources · 3");
+  expect(caption.closest('[role="toolbar"]')).toBe(screen.getByRole("toolbar",{name:"Sources actions"}));
+  expect(screen.getByRole("button",{name:"Open source"})).toBeDisabled();
+});
+
+
+it.each([30, 30.75])("a reading well keeps an embedded selection row of %s pixels whole and reachable", rowHeight => {
+  let scroll = 0;
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function(this: HTMLElement) {
+    if (this.classList.contains("object-list-row")) return new DOMRect(0,(this.textContent === "First claim" ? 0 : rowHeight)-scroll,300,rowHeight);
+    return new DOMRect(0,0,300,45);
+  });
+  vi.spyOn(document, "createRange").mockImplementation(() => ({selectNodeContents:()=>{},getClientRects:()=>[new DOMRect(0,-scroll,300,16),new DOMRect(0,36-scroll,300,16)]}) as unknown as Range);
+  const {container}=render(<SurfaceWell wholeLines><div className="object-list-row">First claim</div><div className="object-list-row">Second claim</div></SurfaceWell>);
+  const well=container.querySelector<HTMLElement>(".surface-well-body")!;
+  const [first,second]=container.querySelectorAll(".object-list-row");
+  const bottom=45-parseFloat(well.style.clipPath.split(" ")[2]);
+  expect(bottom).toBeGreaterThanOrEqual(first.getBoundingClientRect().bottom);
+  expect(bottom).toBeLessThanOrEqual(second.getBoundingClientRect().top);
+  scroll=rowHeight; fireEvent.scroll(well);
+  expect(well.style.clipPath).toBe("");
+  expect(second.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+  expect(second.getBoundingClientRect().bottom).toBeLessThanOrEqual(45);
+  expect(well).toHaveTextContent("Second claim");
 });

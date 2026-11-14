@@ -167,3 +167,7 @@
 @container surface (max-width: 520px) {
   .object-list.object-list--selection:has(> .object-list-head .object-list-sort) { --material-list-head-height: 46px; }
 }
+
+.object-list-inner-toolbar:has(.object-list-caption),
+.surface-disclosure[data-bounded] .object-list-inner-toolbar { min-height: 0; padding-block-end: 0; }
+.object-list-caption { flex: none; text-transform: var(--material-label-case); font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); color: var(--hs-ink-2); }

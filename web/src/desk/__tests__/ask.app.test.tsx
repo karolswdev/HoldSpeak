@@ -646,7 +646,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     fireEvent.change(askBox(), { target: { value: "What changed?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText("Source changed. Select it again")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ask again" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Ask again" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(screen.getByRole("button", { name: "Back to note" })).toBeInTheDocument();
     expect(calls.filter((call) => call.url.endsWith("/api/ask"))).toHaveLength(1);
@@ -1028,7 +1028,8 @@ describe("Ask D1: the question at the top", () => {
     expect(within(turn).getByRole("heading", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
     const refs = screen.getByTestId("ask-looked-at");
     const row = within(refs).getByRole("row", { name: /1:1 with Mira/ });
-    expect(row).toHaveTextContent(/agoNote/);
+    expect(row).toHaveTextContent(/ago/);
+    expect(row).toHaveTextContent("Note");
     fireEvent.doubleClick(row);
     await waitFor(() => expect(useDesk.getState().pullouts.some((p) => p.id === NOTE_REF)).toBe(true));
     // The verbs on the answer.
@@ -1175,7 +1176,7 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     const refs = await screen.findByTestId("ask-looked-at");
     expect(within(refs).getByRole("row", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
-    expect(within(refs).getByRole("row", { name: /1:1 with Mira/ })).toHaveTextContent(/agoNote/);
+    expect(within(refs).getByRole("row", { name: /1:1 with Mira/ })).toHaveTextContent(/Note.*ago/);
   });
 
   it("'Grounded in 2 records' opens the claims and the record that supports each", async () => {
@@ -1361,8 +1362,7 @@ describe("Window pass 2: Ask says one thing once", () => {
     expect(failed.querySelector(".kit-dot")?.getAttribute("data-tone")).toBe("fail");
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByTestId("ask-turn");
-    expect(line).toHaveTextContent("Engine:");
-    expect(line).toHaveTextContent("Glass Lan");
+    expect(screen.getByTestId("engine-line")).toHaveTextContent("Engine: Glass Lan");
   });
 
   it("an engine whose last check did not reach it reads Not answering before any ask", async () => {
@@ -1572,4 +1572,15 @@ it("a held task shows a date word, a sentence-case kind and a lamp for its withh
   expect(within(question).getByText("Oct 23", { exact: true })).toBeVisible();
   expect(question).not.toHaveTextContent("2026-10-23");
   expect(question).not.toHaveTextContent("hidden (secret)");
+});
+
+it("a pinned empty ask offers no answer-only verbs", () => {
+  useDesk.setState({ askThread: null });
+  hubWithTools();
+  useDesk.getState().askAbout([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }]);
+  render(<AskPanel />);
+  const verbs = within(screen.getByTestId("ask-actions"));
+  for (const name of ["Save as note", "Make it a task", "Send…", "Copy"]) expect(verbs.queryByRole("button", { name })).toBeNull();
+  expect(verbs.getByRole("button", { name: "New ask" })).toBeEnabled();
+  expect(verbs.getByRole("button", { name: "About" })).toBeEnabled();
 });

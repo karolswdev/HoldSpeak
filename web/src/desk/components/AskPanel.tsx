@@ -64,7 +64,7 @@ import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
 import { Token } from "../surface/Token";
-import { Toolbar, ListPane, ListView, PreferencePane, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
+import { Toolbar, ListPane, ListView, PreferencePane, PaneGroup, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
 import { plainReason } from "../surface/plainFailure";
 import { nameIsFile } from "../surface/objects/fitName";
@@ -1177,7 +1177,7 @@ export function AskPanel() {
     { id: "new", label: "New ask", key: "Mod+n", enabled: () => true, run: () => { startNew(); setAnswerKey(""); setPickedRecent(null); setRailSheet(false); promptRef.current?.focus(); } },
     { id: "about", label: "About", title: about.length ? about.map(row => row.title).join(", ") : "My whole desk", testId: "ask-context", enabled: () => true, run: () => { scopeAnchor.current = document.querySelector('[data-testid="ask-actions"]'); setScopeOpen(true); } },
     ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", enabled: () => true, run: returnToSource }] : []),
-    { id: "save", label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
+    ...(activeTurn ? [{ id: "save", label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
       run: () => { if (activeTurn) { if (saved[activeTurn.key]) openRef(saved[activeTurn.key], { projectReturn: activeProjectReturn }); else void saveAsNote(activeTurn); } } },
     { id: "task", label: "Make it a task", enabled: () => Boolean(activeTurn && threadId && !tasks[activeTurn.key] && !(activeTurn.used?.wrote ?? []).some(row => row.ref.startsWith("action_item:"))) && !running && !makingTask,
       run: () => { if (activeTurn) void makeTask(activeTurn); } },
@@ -1188,7 +1188,8 @@ export function AskPanel() {
       run: () => { if (activeTurn) setGroundedOpen(current => ({ ...current, [activeTurn.key]: !current[activeTurn.key] })); } },
     ...(fromNote ? [{ id: "append", label: activeTurn && added[activeTurn.key] ? "Undo add to note" : "Add to note", enabled: () => Boolean(activeTurn) && !running && !adding,
       run: () => { if (activeTurn) { if (added[activeTurn.key]) void undoAdd(activeTurn); else void addToNote(activeTurn); } } }] : []),
-    { id: "forget", label: "Forget", enabled: () => Boolean(threadId || turns.length) && !running, run: forget },
+    ] : []),
+    ...(threadId || turns.length ? [{ id: "forget", label: "Forget", enabled: () => Boolean(threadId || turns.length) && !running, run: forget }] : []),
     { id: "engine", label: engine.state === "set" ? `Engine: ${engineDown || engine.down ? "Not answering" : engine.model}` : engine.state === "none" ? "No engine" : engine.state === "failed" ? "Engine not read" : "Engine",
       testId: "engine-line", title: engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined,
       enabled: () => true, run: engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine },
@@ -1212,7 +1213,7 @@ export function AskPanel() {
       }}>
         <AskMast line={[about.length ? about.map(row => row.title).join(", ") : "My whole desk", engine.model, running ? "Asking" : engineDown || engine.down ? "Not answering" : ""].filter(Boolean).join(" · ")} held={held.calls.length} asking={running ? runSeconds : undefined} />
         <ShowMe app="ask:desk" />
-        <ListPane deck={railShown} listShare={.25} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
+        <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
           list={<ListView label="Recent" ordered wholeRows empty={railShown ? "No recent asks" : undefined}
             rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.id, "rest", null, 20) : undefined,
               detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
@@ -1221,7 +1222,7 @@ export function AskPanel() {
             onSelect={id => { setPickedRecent(id); }} onOpen={id => { setPickedRecent(id); setAnswerKey(""); setRailSheet(false); pickRail(id); }}
             defaultVerb="open" verbs={[...verbs, { id: "open", label: "Open", run: row => { if (row) { setAnswerKey(""); setRailSheet(false); pickRail(row.id); } } }]}
             toolbar={{ testId: "ask-actions" }} /> }>
-          <PreferencePane label="Answer">
+          <PreferencePane label="Answer"><PaneGroup label="">
           <AskScope rows={about} candidates={candidates} onPick={pickAbout} onRemove={row => removeAbout(row.ref)}
             onOpenRow={row => row.ref === THIS_WEEK ? undefined : () => openRef(row.ref, { projectReturn: activeProjectReturn })}
             control={{open: scopeOpen, close: () => setScopeOpen(false), anchor: scopeAnchor}} />
@@ -1268,7 +1269,7 @@ export function AskPanel() {
             <PadGadget label="Ask about your work" micLabel="Speak your question" micDraftScope="desk-ask" rows={1} autoGrow value={prompt} placeholder={turns.length ? "Ask a follow-up" : "Ask about your work"}
               autoFocus inputRef={promptRef} onChange={setPrompt} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void ask(); } }} />
           </Toolbar>
-          </PreferencePane>
+          </PaneGroup></PreferencePane>
         </ListPane>
         <StatusBar data-testid="ask-status" parts={[
           ...(held.calls.length ? [{ key: "held", lamp: "ask" as const, priority: 100, text: `${held.calls.length} tool ${held.calls.length === 1 ? "call waits" : "calls wait"} on you` }] : []), ...statusItems]} />

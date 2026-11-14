@@ -78,10 +78,14 @@ def _seat_failures(win, width):
         let cut=false;
         for(let node=walker.nextNode();node;node=walker.nextNode()) {
           if(!node.textContent.trim() || node.parentElement.closest('[aria-hidden=true]')) continue;
-          const range=document.createRange();range.selectNodeContents(node);
-          if([...range.getClientRects()].some(r=>r.top<box.bottom-.5 && r.bottom>box.bottom+.5)) cut=true;
+          const range=document.createRange(), rects=[];
+          if(node.parentElement.closest('pre') && node.textContent.includes('\n')) {
+            let from=0; for(const line of node.textContent.split('\n')) {range.setStart(node,from);range.setEnd(node,from+line.length);rects.push(...range.getClientRects());from+=line.length+1;}
+          } else {range.selectNodeContents(node);rects.push(...range.getClientRects());}
+          if(rects.some(r=>(r.top<box.bottom-.5 && r.bottom>box.bottom+.5) || (r.top<box.top-.5 && r.bottom>box.top+.5))) cut=true;
         }
-        if(cut) failures.push('The reader ends in a partial text line');
+        if(cut) failures.push('The reader has a partial text line at an edge');
+        if([...reading.querySelectorAll('.object-list-row')].map(row=>row.getBoundingClientRect()).some(r=>r.height<=reading.getBoundingClientRect().height && ((r.top<box.bottom-.5 && r.bottom>box.bottom+.5) || (r.top<box.top-.5 && r.bottom>box.top+.5)))) failures.push('The reader has a partial embedded selection row');
       }
       const held=win.querySelector('[data-testid=ask-hold]');
       if (held) {
@@ -104,9 +108,31 @@ def _seat_failures(win, width):
       }
       const sources=win.querySelector('[data-testid=ask-looked-at] .object-list-rows');
       if(sources?.getBoundingClientRect().height) {
-        const box=edge(sources), rows=[...sources.querySelectorAll('[data-object-id]')].map(r=>r.getBoundingClientRect());
+        const box=edge(sources), seat=sources.closest('[data-testid=ask-looked-at]').getBoundingClientRect();box.bottom=Math.min(box.bottom,seat.bottom);const rows=[...sources.querySelectorAll('[data-object-id]')].map(r=>r.getBoundingClientRect());
         if(rows.some(r=>r.top<box.bottom-.5 && r.bottom>box.bottom+.5)) failures.push('Sources ends in a partial row');
-        if(width===1440 && rows.filter(r=>r.top>=box.top-.5 && r.bottom<=box.bottom+.5).length<Math.min(4,rows.length)) failures.push('Sources has fewer than four whole rows');
+        if([...sources.querySelectorAll('[data-col=fact]')].some(cell=>cell.textContent.trim() && !cell.getBoundingClientRect().width)) failures.push('A source fact is hidden');
+        if(width===1440 && rows.filter(r=>r.top>=box.top-.5 && r.bottom<=box.bottom+.5).length<Math.min(3,rows.length)) failures.push('Sources has fewer than three whole rows');
+      }
+      const sourceSeat=win.querySelector('[data-testid=ask-looked-at]');
+      if(sourceSeat && reading?.getBoundingClientRect().height) {
+        const sr=sourceSeat.getBoundingClientRect(), rr=reading.closest('.surface-object-reader').getBoundingClientRect();
+        if(sr.top<rr.bottom-1) failures.push('Sources is not below the answer');
+        const pane=sourceSeat.closest('.surface-list-pane');
+        if(pane && rr.height<pane.getBoundingClientRect().height*.6-1) failures.push('The answer has less than 60 percent of its seat');
+        if(width===393 && !sourceSeat.querySelector('[aria-expanded]')) failures.push('Compact Sources has no reveal');
+        const trigger=sourceSeat.querySelector('[aria-expanded]'), opener=sourceSeat.querySelector('[data-list-verb=open-source]');
+        if(width===393 && trigger && opener && opener.getBoundingClientRect().top<trigger.getBoundingClientRect().bottom+7.5) failures.push('Source controls touch');
+        const rows=sourceSeat.querySelector('.object-list-rows'), bar=sourceSeat.querySelector('.object-list-inner-toolbar,.object-list-verbs');
+        if(rows && bar) {
+          const box=edge(rows), visible=[...rows.querySelectorAll('[data-object-id]')].map(row=>row.getBoundingClientRect()).find(r=>r.top>=box.top-.5 && r.bottom<=Math.min(box.bottom,sr.bottom)+.5);
+          if(width===1440 && visible && visible.top>bar.getBoundingClientRect().bottom+2) failures.push('A gap precedes the first Source row');
+        }
+        if(width===1440) {const recent=win.querySelector('[data-testid=ask-recent] .object-list');if(recent?.getBoundingClientRect().width<win.getBoundingClientRect().width*.35) failures.push('Recent lost its previous width');}
+      }
+      if(!win.querySelector('[data-testid=ask-conversation]')) for(const b of win.querySelectorAll('[data-testid=ask-actions] button:disabled')) if(/^(Save as note|Make it a task|Send|Copy)/.test(b.textContent.trim())) failures.push('An empty ask shows an answer-only verb');
+      for(const pre of win.querySelectorAll('pre.reading-code')) {
+        const label=pre.querySelector('.reading-language'), code=pre.querySelector('code');
+        if(label && code && reading?.getBoundingClientRect().height) {const r=edge(reading), l=label.getBoundingClientRect();const first=document.createRange();first.setStart(code.firstChild,0);first.setEnd(code.firstChild,code.textContent.split('\n')[0].length);const c=first.getBoundingClientRect();if(l.top>=r.top && l.bottom<=r.bottom && c.top>=r.bottom) failures.push('A code block shows only its language');}
       }
       const scope=document.querySelector('[data-testid=ask-scope-menu] .object-list-rows');
       if(scope) {const box=edge(scope), rows=[...scope.querySelectorAll('[data-object-id]')];if(rows.length && !scope.getBoundingClientRect().height) failures.push('The scope rows have no visible seat');if(rows.some(row=>{const r=row.getBoundingClientRect();return r.top<box.bottom-.5 && r.bottom>box.bottom+.5;})) failures.push('The scope search ends in a partial row');}
@@ -226,7 +252,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     threading.Thread(target=model.serve_forever, daemon=True).start()
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask14r2")
+    shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     try:
         with sync_playwright() as pw:
@@ -389,7 +415,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     thread = _stored_long_thread(get_database(), thread)
     answer_count = sum(message["role"] == "assistant" for message in thread["thread"]["messages"])
     hold["answer"]["output"] = _shaped_answer()
-    shots = evidence_dir("ask14r2")
+    shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     pending, decisions = [], []
     seat_failures = []
@@ -451,7 +477,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 sources = win.get_by_test_id("ask-looked-at")
                 if sources.count() and win.get_by_test_id("ask-reading").is_visible():
                     expect(sources).to_be_visible()
-                    assert sources.evaluate("el => {const r=el.querySelector('[role=grid]').getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
+                    assert sources.evaluate("el => {if(!el.querySelector('[role=grid]'))return true;const r=el.querySelector('[role=grid]').getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
 
@@ -487,6 +513,10 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             shot("recent-folded" if width == 1440 else "recent-restored")
             verb("Recent").click()
             shot("recent-restored" if width == 1440 else "recent-folded")
+            reveal = win.get_by_role("button", name=re.compile(r"^Sources(?: |$)"))
+            if width == 393: shot("sources-folded")
+            if reveal.count() and reveal.get_attribute("aria-expanded") == "false": reveal.click()
+            if width == 393: shot("sources-open")
             source = win.get_by_test_id("ask-looked-at").last.get_by_role("row", name=re.compile("1:1 with Mira"))
             source.click()
             shot("source-selected")
@@ -607,7 +637,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
     tools = json.loads((wire / "ask.tools.wire.json").read_text())
     # These names and ids come from the same real note producer as the desk.
     answer = {**tools["answer"], "output": _shaped_answer(), "looked_at": [{"ref": f"note:{note['id']}", "title": note["title"], "kind": "note"} for note in notes]}
-    shots = evidence_dir("ask14r2")
+    shots = evidence_dir(os.environ.get("ASK_GLASS_SHOTS", "ask14r2"))
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
     pending, recent_requests = [], []
     seat_failures = []
@@ -716,10 +746,26 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             pending.pop().fulfill(json=answer)
             expect(win.get_by_test_id("ask-turn")).to_be_visible()
             shot("3-many-sources")
+            code = win.locator("pre.reading-code").first
+            well = win.locator(".surface-object-reading")
+            well.evaluate("(el, top) => el.scrollTop += top-el.getBoundingClientRect().top", code.evaluate("el=>el.getBoundingClientRect().top"))
+            shot("4-code")
+            assert code.locator("code").inner_text().startswith("git status --short")
+            horizontal = code.locator("..")
+            assert horizontal.evaluate("el=>el.scrollWidth>el.clientWidth"), "The long code token needs its own horizontal seat"
+            horizontal.evaluate("el=>el.scrollLeft=el.scrollWidth")
+            assert horizontal.evaluate("el=>el.scrollLeft>0")
+            shot("4-code-tail")
+            horizontal.evaluate("el=>el.scrollLeft=0")
+            well.evaluate("el=>el.scrollTop=0")
             expect(editor).to_be_in_viewport()
             if not win.locator(".surface-object-reading").evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3').getBoundingClientRect(); return head.top>=r.top && head.bottom<=r.bottom;}"):
                 seat_failures.append(("3-many-sources", "The answer opens past its question"))
             sources = win.get_by_test_id("ask-looked-at")
+            reveal = sources.get_by_role("button", name=re.compile(r"^Sources(?: |$)"))
+            if width == 393: shot("3-sources-folded")
+            if reveal.count() and reveal.get_attribute("aria-expanded") == "false": reveal.click()
+            if width == 393: shot("3-sources-open")
             assert sources.locator("[data-object-id]").count() == len(notes)
             sources.locator("[data-object-id]").last.click()
             expect(sources.get_by_role("button", name="Open source", exact=True)).to_be_enabled()

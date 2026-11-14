@@ -81,3 +81,10 @@
 /* Collection facts take only their rows; an unselected list keeps the rest. */
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview > .surface-collection-overview) > .surface-list-pane-list { flex: 1 1 0; min-height: 0; }
 .surface-list-pane-preview:has(> .surface-collection-overview) { flex: 0 0 auto; }
+
+/* Reading first owns its row budget, without an inherited deck list floor. */
+.surface-list-pane[data-layout="stack"] { --surface-list-min: 0px; --surface-list-share: .4fr; --surface-preview-share: .6fr; display: grid; grid-template-rows: minmax(0, var(--surface-preview-share, .6fr)) minmax(0, var(--surface-list-share, .4fr)); }
+.surface-list-pane[data-layout="stack"] > .surface-list-pane-preview { min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 0; }
+.surface-list-pane[data-layout="stack"] > .surface-list-pane-list { flex: none; min-height: 0; overflow: hidden; }
+.surface-list-pane[data-layout="stack"]:not(:has(> .surface-list-pane-list)),
+.surface-list-pane[data-layout="stack"]:has(> .surface-list-pane-list > .surface-disclosure:not([data-open])) { grid-template-rows: minmax(0, 1fr) auto; }
