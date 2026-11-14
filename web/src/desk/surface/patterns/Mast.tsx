@@ -3,6 +3,7 @@ import { createContext, isValidElement, useContext, useLayoutEffect, useRef, use
 import { contentText, labelCaption } from "../content";
 import { fitName, textMeasure } from "../objects/fitName";
 import { spriteUrl } from "../../sprites";
+import { useStripFit } from "../stripMenu";
 import "./mast.css";
 
 export type MastProps = {
@@ -47,6 +48,12 @@ export function useWindowMast(declaration: MastDeclaration, enabled = true) {
   }, [publish, key, enabled]);
 }
 
+
+/** Navigation keeps its direction even when the word cannot fit its gadget. */
+export function MastBackLabel({label}: {label: string}) {
+  const {ref, fits} = useStripFit<HTMLSpanElement>(true, label);
+  return <span ref={ref} className="surface-mast-back"><span aria-hidden="true">‹</span><span hidden={!fits}>{" " + label}</span></span>;
+}
 
 export function Mast({ kind, title, facts, figures, object, framed = false, stateTitle = false, compact = false, id, agent, glyph, children, className, ...data }: MastProps) {
   const publish = useContext(MastSlotContext);

@@ -29,7 +29,7 @@ import { windowObjectEntry } from "../objectMenu";
 import { WindowIdContext } from "./window/windowIdContext";
 import { primeSendTo, sendToEntry, useSendToTick, withSendTo } from "../windowSend";
 import { DESK_WINDOW } from "../../lib/tokens.gen";
-import { Mast, MastSlotContext, type MastDeclaration } from "../surface/patterns/Mast";
+import { Mast, MastBackLabel, MastSlotContext, type MastDeclaration } from "../surface/patterns/Mast";
 
 // -- Extracted modules (HS-117-04) --
 import {
@@ -1403,7 +1403,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             onClick={compact ? (onBack ?? requestClose) : requestClose}
             data-testid={compact && onBack && backTestId ? backTestId : undefined}
           >
-            {compact ? <span>{onBack && backLabel ? backLabel : "‹ Back"}</span> : <GadgetGlyph kind="close" />}
+            {compact ? <MastBackLabel label={onBack && backLabel ? backLabel : "Back"} /> : <GadgetGlyph kind="close" />}
           </Button>
         </span>
         {leading}
