@@ -1,0 +1,10 @@
+{
+  "recordedBy": "real TestClient on starting commit 28709682e",
+  "method": "GET",
+  "path": "/api/projects/proj-a5155b59d821/reviews/missing-review",
+  "status": 404,
+  "body": {
+    "code": "not_found",
+    "message": "Review 'missing-review' not found"
+  }
+}

@@ -45,7 +45,8 @@
     "elapsed_ms": 0,
     "created_at": "2026-11-12T05:14:38.067033+00:00",
     "updated_at": "2026-11-12T05:14:38.067033+00:00",
-    "kept_at": null
+    "kept_at": null,
+    "editable_claims": []
   },
   "gets": {
     "/api/projects/proj-ebd83251fb43/room": {
@@ -329,7 +330,8 @@
         "elapsed_ms": 0,
         "created_at": "2026-11-12T05:14:38.067033+00:00",
         "updated_at": "2026-11-12T05:14:38.067033+00:00",
-        "kept_at": null
+        "kept_at": null,
+        "editable_claims": []
       }
     }
   },

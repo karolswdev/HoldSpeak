@@ -5,7 +5,7 @@
     { "highlight": { "target": "[data-testid=\"room-headline\"]", "words": "Read the project state here. The status bar also names work that waits on you." } },
     { "highlight": { "target": "[data-testid=\"room-open-list\"] .object-list-row", "words": "Click selects an item and shows its facts below. Return opens it." }, "press": { "target": "[data-testid=\"room-open-list\"] .object-list-row", "words": "" } },
     { "highlight": { "target": "[data-testid=\"room-body\"] input[aria-label=\"Ask this project\"]", "words": "Ask about this project. Return puts the answer and its sources in the reader." } },
-    { "highlight": { "target": "[data-testid=\"room-body\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"updates\"]", "words": "Select a draft or sent update to read it. Use Edit to change a draft." }, "press": { "target": "[data-testid=\"room-body\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"updates\"]", "words": "" } }
+    { "highlight": { "target": "[data-testid=\"room-body\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"updates\"]", "words": "Read an update here. Edit changes a claim; Edit full text changes the complete draft." }, "press": { "target": "[data-testid=\"room-body\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"updates\"]", "words": "" } }
   ],
   "review": { "ref": "room-feel", "question": "Keep this Room view?", "choices": ["Keep", "Redo"] }
 }

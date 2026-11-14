@@ -257,7 +257,7 @@ class TestMCPConfigureStewardCadence:
             "evaluation_cadence_minutes": 0,
         })
         assert is_err
-        assert "evaluation_cadence_minutes" in (body.get("error") or body.get("message", ""))
+        assert (body.get("error") or body.get("message", "")) == "Enter at least one minute between checks."
 
     def test_cadence_above_maximum_fenced(self, db) -> None:
         pid = self._seed_project(db)
@@ -859,7 +859,7 @@ class TestDebt4CadenceWriteWire:
         )
         assert response.status_code == 400
         body = response.json()
-        assert "evaluation_cadence_minutes" in body.get("message", "")
+        assert body.get("message", "") == "Enter at least one minute between checks."
 
     def test_cadence_range_fence_ceiling(self, tmp_path: Path) -> None:
         """Cadence above 10080 is rejected."""

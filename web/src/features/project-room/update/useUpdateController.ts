@@ -90,7 +90,7 @@ export function useUpdateController(
   // PHILO-13-04 fix round (Astra counsel P1): Try again calls the LATEST
   // verb through this ref, so it reads the editor as it is NOW. A captured
   // render's `save` resent the old text and wrote it over newer words.
-  const verbs = useRef<{ save: () => Promise<void>; publish: () => Promise<void> }>({
+  const verbs = useRef<{ save: () => Promise<unknown>; publish: () => Promise<void> }>({
     save: async () => {},
     publish: async () => {},
   });
@@ -478,15 +478,17 @@ export function useUpdateController(
   }, [current, startEnginePass]);
 
   // ── Save verb (draft only) ──
-  const save = useCallback(async () => {
+  const save = useCallback(async (claimEdit?: import("./model").ClaimEdit | import("./model").ClaimEdit[]) => {
     if (!current || current.lifecycle !== "draft") return;
+    if (claimEdit && dirty) { setError("Save the full text before you edit a claim."); return false; }
     setSaveBusy(true);
     setError("");
     const sent = editBody;
     try {
       // Betterment P1: his plain text, saved over the stored body (a line he
       // did not change keeps its stored form).
-      const saved = await updateApi.saveUpdate(current.id, bodyFromPlain(sent, current.bodyMd));
+      const saved = claimEdit ? await updateApi.saveClaimEdits(current.id, Array.isArray(claimEdit) ? claimEdit : [claimEdit]) : await updateApi.saveUpdate(current.id, bodyFromPlain(sent, current.bodyMd));
+      if (currentId.current !== current.id) return false;
       setCurrent(saved);
       // Words typed while the save was in flight stay, and stay unsaved.
       if (editBodyNow.current === sent) {
@@ -494,12 +496,15 @@ export function useUpdateController(
         setDirty(false);
         forgetDraft(updateDraftKey(current.id));
       }
+      setUpdates(rows => rows.map(row => row.id === saved.id ? saved : row));
+      return true;
     } catch (reason) {
-      fail("NOT SAVED", reason, () => void verbs.current.save());
+      fail("NOT SAVED", reason, claimEdit ? undefined : () => void verbs.current.save());
+      return false;
     } finally {
       setSaveBusy(false);
     }
-  }, [current, editBody]);
+  }, [current, editBody, dirty]);
 
   // ── PHILO-15 B64: the owner's review of one claim ──
   const [reviewBusy, setReviewBusy] = useState<string | null>(null);

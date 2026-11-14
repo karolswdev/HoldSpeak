@@ -34,6 +34,8 @@ it on the existing loop, kernel states, warrant and atomic receipt seam:
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
 import json
 import threading
 import uuid
@@ -225,13 +227,12 @@ class StewardContract:
         policy = self._db.steward_policies.get_policy_for_project(project_id)
         if principal.kind is not PrincipalKind.OWNER and (policy is None or not policy.get("configure_operation_id")):
             raise _refusal("steward_policy_required",
-                           "No recorded owner policy lets this principal run the steward. The owner saves the "
-                           "steward policy first.")
+                           "The owner must save the steward policy before this agent can run it.")
         if policy is not None and not policy.get("enabled", 1):
-            raise _refusal("steward_disabled", "The steward policy is disabled for this project")
+            raise _refusal("steward_disabled", "Turn on the steward for this project.")
         remaining = self._cooldown_remaining(project_id, policy)
         if remaining:
-            raise _refusal("cooldown_active", f"Cooling down: {remaining}s remaining")
+            raise _refusal("cooldown_active", f"Wait {remaining} seconds before you run the steward again.")
         authority = self._freeze(principal, project_id, policy, parent_operation_id,
                                  grant=self._admitted_grant(handle))
         run_id = "pstrun_" + uuid.uuid5(_RUN_NAMESPACE, handle.operation_id).hex
@@ -247,7 +248,7 @@ class StewardContract:
                              (handle.operation_id, json.dumps(authority, sort_keys=True), run_id))
         except ActiveRunExistsError as exc:
             raise _refusal("active_run_exists",
-                           f"Project {project_id} already has an active steward run (STW-002)") from exc
+                           "A steward run is already in progress for this project.") from exc
         handle.detach()
         if background:
             threading.Thread(target=self._work, args=(principal, run_id, project_id, handle, authority),
@@ -273,7 +274,7 @@ class StewardContract:
     def _require_project(self, project_id: str) -> None:
         with self._db._connection() as conn:
             if conn.execute("SELECT 1 FROM projects WHERE id=?", (str(project_id),)).fetchone() is None:
-                raise NotFound("project", project_id)
+                raise room_not_found("project", project_id)
 
     def _cooldown_remaining(self, project_id: str, policy: Optional[dict[str, Any]]) -> int:
         cooldown = int((policy or {}).get("cooldown_seconds", 0) or 0)
@@ -505,14 +506,14 @@ class StewardContract:
             raise RuntimeError("project.stop_steward runs only as an admitted operation")
         run = self._db.steward_runs.get_run(run_id)
         if run is None:
-            raise NotFound("steward_run", run_id)
+            raise room_not_found("steward_run", run_id)
         if handle.replay:
             return {"success": True, "run_id": run_id}
 
         def effect(conn: Any) -> None:
             current = self._db.steward_runs.get_run_in_transaction(conn, run_id)
             if current is None or current.get("state") in _TERMINAL_RUN_STATES:
-                raise _refusal("steward_run_already_terminal", f"Steward run {run_id} already ended")
+                raise _refusal("steward_run_already_terminal", "This steward run has already ended.")
             self._db.steward_runs.request_stop_in_transaction(conn, run_id)
 
         handle.terminal("succeeded", "stop_requested", f"steward_run:{run_id}", effect=effect)
@@ -525,7 +526,7 @@ class StewardContract:
         from holdspeak.kernel.runtime import _configure
         run = self._db.steward_runs.get_run(run_id)
         if run is None:
-            raise NotFound("steward_run", run_id)
+            raise room_not_found("steward_run", run_id)
         operation_id = run.get("operation_id") or None
         receipt = _configure(self._db).store.receipt(operation_id) if operation_id else None
         return {"run": _serialize_run(run), "steps": _serialize_steps(self._db.steward_steps.list_steps(run_id)),
@@ -558,8 +559,7 @@ class StewardContract:
         if wired_watch is None and wired_steward is None:
             raise _refusal(
                 "scheduler_not_wired",
-                "project.steward.trigger needs the conductor's scheduler services, which only the running hub "
-                "wires. Nothing was evaluated and no steward run started. Start the hub and retry.", 503)
+                "Start the hub before you run the steward scheduler.", 503)
         handle.detach()
 
         def drain() -> None:
@@ -653,11 +653,15 @@ class StewardContract:
     def send_nudge_command(self, principal: Principal, step_id: str, text: str) -> dict[str, Any]:
         """Send a reviewed nudge; a refusal is a named ServiceError (its operation ends refused)."""
         if not (text or "").strip():
-            raise _refusal("empty_text", "The nudge text must not be empty", 400)
+            raise _refusal("empty_text", "Enter the nudge text.", 400)
         result = self.send_nudge(principal, step_id, text)
         if "error" in result:
             code = str(result["error"])
-            raise ServiceError(code, code.replace("_", " "),
+            words = {"nudge_not_found":"The nudge is not available.",
+                     "nudge_not_proposed":"This nudge no longer waits to be sent.",
+                     "empty_text":"Enter the nudge text.", "text_too_long":"Shorten the nudge text.",
+                     "kind_no_longer_eligible":"This policy no longer permits the nudge."}
+            raise ServiceError(code, words.get(code, "The nudge could not be sent."),
                                context={"status": 404 if code == "nudge_not_found" else 409,
                                         **{k: v for k, v in result.items() if k != "error"}})
         # Codex Astra r3: the comment's own evidence (URL, reviewer, time) and the
@@ -741,24 +745,24 @@ def _validate_policy_fields(fields: dict[str, Any], effect_kinds: tuple[str, ...
     eligible = fields.get("eligible_effect_kinds")
     if eligible is not None:
         if not isinstance(eligible, list):
-            refuse("eligible_effect_kinds must be a list")
+            refuse("Choose the effects from the list.")
         invalid = [k for k in eligible if k not in effect_kinds]
         if invalid:
-            refuse(f"Invalid effect kinds: {invalid}. Valid: {list(effect_kinds)}")
+            refuse("Choose the effects from the list.")
     for field, ceiling in (("max_retries", 100), ("max_actions_per_run", 1000), ("cooldown_seconds", 86400)):
         value = fields.get(field)
         if value is not None:
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                refuse(f"{field} must be a non-negative integer")
+                refuse(f"Enter a whole number of zero or more for {field.replace('_', ' ')}.")
             if value > ceiling:
-                refuse(f"{field} cannot exceed {ceiling}")
+                refuse(f"Enter no more than {ceiling} for {field.replace('_', ' ')}.")
     for field in ("enabled", "unattended_enabled"):
         value = fields.get(field)
         if value is not None and not isinstance(value, bool):
-            refuse(f"{field} must be a boolean")
+            refuse(f"Turn {field.replace('_', ' ')} on or off.")
     cadence = fields.get("evaluation_cadence_minutes")
     if cadence is not None:
         if isinstance(cadence, bool) or not isinstance(cadence, int) or cadence < 1:
-            refuse("evaluation_cadence_minutes must be an integer >= 1")
+            refuse("Enter at least one minute between checks.")
         if cadence > 10080:
-            refuse("evaluation_cadence_minutes cannot exceed 10080 (7 days)")
+            refuse("Enter no more than 10080 minutes between checks.")

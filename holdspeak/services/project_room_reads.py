@@ -15,6 +15,8 @@ still imported inside the read, as before.
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
 from .room_binding import watch_binding
 
 import json
@@ -46,7 +48,7 @@ def require_project(db: Any, project_id: str) -> Any:
     """The project row, or ``NotFound`` (the one implementation; the service delegates here)."""
     project = db.projects.get_project(project_id)
     if project is None:
-        raise NotFound("project", project_id)
+        raise room_not_found("project", project_id)
     return project
 
 

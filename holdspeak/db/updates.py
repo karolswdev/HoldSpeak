@@ -286,7 +286,7 @@ class UpdatesRepository(BaseRepository):
             return
         if row[0] != "draft":
             raise PublishedUpdateError(
-                f"Cannot modify {row[0]} update {clean_id}"
+                "Only a draft update can be changed."
             )
 
         updates: list[str] = []
@@ -354,7 +354,7 @@ class UpdatesRepository(BaseRepository):
             return
         if row[0] != "draft":
             raise PublishedUpdateError(
-                f"Cannot publish {row[0]} update {clean_id}"
+                "Only a draft update can be published."
             )
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conn.execute(
@@ -448,7 +448,7 @@ class UpdatesRepository(BaseRepository):
         old = dict(old_row)
         if old["lifecycle"] == "published":
             raise PublishedUpdateError(
-                f"Cannot supersede published update {clean_old}"
+                "A published update cannot be replaced."
             )
 
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")

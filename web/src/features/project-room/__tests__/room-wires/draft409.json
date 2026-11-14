@@ -26,7 +26,24 @@
      "published_at": null,
      "review_id": null,
      "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
-     "updated_at": "2026-10-18T02:21:27+00:00"
+     "updated_at": "2026-10-18T02:21:27+00:00",
+     "editable_claims": [
+      {
+       "span_id": "s_nothing_0",
+       "section": "progress",
+       "text": "Nothing to report.",
+       "values": {
+        "subject": "Nothing to report."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      }
+     ]
     }
    ]
   }
@@ -2955,7 +2972,24 @@
     "published_at": null,
     "review_id": null,
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
-    "updated_at": "2026-10-18T02:21:27+00:00"
+    "updated_at": "2026-10-18T02:21:27+00:00",
+    "editable_claims": [
+     {
+      "span_id": "s_nothing_0",
+      "section": "progress",
+      "text": "Nothing to report.",
+      "values": {
+       "subject": "Nothing to report."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     }
+    ]
    }
   },
   "method": "POST",

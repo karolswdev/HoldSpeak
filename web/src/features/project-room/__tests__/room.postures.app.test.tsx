@@ -18,6 +18,7 @@ import HANDOFF from "./room-wires/send-handoff.json";
 import TAPE from "./room-wires/grammar10.json";
 import STEWARD from "../steward/__tests__/fixtures/steward.recorded.json";
 import REVIEW from "./room-wires/daily-review.json";
+import POLISH from "./room-wires/polish14.json";
 import CLAIMS from "./room-wires/claims200.json";
 
 const io = vi.hoisted(() => ({ api: vi.fn() }));
@@ -38,10 +39,10 @@ function route(url: string, init: { method?: string } = {}) {
 }
 function press(name: string) { fireEvent.click(screen.getAllByRole("button", { name }).at(-1)!); }
 function choose(label: string, value: string) {
-  const update = screen.queryByRole("button", {name:"Update view"});
+  const update = screen.queryByRole("button", {name:"Update view"}) ?? screen.queryByRole("button", {name:"Project view"});
   if (label === "View" && update) {
     fireEvent.click(update);
-    const word = value === "updates" ? "Text" : value[0].toUpperCase() + value.slice(1);
+    const word = ({updates:"Text",brief:"Prepared brief",kept:"Kept briefs",carried:"Carried forward"} as Record<string,string>)[value] ?? value[0].toUpperCase() + value.slice(1);
     fireEvent.click(screen.getByRole("menuitem", {name:word}));
   } else fireEvent.change(screen.getByRole("combobox", { name: label }), { target: { value } });
 }
@@ -123,12 +124,12 @@ describe("Update seats", () => {
     await screen.findByRole("grid", { name: "Updates" });
     expect(document.querySelector(".surface-object-reader")).not.toBeNull();
     expect(screen.queryByRole("textbox", { name: "Update body" })).toBeNull();
-    press("Edit");
+    press("Edit full text");
     const editor = await screen.findByRole("textbox", { name: "Update body" });
     expect(isSensitiveElement(editor)).toBe(true);
     fireEvent.change(editor, { target: { value: "Keep these words while I read" } }); press("Cancel");
     expect(screen.getByText("Keep these words while I read")).toBeVisible();
-    expect(screen.getByText("Not saved")).toBeVisible(); press("Edit");
+    expect(screen.getByText("Not saved")).toBeVisible(); press("Edit full text");
     expect(screen.getByRole("textbox", { name: "Update body" })).toHaveValue("Keep these words while I read");
   });
   it("names an update by its date, reads markdown first and opens editing explicitly", async () => {
@@ -149,7 +150,7 @@ describe("Update seats", () => {
   });
 
   it("keeps a failed save in the editor and retries with the newer words", async () => {
-    render(<Updates />); press("Edit"); const field = await screen.findByRole("textbox", { name: "Update body" });
+    render(<Updates />); press("Edit full text"); const field = await screen.findByRole("textbox", { name: "Update body" });
     fireEvent.change(field, { target: { value: "First edit" } });
     routes[`PUT /api/updates/${TAPE.DRAFT.update.id}`] = () => { throw new ApiError(503, "offline", {}); };
     press("Save"); await screen.findByText("Could not save the update · Your words stay here");
@@ -272,6 +273,20 @@ describe("Steward and review seats", () => {
     expect(await screen.findByRole("checkbox", { name: "Unattended" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Nudge text" })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Actions per run" })).toHaveValue(STEWARD.getPolicy.policy.max_actions_per_run);
+  });
+  it("renders the hub's State choice without a microphone", async () => {
+    const review = POLISH.review;
+    routes[`POST /api/projects/${review.project_id}/reviews`] = review;
+    function Fields() {
+      const ctrl = useReviewController(review.project_id, null, () => {});
+      useEffect(() => { void ctrl.enterReview(); }, []);
+      return <ReviewPosture ctrl={ctrl} />;
+    }
+    render(<Fields />);
+    await waitFor(() => expect(screen.getByRole("button", {name:"Edit and accept"})).toBeEnabled());
+    press("Edit and accept");
+    expect(screen.getByRole("combobox", {name:"State"})).toHaveValue("open");
+    expect(screen.queryByRole("button", {name:"Speak State"})).toBeNull();
   });
   it("edits human fields with the same labels as the facts and preserves the wire patch", async () => {
     routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;

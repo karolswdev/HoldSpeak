@@ -166,8 +166,8 @@ class TestGetProjectRoute:
         assert resp.status_code == 404
         body = resp.json()
         assert "error" in body
-        # Pin: the error says "Project not found" (not_found helper)
-        assert body["error"] == "Project not found"
+        # Missing projects use the same service sentence over HTTP.
+        assert body["error"] == "The project is not available."
 
 
 # ── PATCH /api/projects/{id} ────────────────────────────────────────────
@@ -268,8 +268,8 @@ class TestProjectResourcesRoute:
         resp = client.get("/api/projects/proj-nope/resources")
         assert resp.status_code == 404
         body = resp.json()
-        # Pin: resources route says "Unknown Project: <id>" (different casing)
-        assert "Unknown Project" in body["error"]
+        # The resources read uses the same missing-project sentence.
+        assert body["error"] == "The project is not available."
 
 
 # ── PUT /api/projects/{id}/resources/{ref} ───────────────────────────────

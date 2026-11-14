@@ -474,7 +474,24 @@
     "fallback_reason": null,
     "fallback_receipt": null,
     "generatorHost": null,
-    "generatorModel": null
+    "generatorModel": null,
+    "editable_claims": [
+      {
+        "span_id": "s_nothing_0",
+        "section": "progress",
+        "text": "Nothing to report.",
+        "values": {
+          "subject": "Nothing to report."
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      }
+    ]
   },
   "friday": {
     "workbench": {
@@ -851,7 +868,54 @@
       "fallback_receipt": null,
       "deliveries": [],
       "generatorHost": null,
-      "generatorModel": null
+      "generatorModel": null,
+      "editable_claims": [
+        {
+          "span_id": "s_agent_0",
+          "section": "progress",
+          "text": "## Weekly update",
+          "values": {
+            "subject": "## Weekly update"
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "span_id": "s_agent_2",
+          "section": "progress",
+          "text": "- Platform sync: the cutover moves to Thursday.",
+          "values": {
+            "subject": "- Platform sync: the cutover moves to Thursday."
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "span_id": "s_agent_3",
+          "section": "progress",
+          "text": "- Hiring: two loops are booked for next week.",
+          "values": {
+            "subject": "- Hiring: two loops are booked for next week."
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        }
+      ]
     }
   },
   "opened": {

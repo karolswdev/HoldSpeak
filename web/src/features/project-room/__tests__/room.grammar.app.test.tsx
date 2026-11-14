@@ -56,6 +56,20 @@ beforeEach(() => {
   wire();
 });
 describe("Room selection grammar", () => {
+  it("gives Prepare one View chooser and Recall one Actions menu with Find in the list seat", async () => {
+    mount(); await screen.findByRole("grid", {name:"Open"});
+    await view("Prepare");
+    expect([...document.querySelectorAll('[data-pane-view]')].filter(node => !node.closest('[inert]'))).toHaveLength(1);
+    expect(screen.queryByRole("combobox", {name:"View"})).toBeNull();
+    press("Project view");
+    const names = screen.getAllByRole("menuitem").map(item => item.textContent);
+    expect(new Set(names).size).toBe(names.length);
+    fireEvent.click(screen.getByRole("menuitem", {name:"Sources"}));
+    await view("Recall");
+    const find = screen.getByRole("textbox", {name:"Search memory"});
+    expect(find.closest('.object-list-find')).not.toBeNull();
+    expect(find.closest('.surface-pane-actions')).toBeNull();
+  });
   it("uses sentence case, shared dates and omits facts with no value", () => {
     const facts = roomFacts([{label:"Likelihood", value:"high"}, {label:"Impact", value:"critical"}, {label:"Due", value:"2026-10-01"}, {label:"Due", value:"unknown"}]);
     expect(facts.map(fact => fact.value)).toEqual(["High", "Critical", "Oct 1"]);

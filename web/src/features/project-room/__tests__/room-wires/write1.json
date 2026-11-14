@@ -41,7 +41,69 @@
     "published_at": null,
     "review_id": null,
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-    "updated_at": "2026-10-18T06:56:49+00:00"
+    "updated_at": "2026-10-18T06:56:49+00:00",
+    "editable_claims": [
+     {
+      "span_id": "s_progress_0",
+      "section": "progress",
+      "text": "The ledger cutover is on track for Thursday.",
+      "values": {
+       "subject": "The ledger cutover is on track for Thursday."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_risks_blockers_0",
+      "section": "risks_blockers",
+      "text": "Card tokenization waits on the security team's HSM key ceremony.",
+      "values": {
+       "subject": "Card tokenization waits on the security team's HSM key ceremony."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_source_coverage_read_0",
+      "section": "source_coverage",
+      "text": "Read: 1 meeting",
+      "values": {
+       "subject": "Read: 1 meeting"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_source_coverage_left_out_0",
+      "section": "source_coverage",
+      "text": "Left out: 1:1 with Mira",
+      "values": {
+       "subject": "Left out: 1:1 with Mira"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     }
+    ]
    }
   },
   "method": "POST",
@@ -120,7 +182,84 @@
      "published_at": null,
      "review_id": null,
      "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-     "updated_at": "2026-10-18T06:56:49+00:00"
+     "updated_at": "2026-10-18T06:56:49+00:00",
+     "editable_claims": [
+      {
+       "span_id": "s_progress_meeting_0",
+       "section": "progress",
+       "text": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+       "values": {
+        "subject": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_risks_blockers_week_0",
+       "section": "risks_blockers",
+       "text": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+       "values": {
+        "subject": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_read_0",
+       "section": "source_coverage",
+       "text": "Read: 1 meeting",
+       "values": {
+        "subject": "Read: 1 meeting"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_left_out_0",
+       "section": "source_coverage",
+       "text": "Left out: 1:1 with Mira",
+       "values": {
+        "subject": "Left out: 1:1 with Mira"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_owner_0",
+       "section": "source_coverage",
+       "text": "My own line for Friday.",
+       "values": {
+        "subject": "My own line for Friday."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      }
+     ]
     }
    },
    "method": "PUT",
@@ -152,7 +291,69 @@
      "published_at": null,
      "review_id": null,
      "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-     "updated_at": "2026-10-18T06:56:49+00:00"
+     "updated_at": "2026-10-18T06:56:49+00:00",
+     "editable_claims": [
+      {
+       "span_id": "s_progress_meeting_0",
+       "section": "progress",
+       "text": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+       "values": {
+        "subject": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_risks_blockers_week_0",
+       "section": "risks_blockers",
+       "text": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+       "values": {
+        "subject": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_read_0",
+       "section": "source_coverage",
+       "text": "Read: 1 meeting",
+       "values": {
+        "subject": "Read: 1 meeting"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_left_out_0",
+       "section": "source_coverage",
+       "text": "Left out: 1:1 with Mira",
+       "values": {
+        "subject": "Left out: 1:1 with Mira"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      }
+     ]
     }
    },
    "method": "POST",
@@ -224,7 +425,69 @@
      "published_at": null,
      "review_id": null,
      "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-     "updated_at": "2026-10-18T06:56:50+00:00"
+     "updated_at": "2026-10-18T06:56:50+00:00",
+     "editable_claims": [
+      {
+       "span_id": "s_progress_0",
+       "section": "progress",
+       "text": "The ledger cutover is on track for Thursday.",
+       "values": {
+        "subject": "The ledger cutover is on track for Thursday."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_risks_blockers_0",
+       "section": "risks_blockers",
+       "text": "Card tokenization waits on the security team's HSM key ceremony.",
+       "values": {
+        "subject": "Card tokenization waits on the security team's HSM key ceremony."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_read_0",
+       "section": "source_coverage",
+       "text": "Read: 1 meeting",
+       "values": {
+        "subject": "Read: 1 meeting"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_left_out_0",
+       "section": "source_coverage",
+       "text": "Left out: 1:1 with Mira",
+       "values": {
+        "subject": "Left out: 1:1 with Mira"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      }
+     ]
     }
    },
    "method": "POST",
@@ -304,7 +567,69 @@
      "published_at": null,
      "review_id": null,
      "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-     "updated_at": "2026-10-18T06:56:50+00:00"
+     "updated_at": "2026-10-18T06:56:50+00:00",
+     "editable_claims": [
+      {
+       "span_id": "s_progress_meeting_0",
+       "section": "progress",
+       "text": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+       "values": {
+        "subject": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_risks_blockers_week_0",
+       "section": "risks_blockers",
+       "text": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+       "values": {
+        "subject": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_read_0",
+       "section": "source_coverage",
+       "text": "Read: 1 meeting",
+       "values": {
+        "subject": "Read: 1 meeting"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      },
+      {
+       "span_id": "s_source_coverage_left_out_0",
+       "section": "source_coverage",
+       "text": "Left out: 1:1 with Mira",
+       "values": {
+        "subject": "Left out: 1:1 with Mira"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      }
+     ]
     }
    },
    "method": "POST",
@@ -3404,7 +3729,69 @@
     "published_at": null,
     "review_id": null,
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-    "updated_at": "2026-10-18T06:56:47+00:00"
+    "updated_at": "2026-10-18T06:56:47+00:00",
+    "editable_claims": [
+     {
+      "span_id": "s_progress_meeting_0",
+      "section": "progress",
+      "text": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+      "values": {
+       "subject": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_risks_blockers_week_0",
+      "section": "risks_blockers",
+      "text": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+      "values": {
+       "subject": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_source_coverage_read_0",
+      "section": "source_coverage",
+      "text": "Read: 1 meeting",
+      "values": {
+       "subject": "Read: 1 meeting"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_source_coverage_left_out_0",
+      "section": "source_coverage",
+      "text": "Left out: 1:1 with Mira",
+      "values": {
+       "subject": "Left out: 1:1 with Mira"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     }
+    ]
    }
   },
   "method": "POST",
@@ -3461,7 +3848,69 @@
     "published_at": null,
     "review_id": null,
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":3,\"week_source_refs\":[\"meeting:p1-sync\"]}",
-    "updated_at": "2026-10-18T06:56:49+00:00"
+    "updated_at": "2026-10-18T06:56:49+00:00",
+    "editable_claims": [
+     {
+      "span_id": "s_progress_meeting_0",
+      "section": "progress",
+      "text": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+      "values": {
+       "subject": "Meeting summary: Payments platform sync -- The ledger cutover is on track for Thursday. The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_risks_blockers_week_0",
+      "section": "risks_blockers",
+      "text": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release.",
+      "values": {
+       "subject": "Risk (Payments platform sync): The card tokenization service is blocked on the security team's HSM key ceremony, flagged as a risk to the October release."
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_source_coverage_read_0",
+      "section": "source_coverage",
+      "text": "Read: 1 meeting",
+      "values": {
+       "subject": "Read: 1 meeting"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     },
+     {
+      "span_id": "s_source_coverage_left_out_0",
+      "section": "source_coverage",
+      "text": "Left out: 1:1 with Mira",
+      "values": {
+       "subject": "Left out: 1:1 with Mira"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       }
+      ]
+     }
+    ]
    }
   },
   "method": "POST",
