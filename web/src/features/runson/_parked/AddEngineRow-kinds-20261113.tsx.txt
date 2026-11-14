@@ -1,0 +1,32 @@
+// Parked: engine kinds and services use the kit pop-up; five choice plates no longer consume the form.
+      <div className="surface-pane-actions" role="group" aria-label="Kind of engine">
+        {KINDS.map((tile) => (
+          <Button
+            key={tile.kind}
+            variant={a.kind === tile.kind ? "primary" : "secondary"}
+            className="runson-kind-tile"
+            aria-pressed={a.kind === tile.kind}
+            data-testid={`runson-kind-${tile.kind}`}
+            onClick={() => a.choose(a.kind === tile.kind ? null : tile.kind)}
+          >
+            <span className="runson-kind-name">{tile.name}</span>
+
+          </Button>
+        ))}
+
+      </div>
+
+          <div className="surface-pane-actions" role="group" aria-label="Service">
+            {services.map((tile) => (
+              <Button
+                key={tile.id}
+                dense
+                variant={a.service === tile.id ? "primary" : "secondary"}
+                aria-pressed={a.service === tile.id}
+                data-testid={`runson-service-${tile.id}`}
+                onClick={() => a.choose("service", tile.id)}
+              >
+                {tile.name}
+              </Button>
+            ))}
+          </div>

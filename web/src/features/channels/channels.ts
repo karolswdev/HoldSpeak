@@ -56,6 +56,8 @@ export type Send = {
   account: Record<string, string | boolean>;
   target: Record<string, string | number>;
   payload_digest: string;
+  /** Frozen title metadata already returned by the hub; source body stays private. */
+  document_json?: { title?: string; label?: string } | null;
   size?: number;
   preview: WirePreview;
   prepared_by: { kind: string; identity: string };

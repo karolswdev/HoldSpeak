@@ -124,6 +124,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [accountsStatus, setAccountsStatus] = useState("");
   const [reachStatus, setReachStatus] = useState<string | null>(null);
   const [engineCount, setEngineCount] = useState(0);
+  const [engineStatus, setEngineStatus] = useState("");
+  const [engineLastRead, setEngineLastRead] = useState<Date | null>(null);
+  const [engineBack, setEngineBack] = useState<(() => void) | null>(null);
+  const engineBackChange = useCallback((back: (() => void) | null) => setEngineBack(() => back), []);
   const [accountAttention, setAccountAttention] = useState<string | null>(null);
   const [connectionsFoot, setConnectionsFoot] = useState<ConnectionsFoot | null>(null);
   const handleConnectionsFooter = useCallback((foot: ConnectionsFoot) => {
@@ -206,12 +210,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
         openSection(id);
       }}
       paneOpen={paneOpen}
-      onBack={() => {
+      onBack={engineBack ?? (() => {
         setCameFromRail(false);
         setPaneOpen(false);
-      }}
+      })}
       frameBack
-      holdFrameBack={cameFromRail}
+      holdFrameBack={cameFromRail || Boolean(engineBack)}
       testId="settings-page"
     >
       {refusal && moduleId !== "you" ? (
@@ -229,7 +233,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         </div>
       ) : null}
       {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
-      {pageSection("engines", "Engines", moduleId === "engines" ? <EnginesSection onCount={setEngineCount} /> : null)}
+      {pageSection("engines", "Engines", moduleId === "engines" ? <EnginesSection onCount={setEngineCount} onStatus={setEngineStatus} lastRead={engineLastRead} onRead={setEngineLastRead} onBackChange={engineBackChange} /> : null)}
       {pageSection("speak", "Speak", <SpeakSection b={b} symbolsDraft={symbolsDraft} onRefuse={writer.setRefusal} />)}
       {pageSection("meetings", "Meetings", <MeetingsSection b={b} hub={hub} focusHighlight={focusHighlight} />)}
       {pageSection(
@@ -288,7 +292,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       </div>
       <PrefStatusBar
         receipt={receipt}
-        save={ownerSave ?? undefined}
+        save={moduleId === "engines" && engineStatus ? {tone:"danger", text:engineStatus} : ownerSave ?? undefined}
         failureTestId={moduleId === "you" ? undefined : null}
         onRetry={
           moduleId === "you" ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined) : failedChangesRef.current.length ? () => void retryFailedChanges() : undefined

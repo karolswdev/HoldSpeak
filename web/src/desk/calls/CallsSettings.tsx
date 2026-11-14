@@ -335,6 +335,7 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
               <GadgetRow label="Calls" controlWidth="standard">
                 <CheckGadget
                   label="Calls on"
+                  variant="state"
                   checked={Boolean(settings?.enabled)}
                   disabled={absent || busy === "enabled"}
                   onChange={(next) => void write("enabled", next)}
