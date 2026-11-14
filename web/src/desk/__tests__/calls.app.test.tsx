@@ -27,6 +27,7 @@ import telnyxStatus from "../calls/__fixtures__/line.telnyx.status.connected.jso
 import { ApiError } from "../../lib/api";
 import { CallsCore } from "../calls/CallsWindow";
 import { usePhoneFocus } from "../calls/phoneFocus";
+import { spriteUrl } from "../sprites";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -114,6 +115,28 @@ beforeEach(() => {
   usePhoneFocus.setState({ pending: false, replyTo: null, callId: null });
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+
+describe("Call identity and unknown facts", () => {
+  it("keeps the call object when the recorded call's first words are a path", async () => {
+    const call = {...tape.detail, first_words: "web/src/desk/calls/CallsWindow.tsx: review the saved architecture decision"};
+    hub({"GET /api/calls": {calls:[call]}, [`GET /api/calls/${call.id}`]: call});
+    render(<CallsCore />);
+    await selectCall();
+    expect(screen.getByTestId("calls-document").querySelector('.surface-inspector-object img'))
+      .toHaveAttribute("src", spriteUrl("call", call.id, "rest", null, 32));
+    expect(row()).toHaveAttribute("data-kind", "call");
+    expect(row().querySelector("img")).toBeNull();
+    expect(row().querySelectorAll(".surface-lamp")).toHaveLength(1);
+  });
+  it("leaves an unknown call length empty", async () => {
+    hub();
+    render(<CallsCore />);
+    await waitCalls();
+    const unanswered = tape.recent.calls.find(call => call.outcome === "no_answer")!;
+    expect(unanswered.duration_sec).toBeNull();
+    expect(row(unanswered.id).querySelector('[data-col="length"]')).toHaveTextContent(/^$/);
+  });
+});
 
 describe("Calls selection and results", () => {
   it("uses the shared grouped selection list and has no card, inner Mast or row verbs", async () => {

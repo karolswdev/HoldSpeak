@@ -1,0 +1,8 @@
+PARKED: the corrected owner rule keeps a call's own object and leaves an unknown length blank.
+import { nameIsFile } from "../surface/objects/fitName";
+sprite: nameIsFile(item.label) ? spriteUrl("artifact", item.label, "rest", null, 20) : undefined,
+sprite: nameIsFile(callTitle(call)) ? spriteUrl("artifact", call.id, "rest", null, 20) : undefined,
+object={<img src={spriteUrl(nameIsFile(callTitle(call)) ? "artifact" : "call", call.id, "rest", null, 32)} width={32} height={32} alt="" />}
+// Former unknown length values in the selection cell and inspector figure:
+call.duration_sec == null ? "—" : clockWords(call.duration_sec)
+value: live ? elapsed : (length ?? "—")
