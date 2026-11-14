@@ -22,7 +22,7 @@ decide what the request can read or write.
 
 Ask keeps each completed exchange as part of its Thread.
 Use the follow-up box to continue it and **Recent** to reopen a retained conversation.
-Use the first row in **Recent** or press **⌘N** to start another conversation.
+Select **New ask** or press **⌘N** to start another conversation.
 A read failure offers **Try again** for that read.
 A failed run offers the applicable run recovery.
 Closing the window does not establish that the server run stopped.

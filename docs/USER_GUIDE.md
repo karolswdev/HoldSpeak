@@ -630,7 +630,7 @@ The hub retains turns, references, message parts, and tool results under the app
 4. Select **Ask**.
 5. Ask a follow-up after the answer returns.
 
-Select a row in **Recent**, then select **Open**, double-click the row, or press **Return**.
+Select a row in **Recent**, then use **Actions > Open**, double-click the row, or press **Return**.
 Select **New ask** or press **⌘N** to start another conversation.
 The current Ask window does not offer the older Thread mode tabs.
 
@@ -646,8 +646,9 @@ Check the engine and any named refusal before repeating a failed request.
 
 ### Branch, keep, and search
 
-The verb row has **Make it a task**, **Save as note**, **Copy**, and **Send…** for the open answer.
-Use **Actions** for verbs that do not fit. Use **Answer** to choose an earlier answer.
+The verb row has **Ask again**, **Save as note**, and **Copy** for the open answer.
+**Actions** has **Make it a task**, **Send…**, **Show grounding**, and verbs that do not fit.
+Use **Actions > Answer** to choose an earlier answer.
 Select a **Sources** row, then select **Open source** or press **Return**.
 A held tool call has **Deny** and **Allow once** in the reading well.
 A failed press keeps the call and its answer controls.
