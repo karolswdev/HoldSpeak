@@ -48,8 +48,8 @@ export async function resumeMember(member: ConductorMember): Promise<boolean> {
     useConductor.getState().setStop(member.ref, { word: "RESUMING", at, text: "the agent's own resume runs", tone: "ok" });
     return true;
   } catch (error) {
-    const code = String(((error as { payload?: Record<string, unknown> })?.payload ?? {}).code ?? "") || "hub_unreachable";
-    useConductor.getState().setStop(member.ref, { word: "NOT RESUMED", at, text: code.replace(/_/g, " "), tone: "fail" });
+    const detail = (error as {payload?: {detail?: unknown}})?.payload?.detail;
+    useConductor.getState().setStop(member.ref, { word: "NOT RESUMED", at, text: typeof detail === "string" ? detail : "The agent did not resume; try again.", tone: "fail" });
     return false;
   } finally {
     void useConductor.getState().readFlights();

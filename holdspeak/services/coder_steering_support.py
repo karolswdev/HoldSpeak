@@ -264,13 +264,13 @@ def wait_not_current(session: Any, body: Mapping[str, Any]) -> None:
     """An owner answer names the exact displayed prompt and its original process."""
     if str(body.get("kind") or "") != "answer" and "wait_id" not in body:
         return
-    from ..agent_context.wait_binding import owner_wait, answer_fields
+    from ..agent_context.wait_binding import owner_wait, answer_fields, ANSWER_READ_AGAIN
     current = owner_wait(session)
     if not body.get("wait_id") or body.get("wait_id") != current.get("wait_id"):
         raise CoderRefused({"status": "wait_not_current", "detail": "the question was answered or changed",
                             "wait_id": current.get("wait_id")}, 409)
     if any(not body.get(key) for key in answer_fields(current)):
-        raise CoderRefused({"status": "wait_binding_required", "detail": "read the current question before answering"}, 409)
+        raise CoderRefused({"status": "wait_binding_required", "detail": ANSWER_READ_AGAIN}, 409)
     if answer_fields(body) != answer_fields(current):
         raise CoderRefused({"status": "wait_not_current", "detail": "the question or its terminal changed"}, 409)
 

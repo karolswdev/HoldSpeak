@@ -328,7 +328,7 @@ class TestSessionOpenGlass:
                 assert not session.locator("details.desk-session-details").evaluate("el => el.open")
                 session.get_by_test_id("session-open-terminal").click()
                 terminal = session.get_by_test_id("session-terminal")
-                terminal.get_by_text("Terminal unavailable", exact=False).wait_for()
+                terminal.get_by_text("The terminal could not be read; try again.", exact=True).wait_for()
                 shot("plain-terminal-unavailable", session)
                 assert terminal.get_by_role("button", name="Retry", exact=True).is_visible()
                 terminal.get_by_role("button", name="Back to session", exact=True).click()

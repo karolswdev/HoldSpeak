@@ -2082,7 +2082,7 @@ class LaunchService:
             raise LaunchRefused("profile_unknown", f"unknown agent profile {profile_id!r}")
         worktree_path = self._worktree_path(record)
         if not worktree_path or not Path(worktree_path).is_dir():
-            raise LaunchRefused("worktree_gone", "the agent's worktree is gone")
+            raise LaunchRefused("worktree_gone", "The agent did not resume; use Hand again.")
         self._preflight(profile, str(record.get("engine_id") or ""))
         parent = str(record.get("operation_id") or "")
         if parent:

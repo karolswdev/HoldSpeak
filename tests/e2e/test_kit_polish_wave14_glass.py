@@ -71,8 +71,8 @@ def test_kit_geometry(desk, pw_browser, width, item):
     ctx, page, errors, requests = _page(pw_browser, width, base)
     _before(page)
     if item == '24':
-        # Exercise the named failure state with the hub's own missing-target
-        # refusal. The retained launch still supplies the question and result.
+        # A checked launch needs no automatic seen write. If one is attempted,
+        # a missing-target refusal must not replace its question or result.
         page.route('**/api/agent/launches/launch_ag0_done/seen', lambda route: route.continue_(url=f'{base}/api/agent/launches/kit14-missing/seen'))
     if item in {'17','21','22'}:
         wire = json.loads((ROOT / 'web/src/test/wire/live.actions.wire.json').read_text())['wire']
@@ -126,7 +126,7 @@ def test_kit_geometry(desk, pw_browser, width, item):
             row = win.get_by_role('row',name=__import__('re').compile('Draft test scaffolding for flags')).first
             row.click()
             if item == '24':
-                expect(win.get_by_text('Could not mark it seen', exact=True)).to_be_visible()
+                expect(win.get_by_text('Could not mark it seen', exact=True)).to_have_count(0)
                 _press(page,win,'Remove')
                 expect(win.locator('[data-question]')).to_be_visible()
                 _shot(page,item,'remove-question',width)

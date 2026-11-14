@@ -63,15 +63,7 @@ const GLYPH_EDIT = String.fromCodePoint(0x270E);
 const GLYPH_CLOSE = String.fromCodePoint(0x2715);
 const GLYPH_CHECK = String.fromCodePoint(0x2713);
 
-export const PANE_STATE_LABEL: Record<string, string> = {
-  pane_gone: "pane gone",
-  tmux_absent: "tmux absent",
-  no_pane: "no pane on this session",
-  unknown_session: "gone from the registry",
-  error: "peek failed",
-  unreachable: "hub unreachable",
-  idle: "…",
-};
+export const TERMINAL_READ_FAILURE = "The terminal could not be read; try again.";
 
 /** The arming strip (HS-87-02 mechanics, HS-111-04 render): ARM is one
  * transport key — armed is INVERTED VIDEO, never a glow ring — and the
@@ -682,8 +674,7 @@ export function SessionPullout() {
             changedAt={paneChangedAt}
             absence={
               <>
-                <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}</span>
-                {paneDetail ? <span className="desk-session-pane-detail">{paneDetail}</span> : null}
+                <span title={paneDetail || undefined}>{TERMINAL_READ_FAILURE}</span>
               </>
             }
           />

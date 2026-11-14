@@ -39,6 +39,7 @@ import { AgentPane, memberTitle } from "./AgentPane";
 import { AgentRail, type RailSection } from "./AgentRail";
 import { openSurfaceWhenReady } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
+import { useCompactViewport } from "../useCompactViewport";
 import "../drawer/drawer.css";
 
 /** The reads, live while the window is open. */
@@ -113,6 +114,7 @@ export function defaultAgent(sections: readonly RailSection[], picked: string | 
 }
 
 export function ConductorWindow() {
+  const compact = useCompactViewport();
   const reads = useConductorReads();
   const write = useDeskWriteReceipt();
   const sessions = useAgentFlights((s) => s.sessions);
@@ -334,8 +336,8 @@ export function ConductorWindow() {
           countWords(everyone.filter((m) => m.role !== "ready").length, "session"),
           countWords(
             ready.filter((member) => member.detect?.installed).length,
-            "agent on this Mac",
-            "agents on this Mac",
+            compact ? "here" : "agent on this Mac",
+            compact ? "here" : "agents on this Mac",
           ),
         ]
           .filter(Boolean)

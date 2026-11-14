@@ -142,17 +142,18 @@ export function askedWord(when: string | undefined, whenSort?: number, now: numb
 
 /** A refusal in his words. */
 function refusalWords(error: unknown): string {
-  const status =
-    error instanceof ApiError ? String((error.payload as Record<string, unknown> | null)?.status ?? "") : "";
-  if (status === "wait_not_current") return "The question changed · Nothing was sent";
+  const payload = error instanceof ApiError ? error.payload as Record<string, unknown> | null : null;
+  const status = String(payload?.status ?? "");
+  if (status === "wait_binding_required") return typeof payload?.detail === "string" ? payload.detail : readableError(error);
+  if (status === "wait_not_current") return "The answer was not sent; read the question again.";
   if (status === "pane_gone" || status === "pane_mismatch" || status === "target_gone")
-    return "This agent's terminal is gone · Nothing was sent";
-  if (status === "tmux_absent") return "The terminal is not running · Nothing was sent";
+    return "The answer was not sent; open the agent again.";
+  if (status === "tmux_absent") return "The answer was not sent; start the terminal again.";
   const said = readableError(error);
   // The hub's custody words ("a current registered session and pane
   // identity are required") in his words.
   if (/pane identity|registered session/i.test(said))
-    return "The desk cannot reach this agent's terminal · Nothing was sent";
+    return "The answer was not sent; open the agent again.";
   return `Not sent · ${said}`;
 }
 
@@ -204,6 +205,7 @@ export function AgentRow({
   const [decidedId, setDecidedId] = useState<string | null>(null);
   const [failure, setFailure] = useState<{
     label: string;
+    retryLabel?: string;
     retry?(): void;
   } | null>(null);
   const [sent, setSent] = useState<string | null>(null);
@@ -319,9 +321,14 @@ export function AgentRow({
       if (path === "steer" && scopeNow.current === pressedScope) setText("");
     } catch (error) {
       if (scopeNow.current !== pressedScope) return;
+      const status = error instanceof ApiError ? (error.payload as {status?: string})?.status : undefined;
+      const readAgain = status === "wait_binding_required" || status === "wait_not_current";
       setFailure({
         label: refusalWords(error),
-        retry: () => void press(path, body, word),
+        retryLabel: readAgain ? "Read again" : undefined,
+        retry: readAgain ? () => void Promise.all([reread(), useConductor.getState().readFlights()]).then(() => {
+          if (scopeNow.current === pressedScope) setFailure(null);
+        }) : () => void press(path, body, word),
       });
       void useConductor.getState().readFlights();
     } finally {
@@ -467,7 +474,7 @@ export function AgentRow({
             </span>
             {busy || !failure.retry ? null : (
               <Button dense onClick={failure.retry}>
-                Try again
+                {failure.retryLabel ?? "Try again"}
               </Button>
             )}
           </PaneActions>
