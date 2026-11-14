@@ -71,11 +71,6 @@
 .object-list--selection .object-list-th { height: 100%; box-sizing: border-box; padding-block: 0; align-items: center; }
 .object-list--selection .object-list-th[data-col] .object-list-sort { min-height: 0; height: 100%; padding: 0; margin-inline: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
 
-/* Intrinsic header measurement stays available even after its column drops. */
-.object-list-measure { position: absolute; visibility: hidden; pointer-events: none; font: 600 12px / 18px var(--font-sans); }
-.object-list-measure > span { display: block; width: max-content; white-space: nowrap; }
-.object-list-measure > span::before { content: attr(data-label); }
-
 .object-list--selection .object-list-cell > .kit-dotword { min-width: 0; max-width: 100%; }
 
 /* All embedded lists draw the same action bar before their header. */
@@ -116,7 +111,7 @@
 /* D keeps selection, roving and fitting in the existing list. */
 .object-list.object-list--selection { --object-list-row-height: var(--material-row-height); }
 .object-list--selection > .object-list-head { padding-block: 0; height: var(--material-list-head-height); min-height: var(--material-list-head-height); box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
-.object-list--selection .object-list-th, .object-list-measure { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); color: var(--hs-ink-2); }
+.object-list--selection .object-list-th { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); color: var(--hs-ink-2); }
 .object-list--selection .object-list-selection-title { font-weight: 600; }
 .object-list--selection > .object-list-rows { border-inline: 0; background: var(--hs-raised); }
 .object-list--selection .object-list-row[data-selected="true"] { background: var(--hs-steel); color: var(--hs-raised); box-shadow: var(--material-row-shadow); }
@@ -152,7 +147,7 @@
 .object-list-toolbar-strip > [data-pane-view] { margin-inline-start: 0; }
 .object-list-lamp-seat { order: -1; display: inline-flex; flex: 0 0 8px; width: 8px; align-items: center; justify-content: center; }
 
-.object-list--selection .object-list-th[data-caption="short"], .object-list-measure > [data-caption="short"] { text-transform: var(--material-label-case); }
+.object-list--selection .object-list-th[data-caption="short"] { text-transform: var(--material-label-case); }
 
 /* The text uses the name track, not the intrinsic width of its fitted words. */
 .object-list--selection .object-list-selection-name { flex: 1 1 0; }

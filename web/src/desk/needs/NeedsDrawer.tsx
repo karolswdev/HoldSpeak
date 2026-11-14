@@ -47,9 +47,9 @@ export { NeedRow, quietState, glyphWord, useRowMarks } from "./NeedRow";
  *  on every row tells nothing). At a wide window every column stays. */
 export function waitingColumns(compact: boolean, states: readonly string[], anyWhen: boolean) {
   const name = {key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"};
-  const state = {key: "state", word: "State", priority: 80, track: "max-content", minWidth: 80};
+  const state = {key: "state", word: "State", priority: 80, track: "140px", minWidth: 140};
   const from = {key: "from", word: "From", priority: 40, track: "minmax(0, 1fr)"};
-  const when = anyWhen ? [{key: "when", word: "When", priority: 20, track: "max-content", minWidth: 80}] : [];
+  const when = anyWhen ? [{key: "when", word: "When", priority: 20, track: "112px"}] : [];
   if (!compact) return [name, state, from, ...when];
   return [name, ...(new Set(states).size > 1 ? [state] : []), ...when];
 }
