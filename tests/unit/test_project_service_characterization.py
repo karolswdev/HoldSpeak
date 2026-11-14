@@ -77,22 +77,22 @@ class TestCreateProject:
 
     def test_empty_name_raises_validation(self, rig) -> None:
         _db, svc = rig
-        with pytest.raises(ValidationError, match="name is required"):
+        with pytest.raises(ValidationError, match="Enter the project name"):
             _create_project(svc, name="")
 
     def test_none_name_raises_validation(self, rig) -> None:
         _db, svc = rig
-        with pytest.raises(ValidationError, match="name is required"):
+        with pytest.raises(ValidationError, match="Enter the project name"):
             svc.create_project(OWNER, {})
 
     def test_bad_threshold_raises_validation(self, rig) -> None:
         _db, svc = rig
-        with pytest.raises(ValidationError, match="detection_threshold"):
+        with pytest.raises(ValidationError, match="Enter a detection threshold between 0 and 1"):
             _create_project(svc, detection_threshold="not-a-number")
 
     def test_threshold_out_of_range(self, rig) -> None:
         _db, svc = rig
-        with pytest.raises(ValidationError, match="detection_threshold"):
+        with pytest.raises(ValidationError, match="Enter a detection threshold between 0 and 1"):
             _create_project(svc, detection_threshold=1.5)
 
     def test_keywords_from_csv_string(self, rig) -> None:
@@ -205,7 +205,7 @@ class TestUpdateProject:
     def test_empty_name_raises(self, rig) -> None:
         _db, svc = rig
         created = _create_project(svc)
-        with pytest.raises(ValidationError, match="cannot be empty"):
+        with pytest.raises(ValidationError, match="Enter the project name"):
             svc.update_project(OWNER, created["id"], {"name": ""})
 
     def test_not_found(self, rig) -> None:

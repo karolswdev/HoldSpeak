@@ -470,7 +470,7 @@ class TestHonestRefusals:
         assert result["isError"] is True, result
         text = result["content"][0]["text"]
         assert "scheduler_not_wired" in text
-        assert "hub" in text and "Nothing was evaluated" in text
+        assert "Start the hub before you run the steward scheduler." in text
 
     def test_start_capture_names_why_it_cannot_run_here(self, tmp_path: Path) -> None:
         """Not `validation_error` — the input was fine; the controller is absent."""

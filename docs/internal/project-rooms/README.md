@@ -7,6 +7,27 @@ Vision epic: [GitHub issue #514](https://github.com/karolswdev/HoldSpeak/issues/
 
 This directory is the implementation requirements suite for graduating HoldSpeak's existing Project subsystem and Project Memory surface into Project Rooms: a living operating model for consequential work.
 
+## Implemented editing (2026-11-14)
+
+The review read returns `editable_fields` for each proposal. Each field has a
+`kind`; a choice also has `values`. The patch validator uses these same choices.
+Record-only review State uses Open and Closed. This field does not change the
+proposal's separate Accept, Defer or Dismiss state. Edit and accept saves the
+edited patch with the decision in one transaction.
+
+A draft update returns `editable_claims`. Edit selects one claim. Item claims
+have separate Subject, Kind, State and, when present, Severity controls. Other
+claims have a Subject field and a note that no separate kind or state is saved.
+The hub does not infer an item state for them.
+The existing draft-save operation accepts `claim_edits`, with a span ID, saved
+text and new values. It composes the stored sentence in its original section.
+It refuses changed claims and retains the other sections. Only the owner can
+use this edit form; an agent's existing separate-draft path stays the same.
+
+Each unsaved claim uses the Desk's existing draft store. Selection and Cancel
+retain it. Save clears only the values the hub acknowledged. Edit full text
+keeps the complete-document editor. Save one form before using the other.
+
 ## Documents
 
 1. [Integrated system SRS](./SRS_SYSTEM.md) — normative scope, system requirements, release boundaries, and traceability.

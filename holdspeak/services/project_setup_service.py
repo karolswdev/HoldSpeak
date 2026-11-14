@@ -15,6 +15,8 @@ SRS traceability
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -197,7 +199,7 @@ class ProjectSetupService:
         if principal.kind is not PrincipalKind.OWNER:
             raise ServiceError(
                 "owner_principal_required",
-                "Setup operations require OWNER principal",
+                "Only the owner can set up a project.",
                 context={"status": 403},
             )
 
@@ -289,7 +291,7 @@ class ProjectSetupService:
 
         if question_id not in (Q_OUTCOME, Q_SIGNALS, Q_JIRA_SCOPE):
             raise ValidationError(
-                f"Unknown question_id: {question_id!r}",
+                "Read the setup questions again because this question is not available.",
                 code="validation",
             )
 
@@ -475,7 +477,7 @@ class ProjectSetupService:
 
         if proposal["state"] not in ("proposed", "selected"):
             raise ValidationError(
-                f"Cannot select proposal in state {proposal['state']!r}",
+                "This proposal can no longer be selected.",
                 code="validation",
             )
 
@@ -495,7 +497,7 @@ class ProjectSetupService:
 
         if proposal["state"] != "selected":
             raise ValidationError(
-                f"Cannot deselect proposal in state {proposal['state']!r}",
+                "This proposal can no longer be cleared.",
                 code="validation",
             )
 
@@ -678,14 +680,14 @@ class ProjectSetupService:
         if session["state"] != "active":
             raise ServiceError(
                 "session_not_active",
-                f"Setup session {session_id} is {session['state']}, not active",
+                "This setup session is closed.",
                 context={"status": 409, "state": session["state"]},
             )
 
         if self._project_service is None:
             raise ServiceError(
                 "project_service_missing",
-                "ProjectSetupService requires a composed ProjectService",
+                "The project service is not available.",
             )
 
         # Gather answers for Project fields
@@ -1011,7 +1013,7 @@ class ProjectSetupService:
         if adapter is None:
             raise ServiceError(
                 "github_adapter_missing",
-                "GitHub adapter not configured",
+                "Connect GitHub before you continue.",
             )
 
         if repo is not None:
@@ -1174,7 +1176,7 @@ class ProjectSetupService:
         if adapter is None:
             raise ServiceError(
                 "jira_adapter_missing",
-                "Jira adapter not configured",
+                "Connect Jira before you continue.",
             )
 
         ref = connection_ref or ""
@@ -1326,7 +1328,7 @@ class ProjectSetupService:
             adapter = self._github_adapter
             if adapter is None:
                 raise ValidationError(
-                    "GitHub adapter not configured for pull_request test",
+                    "Connect GitHub before you check the pull request.",
                     code="validation",
                 )
             scope = spec.get("subject", {}).get("scope", {})
@@ -1351,7 +1353,7 @@ class ProjectSetupService:
             adapter = self._jira_adapter
             if adapter is None:
                 raise ValidationError(
-                    "Jira adapter not configured for issue test",
+                    "Connect Jira before you check the issue.",
                     code="validation",
                 )
             scope = spec.get("subject", {}).get("scope", {})
@@ -1391,7 +1393,7 @@ class ProjectSetupService:
             return items[:5]
 
         raise ValidationError(
-            f"Unknown native subject kind: {subject_kind!r}",
+            "Choose a source kind from the list.",
             code="validation",
         )
 
@@ -1495,7 +1497,7 @@ class ProjectSetupService:
     def _require_session(self, session_id: str) -> dict[str, Any]:
         session = self._repo.get_setup_session(session_id)
         if not session:
-            raise NotFound("setup_session", session_id)
+            raise room_not_found("setup_session", session_id)
         return session
 
     def _require_active(self, session_id: str) -> dict[str, Any]:
@@ -1503,7 +1505,7 @@ class ProjectSetupService:
         if session["state"] != "active":
             raise ServiceError(
                 "session_not_active",
-                f"Setup session {session_id} is {session['state']}, not active",
+                "This setup session is closed.",
                 context={"status": 409, "state": session["state"]},
             )
         return session
@@ -1513,9 +1515,9 @@ class ProjectSetupService:
     ) -> dict[str, Any]:
         proposal = self._repo.get_setup_proposal(proposal_id)
         if not proposal:
-            raise NotFound("setup_proposal", proposal_id)
+            raise room_not_found("setup_proposal", proposal_id)
         if proposal["session_id"] != session_id:
-            raise NotFound("setup_proposal", proposal_id)
+            raise room_not_found("setup_proposal", proposal_id)
         return proposal
 
     def _latest_answers(self, session_id: str) -> dict[str, dict[str, Any]]:

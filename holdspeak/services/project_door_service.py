@@ -453,7 +453,7 @@ class ProjectDoorService:
                 principal, query_kind=str(spec.get("subject", {}).get("kind") or "recent_blogs"), query=stored_query,
             )
 
-        raise ServiceError("unknown_provider", f"Unknown provider: {provider}")
+        raise ServiceError("unknown_provider", "Choose a source provider from the list.")
 
     def _compile_github(
         self,
@@ -478,7 +478,7 @@ class ProjectDoorService:
         from holdspeak import jira_templates
         connection_ref = str(scope.get("connection_ref") or "").strip()
         if not connection_ref:
-            raise ValidationError("Check the Jira account for this source before creating it")
+            raise ValidationError("Check the Jira account before you create this source.")
         site_scope = {
             "connection_ref": connection_ref,
             "projects": scope.get("projects", []),
@@ -499,7 +499,7 @@ class ProjectDoorService:
 
         connection_ref = str(scope.get("connection_ref") or "").strip()
         if not connection_ref:
-            raise ValidationError("Check the Confluence account for this source before creating it")
+            raise ValidationError("Check the Confluence account before you create this source.")
 
         site_scope = {
             "connection_ref": connection_ref,
@@ -521,11 +521,11 @@ class ProjectDoorService:
         if project_id:
             return self.add_sources(principal, project_id, sources, found=found)
         if not str(outcome or "").strip():
-            raise ValidationError("outcome is required")
+            raise ValidationError("Enter the project outcome.")
         if self._project_service is None:
             raise ServiceError(
                 "project_service_missing",
-                "ProjectDoorService requires a composed ProjectService",
+                "The project service is not available.",
             )
 
         name = (outcome[:80]).strip() or "New Project"
@@ -586,9 +586,9 @@ class ProjectDoorService:
                     (project_id, resource_ref),
                 ).fetchone()
         except Exception as exc:
-            raise ServiceError("link_readback_failed", redact_error(str(exc), limit=500)) from exc
+            raise ServiceError("link_readback_failed", "The saved source link could not be read.") from exc
         if row is None:
-            raise ServiceError("link_not_persisted", f"{kind.title()} link was not saved")
+            raise ServiceError("link_not_persisted", f"The {kind.replace('_', ' ')} link was not saved.")
 
     def _link_found(self, principal: Principal, project_id: str, found: dict[str, Any]) -> list[dict[str, Any]]:
         """Link each selected meeting/note and report every leaf outcome."""
@@ -598,7 +598,7 @@ class ProjectDoorService:
             return results
         if not project_id or self._project_service is None:
             return [
-                {"kind": kind, "id": item_id, "state": "failed", "error": "Project link service unavailable"}
+                {"kind": kind, "id": item_id, "state": "failed", "error": "The project link service is not available."}
                 for kind, item_id in rows
             ]
         for kind, item_id in rows:
@@ -611,12 +611,12 @@ class ProjectDoorService:
                         principal, project_id, f"note:{item_id}", relationship="member",
                     )
                 if linked is False:
-                    raise ServiceError("link_failed", f"Could not add {kind} {item_id}")
+                    raise ServiceError("link_failed", f"The {kind.replace('_', ' ')} could not be added.")
                 self._found_link_readback(project_id, kind, item_id)
             except ServiceError as exc:
-                error = redact_error(exc.detail or str(exc), limit=500) or f"Could not add {kind}"
+                error = redact_error(exc.detail or str(exc), limit=500) or f"The {kind.replace('_', ' ')} could not be added."
             except Exception as exc:
-                error = redact_error(str(exc), limit=500) or f"Could not add {kind}"
+                error = f"The {kind.replace('_', ' ')} could not be added."
             results.append({
                 "kind": kind,
                 "id": item_id,
@@ -639,12 +639,12 @@ class ProjectDoorService:
         if self._project_service is None:
             raise ServiceError(
                 "project_service_missing",
-                "ProjectDoorService requires a composed ProjectService",
+                "The project service is not available.",
             )
         specs = self._specs(sources)
         found_rows = self._found_rows(found)
         if not specs and not found_rows:
-            raise ValidationError("Choose a source to add")
+            raise ValidationError("Choose a source to add.")
         activated: list[Any] = []
         if specs:
             result = self._project_service.add_source_watches(principal, project_id, specs)

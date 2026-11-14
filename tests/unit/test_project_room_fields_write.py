@@ -239,7 +239,7 @@ class TestLifecycleVocabulary:
             svc.update_project(OWNER, created["id"],
                                {"lifecycle": "archived"})
         assert exc_info.value.code == "invalid_lifecycle"
-        assert "archive_project" in exc_info.value.detail
+        assert exc_info.value.detail == "Use Archive to archive the project."
 
     def test_unknown_lifecycle_rejected(self, rig) -> None:
         _db, svc = rig
@@ -481,7 +481,7 @@ class TestRouteLevelRoundTrip:
         assert resp.status_code == 400
         body = resp.json()
         assert body["success"] is False
-        assert "archive_project" in body["error"]
+        assert body["error"] == "Use Archive to archive the project."
 
     def test_invalid_owner_ref_400_via_route(self, rig, client) -> None:
         proj = self._create_via_route(client)

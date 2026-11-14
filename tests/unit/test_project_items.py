@@ -122,13 +122,13 @@ class TestClosedSchemaRefusals:
     def test_unknown_item_type_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="Unknown item_type"):
+        with pytest.raises(ValidationError, match="Choose an item kind from the list"):
             _create_item(svc, proj["id"], "imaginary", "Nope")
 
     def test_unknown_field_in_details_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="Unknown fields"):
+        with pytest.raises(ValidationError, match="Remove the unknown item detail fields"):
             _create_item(svc, proj["id"], "risk", "R",
                          details={"likelihood": "high", "impact": "low",
                                   "surprise_field": "boom"})
@@ -136,21 +136,21 @@ class TestClosedSchemaRefusals:
     def test_missing_required_field_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="required"):
+        with pytest.raises(ValidationError, match="Enter impact for the item"):
             _create_item(svc, proj["id"], "risk", "R",
                          details={"likelihood": "high"})  # impact is required
 
     def test_wrong_type_in_details_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="invalid type"):
+        with pytest.raises(ValidationError, match="Enter a valid value for"):
             _create_item(svc, proj["id"], "risk", "R",
                          details={"likelihood": 42, "impact": "high"})
 
     def test_invalid_dependency_direction_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="invalid type"):
+        with pytest.raises(ValidationError, match="Enter a valid value for"):
             _create_item(svc, proj["id"], "dependency", "D",
                          details={"direction": "sideways",
                                   "counterpart_ref": "project:other"})
@@ -172,7 +172,7 @@ class TestClosedSchemaRefusals:
     def test_invalid_lifecycle_for_type_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="lifecycle"):
+        with pytest.raises(ValidationError, match="Choose a state for this item from the list"):
             _create_item(svc, proj["id"], "risk", "R",
                          lifecycle="reached",  # only valid for milestones
                          details={"likelihood": "high", "impact": "bad"})
@@ -180,14 +180,14 @@ class TestClosedSchemaRefusals:
     def test_invalid_provenance_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="provenance_kind"):
+        with pytest.raises(ValidationError, match="Only the owner can name the source of this item"):
             _create_item(svc, proj["id"], "milestone", "M",
                          provenance_kind="proposal")  # P2 only
 
     def test_invalid_owner_ref_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="owner_ref"):
+        with pytest.raises(ValidationError, match="Choose a valid owner"):
             _create_item(svc, proj["id"], "milestone", "M",
                          owner_ref="not-a-ref")
 
@@ -208,7 +208,7 @@ class TestLifecycleVerbs:
         _db, svc = rig
         proj = _create_project(svc)
         item = _create_item(svc, proj["id"], "milestone", "M1")
-        with pytest.raises(ValidationError, match="DOM-007"):
+        with pytest.raises(ValidationError, match="Use the milestone transition to mark it reached"):
             svc.update_item(OWNER, proj["id"], item["item_id"],
                             {"lifecycle": "reached"})
 
@@ -232,7 +232,7 @@ class TestLifecycleVerbs:
         _db, svc = rig
         proj = _create_project(svc)
         item = _create_item(svc, proj["id"], "milestone", "M1")
-        with pytest.raises(ValidationError, match="lifecycle"):
+        with pytest.raises(ValidationError, match="Choose a state for this item from the list"):
             svc.transition_item(OWNER, proj["id"], item["item_id"], "vanished")
 
     def test_transition_wrong_project_not_found(self, rig) -> None:
@@ -290,7 +290,7 @@ class TestOrderingPagination:
     def test_invalid_type_filter_refused(self, rig) -> None:
         _db, svc = rig
         proj = _create_project(svc)
-        with pytest.raises(ValidationError, match="Unknown item_type"):
+        with pytest.raises(ValidationError, match="Choose an item kind from the list"):
             svc.list_items(OWNER, proj["id"], item_type="imaginary")
 
     def test_sort_key_nulls_last(self, rig) -> None:
@@ -563,7 +563,7 @@ class TestUpdateItem:
         _db, svc = rig
         proj = _create_project(svc)
         item = _create_item(svc, proj["id"], "milestone", "M1")
-        with pytest.raises(ValidationError, match="No updatable fields"):
+        with pytest.raises(ValidationError, match="Change a field before you save"):
             svc.update_item(OWNER, proj["id"], item["item_id"], {})
 
 

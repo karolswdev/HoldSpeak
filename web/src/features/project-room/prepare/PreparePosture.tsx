@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   InspectorForm,
+  PaneViews,
   InspectorQuestion,
   ObjectReader,
   Material,
@@ -29,7 +30,11 @@ export function PreparePosture({
   onOpenRef,
   onResultChange,
   onClose,
+  projectViews = [],
+  onProjectView,
 }: {
+  projectViews?: readonly {id: string; label: string}[];
+  onProjectView?(id: string): void;
   ctrl: PrepareController;
   onClose?(): void;
   projectName: string;
@@ -233,6 +238,12 @@ export function PreparePosture({
     },
   ];
   return (
+    <PaneViews label="Project view" value={seat}
+      tabs={[{id:"purpose",label:"Purpose"},{id:"sources",label:"Sources"},{id:"brief",label:"Prepared brief"},{id:"claims",label:"Claims"},{id:"carried",label:"Carried forward"},{id:"kept",label:"Kept briefs"}, ...projectViews.map(view => ({id:`project:${view.id}`,label:view.label}))]}
+      onChange={next => {
+        if (next.startsWith("project:")) onProjectView?.(next.slice(8));
+        else { setSeat(next); if (next === "kept") void ctrl.loadKept(); }
+      }}>
     <RoomList
       reader={seat === "purpose" || seat === "brief"}
       label="Prepare"
@@ -240,24 +251,7 @@ export function PreparePosture({
       selectedId={picked}
       onSelect={setPicked}
       verbs={verbs}
-      field={
-        <CycleGadget
-          label="View"
-          value={seat}
-          options={[
-            { value: "sources", label: "Sources" },
-            { value: "purpose", label: "Purpose" },
-            { value: "brief", label: "Brief" },
-            { value: "claims", label: "Claims" },
-            { value: "carried", label: "Carried forward" },
-            { value: "kept", label: "Kept briefs" },
-          ]}
-          onChange={(next) => {
-            setSeat(next);
-            if (next === "kept") void ctrl.loadKept();
-          }}
-        />
-      }
+
       error={seat === "brief" && brief ? undefined : ctrl.error}
       retryLabel="Read again"
       retry={() => {
@@ -369,5 +363,6 @@ export function PreparePosture({
         </ObjectReader>
       ) : undefined}
     </RoomList>
+    </PaneViews>
   );
 }

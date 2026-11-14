@@ -531,8 +531,7 @@ def validate_severity(value: Any) -> Optional[str]:
     sev = str(value).strip().lower()
     if sev not in SEVERITY_LEVELS:
         raise ValidationError(
-            f"severity must be one of {sorted(SEVERITY_LEVELS)} or null, "
-            f"got {sev!r}",
+            "Choose a severity from the list.",
             code="validation",
         )
     return sev
@@ -542,13 +541,12 @@ def validate_lifecycle(item_type: str, lifecycle: str) -> None:
     valid = ITEM_LIFECYCLES.get(item_type)
     if valid is None:
         raise ValidationError(
-            f"Unknown item_type: {item_type!r}",
+            'Choose an item kind from the list.',
             code="validation",
         )
     if lifecycle not in valid:
         raise ValidationError(
-            f"lifecycle {lifecycle!r} is not valid for {item_type}; "
-            f"must be one of {list(valid)}",
+            "Choose a state for this item from the list.",
             code="validation",
         )
 
@@ -561,7 +559,7 @@ def validate_optional_ref(value: Any, field_name: str) -> Optional[str]:
         parse_ref(ref_str)
     except Exception as exc:
         raise ValidationError(
-            f"{field_name} is not a valid qualified ref: {ref_str!r}",
+            f"Choose a valid {field_name.replace('_ref', '').replace('_', ' ')}.",
             code="validation",
         ) from exc
     return ref_str
@@ -575,13 +573,13 @@ def validate_details(item_type: str, details: dict[str, Any]) -> str:
     schema = _DETAILS_SCHEMAS.get(item_type)
     if schema is None:
         raise ValidationError(
-            f"No details schema for item_type {item_type!r}",
+            "Choose an item kind from the list.",
             code="validation",
         )
 
     if not isinstance(details, dict):
         raise ValidationError(
-            "details must be a JSON object",
+            "Enter the item details.",
             code="validation",
         )
 
@@ -589,7 +587,7 @@ def validate_details(item_type: str, details: dict[str, Any]) -> str:
     unknown = set(details.keys()) - set(schema.keys())
     if unknown:
         raise ValidationError(
-            f"Unknown fields in details for {item_type}: {sorted(unknown)}",
+            "Remove the unknown item detail fields.",
             code="validation",
         )
 
@@ -600,13 +598,13 @@ def validate_details(item_type: str, details: dict[str, Any]) -> str:
         if value is None and field_name not in details:
             if required:
                 raise ValidationError(
-                    f"details.{field_name} is required for {item_type}",
+                    f"Enter {field_name.replace('_', ' ')} for the item.",
                     code="validation",
                 )
             continue  # omitted optional field
         if not validator(value):
             raise ValidationError(
-                f"details.{field_name} has invalid type/value for {item_type}",
+                f"Enter a valid value for {field_name.replace('_', ' ')}.",
                 code="validation",
             )
         clean[field_name] = value

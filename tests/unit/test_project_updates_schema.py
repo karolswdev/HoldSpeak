@@ -301,7 +301,7 @@ class TestLifecycleLaw:
         )
         uid2 = generate_pupd_id()
         repo.supersede_draft(uid1, new_update_id=uid2, body_md="v2")
-        with pytest.raises(PublishedUpdateError, match="superseded"):
+        with pytest.raises(PublishedUpdateError, match="Only a draft update can be changed"):
             repo.update_draft(uid1, body_md="should fail")
         conn.close()
 
@@ -316,7 +316,7 @@ class TestLifecycleLaw:
         )
         uid2 = generate_pupd_id()
         repo.supersede_draft(uid1, new_update_id=uid2, body_md="v2")
-        with pytest.raises(PublishedUpdateError, match="superseded"):
+        with pytest.raises(PublishedUpdateError, match="Only a draft update can be published"):
             repo.publish_update(uid1)
         conn.close()
 

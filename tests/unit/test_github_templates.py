@@ -532,7 +532,7 @@ class TestClarifyRepoScope:
             state="proposed",
         )
 
-        with pytest.raises(ServiceError, match="GitHub adapter not configured"):
+        with pytest.raises(ServiceError, match="Connect GitHub before you continue"):
             svc.clarify_repo_scope(OWNER, session["id"], proposal_id)
 
 

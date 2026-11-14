@@ -76,7 +76,7 @@ class CooldownActiveError(Exception):
     def __init__(self, seconds_remaining: int) -> None:
         self.seconds_remaining = seconds_remaining
         super().__init__(
-            f"Cooldown active: {seconds_remaining}s remaining"
+            f"Wait {seconds_remaining} seconds before you run the steward again."
         )
 
 
@@ -234,7 +234,7 @@ class ProjectStewardService(StewardContract):
                 effect_id,
                 state="skipped",
                 error_code="no_project",
-                error_detail="Watch has no project binding",
+                error_detail="This watch has no project.",
             )
             return {
                 "effect_id": effect_id,
@@ -250,7 +250,7 @@ class ProjectStewardService(StewardContract):
                 effect_id,
                 state="skipped",
                 error_code="no_opt_in",
-                error_detail="unattended_enabled is OFF for this project",
+                error_detail="Turn on unattended work for this project.",
             )
             return {
                 "effect_id": effect_id,
@@ -265,7 +265,7 @@ class ProjectStewardService(StewardContract):
                 effect_id,
                 state="skipped",
                 error_code="steward_disabled",
-                error_detail="Steward policy is disabled",
+                error_detail="Turn on the steward for this project.",
             )
             return {
                 "effect_id": effect_id,
@@ -302,7 +302,7 @@ class ProjectStewardService(StewardContract):
                         effect_id,
                         state="skipped",
                         error_code="cooldown_active",
-                        error_detail=f"{int(cooldown - elapsed)}s remaining",
+                        error_detail=f"Wait {int(cooldown - elapsed)} seconds before you run the steward again.",
                     )
                     return {
                         "effect_id": effect_id,
@@ -465,7 +465,7 @@ class ProjectStewardService(StewardContract):
         if policy is not None:
             if not policy.get("enabled", 1):
                 raise StewardDisabledError(
-                    f"Steward policy for {project_id} is disabled"
+                    "Turn on the steward for this project."
                 )
             cooldown = int(policy.get("cooldown_seconds", 0) or 0)
             if cooldown > 0:

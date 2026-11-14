@@ -175,8 +175,10 @@ export function useReviewController(
         if (windowRef.current?.reviewId === window.reviewId) setWindow(refreshed);
         setEditingPatch(null);
         setDeferDate("");
+        return true;
       } catch (reason) {
         setError(readableError(reason));
+        return false;
       } finally {
         setDecidingId(null);
       }

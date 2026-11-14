@@ -518,7 +518,8 @@ def test_a_broken_endpoint_refuses_as_unreachable_and_writes_nothing(db: Databas
         svc.prepare(OWNER, project_id, "cut-over")
     assert caught.value.route["state"] == ROUTE_UNREACHABLE
     assert caught.value.route["token"] == "ENDPOINT UNREACHABLE"
-    assert "192.168.1.43" in caught.value.route["reason"]
+    assert caught.value.route["reason"] == "The brief engine did not answer."
+    assert "192.168.1.43" in str(caught.value.__cause__)
     # P0: the runner raised before any operation existed -> nothing was sent.
     assert caught.value.route["invoke"]["sent"] is False
     assert svc.list_briefs(OWNER, project_id) == []

@@ -35,7 +35,29 @@
       "patch_json": "{\"_source_version\":\"2026-10-15\",\"card_id\":\"philo13-b4-owned-action\",\"due\":\"2026-10-15\",\"lane\":\"overdue\",\"owner\":\"Priya\",\"text\":\"Send the dry-run report\"}",
       "materiality": "0.795",
       "producer_kind": "assessment",
-      "lifecycle": "open"
+      "lifecycle": "open",
+      "editable_fields": [
+        {
+          "key": "due",
+          "label": "Due",
+          "kind": "text"
+        },
+        {
+          "key": "lane",
+          "label": "Lane",
+          "kind": "text"
+        },
+        {
+          "key": "owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "key": "text",
+          "label": "Text",
+          "kind": "text"
+        }
+      ]
     }
   ]
 }

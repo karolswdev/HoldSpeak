@@ -106,7 +106,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(ops().invoke(principal(request), "project.get_steward_run", {"run_id": run_id}))
         except NotFound:
             return JSONResponse(
-                {"code": "not_found", "message": f"Unknown steward run: {run_id}"},
+                {"code": "not_found", "message": "The steward run is not available."},
                 status_code=404,
             )
         except Exception as exc:
@@ -130,7 +130,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
                                  **refusal_fields(exc)}, status_code=400)
         except ServiceError as exc:
             if isinstance(exc, NotFound) and kernel_refusal(exc) is None:
-                return JSONResponse({"code": "not_found", "message": f"Unknown steward run: {run_id}",
+                return JSONResponse({"code": "not_found", "message": "The steward run is not available.",
                                      **refusal_fields(exc)}, status_code=404)
             return refused_by(exc)
         except Exception as exc:

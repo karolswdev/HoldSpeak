@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   InspectorForm,
+  PaneNotice,
   PaneViews,
   ObjectReader,
   ReadingDocument,
@@ -13,6 +14,8 @@ import {
   type ListVerb,
   wireDayClock,
 } from "../../../desk/surface";
+import { roomEditRows } from "../RoomEditFields";
+import { useDeskDraft, keptDraft, forgetDraft } from "../../../desk/deskMemory";
 import { openRef, refOpener } from "../../../desk/openObject";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine } from "../../../desk/hooks/useEngine";
@@ -80,8 +83,28 @@ export function UpdatePosture({
   }, [ctrl.reloadDeliveries]);
   const engine = useEngine("project.update_draft");
   const claim = seat === "claims" ? current?.claims.find((row) => row.spanId === picked) : undefined;
+  const editing = seat === "edit" ? current?.editableClaims?.find(row => row.span_id === picked) : undefined;
+  const keyOfClaim = (row: import("./model").EditableClaim) => `room/update-claim/${JSON.stringify([current?.id,row.span_id,row.text])}`;
+  const [claimDraft, setClaimDraft] = useDeskDraft(editing ? keyOfClaim(editing) : null);
+  const valuesOfClaim = (row: import("./model").EditableClaim, draft = keptDraft(keyOfClaim(row))) => {
+    try { const value: unknown = JSON.parse(draft || "null"); return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string,unknown> : row.values; }
+    catch { return row.values; }
+  };
+  const claimValues = editing ? valuesOfClaim(editing, claimDraft) : {};
+  const pendingClaims = (current?.editableClaims ?? []).flatMap(row => {
+    const values=valuesOfClaim(row);
+    return JSON.stringify(values) === JSON.stringify(row.values) ? [] : [{key:keyOfClaim(row), draft:JSON.stringify(values), edit:{span_id:row.span_id,text:row.text,values}}];
+  });
+  const saveClaims = async () => {
+    if (!pendingClaims.length) return false;
+    const saved = await ctrl.save(pendingClaims.map(row => row.edit));
+    if (saved) for (const row of pendingClaims) if (keptDraft(row.key) === row.draft) forgetDraft(row.key);
+    return saved;
+  };
   const rows: RoomEntry[] =
-    seat === "claims" && current
+    seat === "edit" && current
+      ? (current.editableClaims ?? []).map(row => ({id:row.span_id, name:String(row.values.subject), detail:roomWord(row.section || ""), kind:String(row.values.kind || current.claims.find(claim => claim.spanId === row.span_id)?.kind || "artifact"), cells:{state:String(row.values.state || "")}}))
+      : seat === "claims" && current
       ? current.claims.map((row) => ({
           id: row.spanId,
           ...roomClaimWords(row.text),
@@ -164,24 +187,31 @@ export function UpdatePosture({
     {
       id: "edit",
       label: "Edit",
-      enabled: () => Boolean(current) && ctrl.isDraft,
-      run: () => setSeat("edit"),
+      enabled: () => Boolean(current) && ctrl.isDraft && !ctrl.dirty,
+      run: () => {
+        const row = current?.editableClaims?.find(row => row.span_id === picked) ?? current?.editableClaims?.[0];
+        setPicked(row?.span_id ?? null); setSeat("edit");
+      },
+    },
+    {
+      id: "edit-text", label: "Edit full text", enabled: () => Boolean(current) && ctrl.isDraft && !pendingClaims.length,
+      run: () => setSeat("edit-text"),
     },
     {
       id: "save",
       label: "Save",
       testId: "update-verb-save",
       enabled: () =>
-        Boolean(current) && ctrl.isDraft && ctrl.dirty && !ctrl.saveBusy,
+        Boolean(current) && ctrl.isDraft && (ctrl.dirty || pendingClaims.length > 0) && !ctrl.saveBusy,
       run: () => {
-        void ctrl.save();
+        if (pendingClaims.length) void saveClaims(); else void ctrl.save();
       },
     },
     {
       id: "publish",
       label: "Publish",
       testId: "update-verb-publish",
-      enabled: () => Boolean(current) && ctrl.isDraft && !ctrl.publishBusy,
+      enabled: () => Boolean(current) && ctrl.isDraft && !ctrl.publishBusy && !ctrl.dirty && !pendingClaims.length,
       run: () => {
         void ctrl.publish();
       },
@@ -197,7 +227,7 @@ export function UpdatePosture({
     {
       id: "regenerate",
       label: "Regenerate",
-      enabled: () => Boolean(current) && !ctrl.regenerateBusy,
+      enabled: () => Boolean(current) && !ctrl.regenerateBusy && !ctrl.dirty && !pendingClaims.length,
       run: () => {
         void ctrl.regenerate("deterministic");
       },
@@ -332,9 +362,17 @@ export function UpdatePosture({
         />
       </PaneViewContext.Provider>
     );
-  else if (current && (seat === "updates" || seat === "edit"))
+  else if (current && seat === "edit" && editing)
+    inspector = <PaneInspector label="Edit claim"><InspectorForm
+      notice={!editing.fields.some(field => field.key === "kind" || field.key === "state") ? <PaneNotice>This claim has no separate kind or state.</PaneNotice> : undefined}
+      rows={roomEditRows(editing.fields, claimValues, (key,value) => setClaimDraft(JSON.stringify({...valuesOfClaim(editing),[key]:value})), ctrl.saveBusy)}
+      completion={{cancel:()=>setSeat("updates"), primary:{label:"Save", busy:ctrl.saveBusy,
+        disabled:JSON.stringify(claimValues) === JSON.stringify(editing.values),
+        run:()=>{void saveClaims().then(saved => {if(saved)setSeat("updates");});}}}} />
+    </PaneInspector>;
+  else if (current && (seat === "updates" || seat === "edit-text"))
     inspector =
-      ctrl.isDraft && seat === "edit" ? (
+      ctrl.isDraft && seat === "edit-text" ? (
         <PaneInspector label="Update">
           <InspectorForm
             rows={[
@@ -378,7 +416,7 @@ export function UpdatePosture({
             key={current.id}
             label="Update"
             facts={[
-              { label: "State", value: ctrl.dirty ? "Not saved" : lifecycleLabel(current.lifecycle) },
+              { label: "State", value: ctrl.dirty || pendingClaims.length ? "Not saved" : lifecycleLabel(current.lifecycle) },
               {
                 label: "From",
                 value: generatorLabel(
@@ -401,7 +439,7 @@ export function UpdatePosture({
           </ObjectReader>
       );
   return (
-    <PaneViews label="Update view" value={seat === "edit" ? "updates" : seat}
+    <PaneViews label="Update view" value={seat.startsWith("edit") ? "updates" : seat}
       tabs={[{id:"updates",label:"Text"},{id:"claims",label:"Claims"},{id:"sources",label:"Sources"},{id:"send",label:"Send"},{id:"delivery",label:"Delivery"},
         ...projectViews.map(view => ({id:`project:${view.id}`,label:view.label}))]}
       onChange={id => id.startsWith("project:") ? onProjectView?.(id.slice(8)) : setSeat(id)}>
@@ -409,17 +447,19 @@ export function UpdatePosture({
       label="Updates"
       rows={rows}
       columns={
-        seat === "claims" || seat === "sources"
+        seat === "claims" || seat === "sources" || seat === "edit"
           ? undefined
           : [
               { key: "name", word: "Update", priority: 10, minWidth: 220 },
             ]
       }
       selectedId={
-        seat === "claims" || seat === "sources" ? picked : current?.id
+        seat === "claims" || seat === "sources" || seat === "edit" ? picked : current?.id
       }
       onSelect={(id) => {
-        if (seat === "claims" || seat === "sources") setPicked(id);
+        if (seat === "claims" || seat === "sources" || seat === "edit") {
+          if (!ctrl.saveBusy) setPicked(id);
+        }
         else {
           const row = ctrl.updates.find((row) => row.id === id);
           if (row) {

@@ -15,7 +15,7 @@ from .room_seed_rig import _seed_populated_project, _seed_meeting_with_proposals
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/room14r2"
+OUT = ROOT / ".tmp/evidence-shots/room14r3"
 PHASE = os.environ.get("ROOM_SHOT_PHASE", "after")
 
 
@@ -106,7 +106,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             def shot(win: Any, name: str) -> None:
                 _settle(page)
                 suffix = "900" if width == 1440 else "393"
-                item = {"update-claims": "1", "posture-history": "2", "update-reader": "3", "update": "4", "review-edit": "5", "sources": "6", "prepare-kept-reader": "7", "review-dismiss-question": "8"}.get(name, "states")
+                item = {"update": "2", "update-plain":"2", "update-kind-changed":"2", "update-claims": "2", "update-reader": "2", "review-edit": "1", "review-item-edit":"1", "sources": "4", "plan": "4", "posture-files": "4", "posture-recall": "3", "prepare-purpose": "3", "prepare-kept-reader": "3"}.get(name, "states")
                 dest = OUT / f"{item}-{name}-{PHASE}-{suffix}"
                 page.screenshot(path=str(dest.with_suffix(".png")))
                 facts = win.evaluate("""el => ({box:el.getBoundingClientRect().toJSON(),
@@ -132,15 +132,30 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     assert strong.evaluate("e => getComputedStyle(e).display === 'inline'")
                 for well in win.locator(".surface-object-reading").all():
                     assert well.evaluate("e => e.clientHeight >= Math.min(80, e.scrollHeight)"), well.evaluate("e=>({height:e.clientHeight,scroll:e.scrollHeight})")
+                if name in ("prepare-purpose", "prepare-kept-reader", "posture-recall"):
+                    assert win.locator('[data-pane-view]:not([inert] [data-pane-view])').count() == 1
+                    assert win.get_by_role("button", name="Actions ▾", exact=True).count() <= 1
+                if name in ("plan", "sources", "posture-files", "posture-recall"):
+                    assert win.locator('.object-list-rows').evaluate_all("""wells => wells.every(well => {
+                        const seat=well.getBoundingClientRect();
+                        return [...well.querySelectorAll('.object-list-row')].every(row => {
+                            const r=row.getBoundingClientRect();
+                            return r.bottom<=seat.top+.5 || r.top>=seat.bottom-.5 || (r.top>=seat.top-.5 && r.bottom<=seat.bottom+.5);
+                        });
+                    })"""), "Rows at rest must keep both edges in their list well"
+                if name == "posture-recall":
+                    field=win.get_by_role("textbox", name="Search memory", exact=True)
+                    assert field.evaluate("e=>!e.closest('.surface-pane-actions') && !!e.closest('.object-list-find')")
                 if name in ("update", "review-edit"):
-                    field = win.get_by_role("textbox", name="Update body" if name == "update" else "Text", exact=True)
+                    field = win.get_by_role("textbox", name="Subject" if name == "update" else "Text", exact=True)
                     assert field.evaluate("""e => {
                         const well=e.closest('.gadget-pad,.gadget-string').getBoundingClientRect();
                         const seat=e.closest('.gadget-row').querySelector('.gadget-row-gadget').getBoundingClientRect();
                         return Math.abs(well.left-seat.left)<2 && well.width>=seat.width-2 && well.right<=seat.right+2;
                     }"""), "The text well must fill its inspector value seat"
                 if name == "review-edit":
-                    expect(win.get_by_role("textbox", name="State", exact=True)).to_have_value("Open")
+                    expect(win.get_by_role("combobox", name="State", exact=True)).to_have_value("open")
+                    expect(win.get_by_role("button", name="Speak State", exact=True)).to_have_count(0)
                 if name == "review-dismiss-question":
                     assert win.locator('[data-question]').evaluate("""e=>{
                         const keeps=e.querySelector('.surface-question-keeps').getBoundingClientRect();
@@ -182,8 +197,35 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             expect(win.locator(".surface-object-reading")).not_to_contain_text("[critical]")
             shot(win, "update-reader")
             _verb(page, win, "Edit")
-            expect(win.get_by_role("textbox", name="Update body", exact=True)).to_be_visible()
+            expect(win.get_by_role("textbox", name="Subject", exact=True)).to_be_visible()
             shot(win, "update")
+            plain = next(claim for claim in draft["editable_claims"] if "kind" not in claim["values"])
+            plain_row = win.locator(f'[data-object-id="{plain["span_id"]}"]')
+            plain_row.scroll_into_view_if_needed()
+            plain_row.click()
+            expect(win.get_by_text("This claim has no separate kind or state.", exact=True)).to_be_visible()
+            expect(win.get_by_role("textbox", name="Subject", exact=True)).to_have_value(plain["values"]["subject"])
+            expect(win.get_by_role("combobox", name="State", exact=True)).to_have_count(0)
+            shot(win, "update-plain")
+            item = next(claim for claim in draft["editable_claims"] if claim["values"].get("kind") == "risk")
+            item_row = win.locator(f'[data-object-id="{item["span_id"]}"]')
+            item_row.scroll_into_view_if_needed()
+            item_row.click()
+            win.get_by_role("combobox", name="Kind", exact=True).select_option("dependency")
+            expect(win.get_by_role("combobox", name="State", exact=True)).to_have_value("healthy")
+            shot(win, "update-kind-changed")
+            win.get_by_role("combobox", name="Kind", exact=True).select_option("risk")
+            _verb(page, win, "Cancel")
+            _verb(page, win, "Edit full text")
+            expect(win.get_by_role("textbox", name="Update body", exact=True)).to_be_visible()
+            shot(win, "update-full-text")
+            full_text = win.get_by_role("textbox", name="Update body", exact=True)
+            original_text = full_text.input_value()
+            full_text.fill(original_text + "\nKeep the latest edit.")
+            shot(win, "update-full-text-unsaved")
+            full_text.fill(original_text)
+            win.locator(".surface-inspector-actions").get_by_role("button", name="Save", exact=True).click()
+            expect(win.locator(".surface-inspector-actions").get_by_role("button", name="Save", exact=True)).to_be_disabled()
             _verb(page, win, "Cancel")
             for seat in ("claims", "sources"):
                 _view(page,win,seat.capitalize())
@@ -220,9 +262,19 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     source_note.locator(".desk-gadget-close").click()
                     expect(win.locator(".desk-window-title")).to_have_attribute("aria-label", "Payments Platform Rewrite")
                     expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
+                if posture == "Recall":
+                    row = win.get_by_role("row", name=__import__("re").compile("Load test rerun")).first
+                    expect(row).to_be_visible()
+                    row.click()
+                    expect(win.locator(".surface-inspector-facts")).not_to_contain_text("Not set")
+                    shot(win, "recall-selected")
+                    _verb(page, win, "Set a date")
+                    expect(win.get_by_role("textbox", name="Due", exact=True)).to_be_visible()
+                    shot(win, "recall-date")
+                    _verb(page, win, "Cancel")
                 if posture == "Prepare":
                     shot(win, "prepare-purpose")
-                    choose_toolbar(win,'View',"kept")
+                    _view(page, win, "Kept briefs")
                     kept = win.locator(".object-list-row").first
                     expect(kept).to_be_visible()
                     shot(win, "prepare-kept-list")
@@ -234,9 +286,9 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     shot(win, "prepare-kept-reader")
                     # Visit every records seat of a saved brief after the fit change.
                     for seat in ("sources", "claims", "carried"):
-                        choose_toolbar(win,"View",seat)
+                        _view(page, win, {"sources":"Sources","claims":"Claims","carried":"Carried forward"}[seat])
                         shot(win, "prepare-" + seat)
-                    choose_toolbar(win,'View',"brief")
+                    _view(page, win, "Prepared brief")
                 if posture == "Review":
                     open_verb = win.get_by_role("button", name="Open", exact=True)
                     if open_verb.is_visible():
@@ -258,6 +310,15 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     _verb(page, win, "Dismiss")
                     expect(win.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
                     shot(win, "review-dismiss-question")
+                    _verb(page, win, "Cancel")
+                    db.project_observations.insert_proposal(proposal_id="room11-item", project_id=project_id, review_window_key="room11-review", proposal_kind="risk_attention", title="Read the cutover item", target_ref=f"project:{project_id}", patch_json=json.dumps({"item_type":"risk", "title":"Read the cutover item", "lifecycle":"open"}))
+                    _verb(page, win, "Close review")
+                    _view(page, win, "Review")
+                    win.get_by_role("row").filter(has_text="Read the cutover item").click()
+                    _verb(page, win, "Edit and accept")
+                    choose_toolbar(win, "Item type", "dependency")
+                    expect(win.get_by_role("combobox", name="Lifecycle", exact=True)).to_have_value("healthy")
+                    shot(win, "review-item-edit")
                     _verb(page, win, "Cancel")
                 shot(win, "posture-" + posture.lower())
             _view(page, win, "Now")
@@ -352,6 +413,60 @@ def test_room_path_inspector_uses_the_file_object(tmp_path, monkeypatch, width):
             expect(facts).to_contain_text("Critical")
             expect(facts).to_contain_text("Oct 1")
             assert not page.evaluate(CLIPPED_JS, "#surface-project-memory")
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_room_review_read_refusal_words_and_read_again(tmp_path, monkeypatch, width):
+    """Replay the starting hub's real refusal, then read the current hub's refusal."""
+    from playwright.sync_api import expect, sync_playwright
+    from holdspeak.db import get_database
+
+    _ensure_build()
+    old = json.loads((ROOT / "web/src/features/project-room/__tests__/room-wires/refusal-before14.json").read_text())
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    OUT.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition":"completed"}, token=TOKEN)
+            pid = _api(page, "POST", "/api/projects", {"name":"Review read refusal"}, token=TOKEN)["project"]["id"]
+            _api(page, "POST", f"/api/projects/{pid}/items", {"item_type":"milestone", "title":"Read the saved rollback review", "lifecycle":"planned"}, token=TOKEN)
+            get_database().project_observations.insert_review(review_id="refusal-review", project_id=pid,
+                status="open", opened_at="2026-11-14T12:00:00+00:00")
+            for phase in ("before", "after"):
+                clear_hub_windows_http(base, TOKEN)
+                _api(page, "POST", "/api/desk/windows/surface-project-memory/open", {"object_ref":f"project:{pid}"}, token=TOKEN)
+                if width == 1440:
+                    _api(page, "POST", "/api/desk/windows/surface-project-memory/set_geometry", {"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}}, token=TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                win=page.locator("#surface-project-memory")
+                expect(win.get_by_role("grid", name="Open", exact=True)).to_be_visible()
+                pattern=f"**/api/projects/{pid}/reviews"
+                def refuse(route):
+                    if phase == "before":
+                        route.fulfill(status=old["status"], json=old["body"])
+                    else:
+                        route.continue_(url=f"{base}/api/projects/{pid}/reviews/missing-review", method="GET", post_data=None)
+                page.route(pattern, refuse)
+                _view(page,win,"Review")
+                words=old["body"]["message"] if phase == "before" else "The review is not available."
+                expect(win.get_by_role("alert")).to_contain_text(words)
+                _settle(page)
+                suffix="900" if width == 1440 else "393"
+                page.screenshot(path=str(OUT / f"5-review-read-refused-{phase}-{suffix}.png"))
+                page.unroute(pattern)
+                _verb(page,win,"Read again")
+                expect(win.get_by_text("No proposals to review", exact=True)).to_be_visible()
+                expect(win.get_by_role("alert")).to_have_count(0)
+                if phase == "after":
+                    _settle(page)
+                    page.screenshot(path=str(OUT / f"5-review-read-again-after-{suffix}.png"))
             browser.close()
     finally:
         server.stop()

@@ -6,6 +6,8 @@ HTTP statuses (409 for conflicts).
 """
 from __future__ import annotations
 
+from ...services.room_errors import room_not_found
+
 from typing import Any
 
 from fastapi import APIRouter, Body, Request
@@ -69,12 +71,12 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     from ._produced import envelope, produced
 
     room_answer = envelope(log, "Failed to read the project", statuses={ValueError: 400}, not_found=lambda exc: {
-        "error": "Project not found" if exc.kind == "project" else str(exc)})
+        "error": exc.detail})
     mount_router(router, produced(ctx, [d for d in PROJECT_OPERATIONS if d.service == "project_service"],
                                   room_answer, module=__name__, project_service=lambda: service))
 
     def not_found(exc: NotFound, *, success: bool = False) -> JSONResponse:
-        body: dict[str, Any] = {"error": "Project not found" if exc.kind == "project" else str(exc)}
+        body: dict[str, Any] = {"error": exc.detail}
         if success:
             body["success"] = False
         return JSONResponse(body, status_code=404)
@@ -216,7 +218,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             if (refused := kernel_refusal(exc)) is not None:
                 return refused
             if isinstance(exc, NotFound):
-                return JSONResponse({"success": False, "error": "Project not found", **refusal_fields(exc)}, status_code=404)
+                return JSONResponse({"success": False, "error": room_not_found("project", project_id).detail, **refusal_fields(exc)}, status_code=404)
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
         except Exception as exc:
@@ -250,7 +252,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             return JSONResponse({"resources": ops().invoke(principal(request), "project.resource.list", {"project_id": project_id})})
         except NotFound:
-            return JSONResponse({"error": f"Unknown Project: {project_id}"}, status_code=404)
+            return JSONResponse({"error": room_not_found("project", project_id).detail}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to list Project resources")
 
@@ -272,7 +274,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             if (refused := kernel_refusal(exc)) is not None:
                 return refused
             if isinstance(exc, NotFound):
-                return JSONResponse({"error": "Project not found" if exc.kind == "project" else str(exc),
+                return JSONResponse({"error": exc.detail,
                                      **refusal_fields(exc)}, status_code=404)
             if isinstance(exc, ValidationError):
                 return JSONResponse({"error": exc.detail, **refusal_fields(exc)}, status_code=400)
@@ -299,7 +301,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             if (refused := kernel_refusal(exc)) is not None:
                 return refused
             if isinstance(exc, NotFound):
-                return JSONResponse({"error": "Project not found" if exc.kind == "project" else str(exc),
+                return JSONResponse({"error": exc.detail,
                                      **refusal_fields(exc)}, status_code=404)
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
@@ -564,7 +566,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             if (refused := kernel_refusal(exc)) is not None:
                 return refused
             if isinstance(exc, NotFound):
-                message = "Suggestion not found or already resolved" if exc.kind == "suggestion" else "Project not found"
+                message = exc.detail
                 return JSONResponse({"error": message, **refusal_fields(exc)}, status_code=404)
             status = int(exc.context.get("status") or 409)
             return JSONResponse({"success": False, "error": exc.detail, "code": exc.code, "error_code": exc.code,
@@ -579,8 +581,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(ops().invoke(principal(request), "project.dismiss_suggested_source",
                                              {"project_id": project_id, "reference": ref}))
         except NotFound as exc:
-            if exc.kind == "suggestion":
-                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to dismiss suggested source")
