@@ -2310,7 +2310,7 @@ seat after padding, glyphs, lamps and meters.
 - `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
   inspectors use the shared file object for them, rather than human initials.
 - Every `WorkMenu` uses the owner window's measured free seat. Its opener's
-  row, visible selected rows, tabs and list chrome stay clear. A panel opens
+  row, visible selected rows, tabs, list chrome and the status strip stay clear. A panel opens
   below, flips above when needed, and scrolls inside the window if neither
   side holds its full height. A short menu ends at a measured entry boundary;
   entries scroll at their full height. There is no per-app placement opt-in.

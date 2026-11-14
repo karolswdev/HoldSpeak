@@ -312,7 +312,8 @@ describe("ObjectList", () => {
   });
 
   it("the narrow Sort uses the shared menu and changes the rendered order", async () => {
-    render(<ListHost dense />);
+    // JSDOM has no container queries; expose the phone's Sort slot.
+    render(<><style>{".object-list-sortline { display: flex; }"}</style><ListHost dense /></>);
     const button = screen.getByRole("button", {name:"Sort: Name, ascending"});
     await userEvent.click(button);
     const menu = screen.getByRole("menu", {name:"Sort by"});

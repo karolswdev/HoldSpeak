@@ -505,7 +505,7 @@ export function WorkMenu({
       const edge = row?.getBoundingClientRect() ?? {top: y, bottom: y, left: x, right: x};
       const protectedNodes = new Set<HTMLElement>(row ? [row] : []);
       if (!windowOwner) document.querySelectorAll<HTMLElement>(".desk-menubar, .desk-dock").forEach(node => protectedNodes.add(node));
-      windowOwner?.querySelectorAll<HTMLElement>('.desk-pullout-head, [role="tablist"], .object-list-head, .object-list-inner-toolbar, .object-list-row[aria-selected="true"]').forEach(node => protectedNodes.add(node));
+      windowOwner?.querySelectorAll<HTMLElement>('.desk-pullout-head, .desk-surface-foot, [role="tablist"], .object-list-head, .object-list-inner-toolbar, .object-list-row[aria-selected="true"]').forEach(node => protectedNodes.add(node));
       const protectedRects = [...protectedNodes].map(node => node.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0 && rect.bottom > bounds.top && rect.top < bounds.bottom);
       const keepInView = (el: HTMLElement | null, parent?: DOMRect) => {
         if (!el) return;
