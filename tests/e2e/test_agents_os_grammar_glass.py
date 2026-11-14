@@ -4,7 +4,7 @@ import os
 import copy
 import shutil
 import pytest
-from .glass_infra import _api, _boot, _ensure_build, _settle, clear_hub_windows
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows, clear_hub_windows_http
 from .conductor_rig import _seed
 
 OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents14r2"
@@ -72,6 +72,39 @@ def _open_agents(page, base: str, width: int) -> None:
     page.goto(f"{base}/conductor?token={TOKEN}", wait_until="load")
 
 
+def _whole_state_words(win) -> set[str]:
+    measured=win.get_by_test_id("conductor-pill").evaluate_all("""els=>els.flatMap(el=>{
+        const r=el.getBoundingClientRect(),well=el.closest('.object-list-rows'),box=well?.getBoundingClientRect();
+        if(!box||!r.width||!r.height||r.bottom<=box.top||r.top>=box.bottom)return [];
+        return [{id:el.closest('[data-object-id]').getAttribute('data-object-id'),word:el.textContent,
+          fits:el.scrollWidth<=el.clientWidth+1&&[...el.querySelectorAll('span')].every(s=>s.scrollWidth<=s.clientWidth+1)}];
+    })""")
+    assert all(row["fits"] for row in measured), [row for row in measured if not row["fits"]]
+    return {row["id"] for row in measured}
+
+
+def _read_the_fleet(page, win) -> None:
+    """Every state is whole when its row enters the viewport; no offscreen width fence."""
+    well=win.get_by_test_id("agents-list").locator(".object-list-rows")
+    expected=set(well.locator('[data-object-id]').evaluate_all("els=>els.map(el=>el.getAttribute('data-object-id'))"))
+    well.evaluate("el=>{el.scrollTop=0}")
+    _settle(page)
+    seen=_whole_state_words(win)
+    first=True
+    while well.evaluate("el=>el.scrollTop+el.clientHeight<el.scrollHeight-1"):
+        previous=well.evaluate("el=>el.scrollTop")
+        well.evaluate("el=>{el.scrollTop+=Math.max(1,el.clientHeight*.75)}")
+        _settle(page)
+        if first:
+            page.screenshot(path=str(OUT/f"scroll-55-{PHASE}-{900 if page.viewport_size['width']==1440 else 393}.png"))
+            first=False
+        assert well.evaluate("el=>el.scrollTop") > previous, "The list must keep the owner's scroll"
+        seen |= _whole_state_words(win)
+    assert expected <= seen, f"Rows not read: {expected-seen}"
+    well.evaluate("el=>{el.scrollTop=0}")
+    _settle(page)
+
+
 def _press(win, verb: str, label: str) -> None:
     button = win.get_by_test_id(verb)
     if button.count() and button.is_visible():
@@ -120,7 +153,7 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
                 _settle(page)
                 assert win.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
                 assert win.locator(".aw-plate,.surface-mast:not(.surface-mast--framed),.surface-rail").count()==0
-                assert win.get_by_test_id("conductor-pill").evaluate_all("els=>els.every(el=>el.scrollWidth<=el.clientWidth+1 && [...el.querySelectorAll('span')].every(s=>s.scrollWidth<=s.clientWidth+1))"), "A state pill must show whole words"
+                _whole_state_words(win)
                 assert not win.locator(".surface-mast-facts").inner_text().endswith("this…")
                 if PHASE == "after" and name in {"waiting", "answer-draft", "answer-refused"}:
                     answer = win.get_by_test_id("conductor-answer").bounding_box()
@@ -134,18 +167,23 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
                 if not target.count() or not target.is_visible():
                     win.get_by_role("button",name="Agent view more",exact=True).click()
                     win.get_by_role("menuitem",name=name,exact=True).click()
-                else: target.click()
+                else:
+                    target.click()
             def pick(ref: str) -> None:
                 back=win.get_by_role("button",name="Back",exact=True)
-                if width==393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is not None: back.click()
+                if width==393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is not None:
+                    back.click()
                 row=win.locator(f'[data-testid="agents-list"] [data-object-id="{ref}"]')
                 row.scroll_into_view_if_needed()
                 _settle(page)
                 row.click()
                 expect(row).to_have_attribute("aria-selected","true")
-                if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None: row.press("Enter")
+                if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None:
+                    row.press("Enter")
                 expect(win.get_by_test_id("agents-mast")).to_be_visible()
             shot("list")
+            if pane == "work":
+                _read_the_fleet(page,win)
             for i, state_name in ([(0, "path-name"), (1, "identifier-name")] if crowded else []):
                 pick(f"launch:launch_agents14_{i}")
                 shot(state_name)
@@ -295,20 +333,41 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
         with sync_playwright() as pw:
             browser=pw.chromium.launch()
             page=browser.new_page(viewport={"width":width,"height":900 if width==1440 else 852},reduced_motion="reduce")
-            _reference_build(page)
-            page.route("**/api/coders/sessions**",lambda route:route.fulfill(json=fleet()))
-            page.route("**/api/agent/launches/launch_ag7_held/lane**",lambda route:route.fulfill(json=wire("agents-ag7","lane.held")))
-            page.route("**/api/agent/launches/launch_ag0_done/lane**",lambda route:route.fulfill(json=wire("agents-ag0","lane.done")))
-            page.route("**/api/agent/launches/*/resume",lambda route:route.fulfill(status=409,json=wire("agents-ag6","resume.refused")))
             page.goto(f"{base}/?token={TOKEN}",wait_until="load")
             _api(page,"PUT","/api/setup/onboarding",{"disposition":"completed"},token=TOKEN)
+            def recorded_page():
+                fresh=browser.new_page(viewport={"width":width,"height":900 if width==1440 else 852},reduced_motion="reduce")
+                _reference_build(fresh)
+                fresh.route("**/api/coders/sessions**",lambda route:route.fulfill(json=fleet()))
+                fresh.route("**/api/agent/launches/launch_ag7_held/lane**",lambda route:route.fulfill(json=wire("agents-ag7","lane.held")))
+                fresh.route("**/api/agent/launches/launch_ag0_done/lane**",lambda route:route.fulfill(json=wire("agents-ag0","lane.done")))
+                fresh.route("**/api/agent/launches/*/resume",lambda route:route.fulfill(status=409,json=wire("agents-ag6","resume.refused")))
+                return fresh
             def open_case(group:str):
+                nonlocal page
+                # Each tape is a separate desk snapshot, with no old page cache or close still in flight.
+                page.close()
+                clear_hub_windows_http(base,TOKEN)
+                page=recorded_page()
                 case[0]=group
                 tape=json.loads((fixtures/group/("coders-sessions.checked.wire.json" if group=="agents-ag0" else "coders-sessions.wire.json")).read_text())
                 page.clock.set_fixed_time(tape["captured_at"])
-                _open_agents(page,base,width)
+                status, opened = _http(base,"POST","/api/desk/windows/conductor/open",TOKEN,{})
+                assert status == 200, opened
+                if width == 1440:
+                    status, sized = _http(base,"POST","/api/desk/windows/conductor/set_geometry",TOKEN,
+                                           {"rect":{"x":"-1/2 + 240","y":"-1/2 + 100","w":"900px","h":"600px"}})
+                    assert status == 200, sized
+                page.goto(f"{base}/conductor?token={TOKEN}",wait_until="load")
+                _normal_chair(page)
                 win=page.locator("#conductor")
-                expect(win.get_by_test_id("conductor-row").first).to_be_visible()
+                try:
+                    expect(win.locator(".surface-mast-facts")).to_contain_text("55 sessions", timeout=15000)
+                    expect(win.get_by_test_id("conductor-row").first).to_be_visible()
+                except AssertionError:
+                    page.screenshot(path=str(OUT.parents[1]/f"agents-load-{group}-{PHASE}-{width}.png"))
+                    print(page.evaluate("""() => ({windows:[...document.querySelectorAll('.desk-window-shell')].map(el=>({id:el.id,cls:el.className})),rows:document.querySelectorAll('[data-testid="conductor-row"]').length,scoped:document.querySelectorAll('#conductor [data-testid="conductor-row"]').length,first:document.querySelector('[data-testid="conductor-row"]')?.outerHTML.slice(0,500)})"""))
+                    raise
                 return win
             findings=[]
             def shot(win,name:str):
@@ -320,22 +379,30 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
                     assert reading and verbs and reading["y"] + reading["height"] <= verbs["y"] + verbs["height"] + 1
                 page.screenshot(path=str(OUT/f"{name}-{PHASE}-{900 if width==1440 else 393}.png"))
                 if name == "remove-question":
-                    if not win.get_by_role("tablist",name="Agent progress").count(): findings.append("1: Remove lost the step track")
-                    if not win.get_by_role("log",name="Latest activity").count(): findings.append("1: Remove lost the last activity")
+                    if not win.get_by_role("tablist",name="Agent progress").count():
+                        findings.append("1: Remove lost the step track")
+                    if not win.get_by_role("log",name="Latest activity").count():
+                        findings.append("1: Remove lost the last activity")
                     well=win.locator(".surface-tab-panel > .surface-preference-well").bounding_box()
                     for part in (win.get_by_role("tablist",name="Agent progress"),win.get_by_role("log",name="Latest activity")):
                         box=part.bounding_box() if part.count() else None
-                        if box and well and (box["y"] < well["y"]-1 or box["y"]+box["height"] > well["y"]+well["height"]+1): findings.append("1: Remove hides progress or the last activity outside its well")
+                        if box and well and (box["y"] < well["y"]-1 or box["y"]+box["height"] > well["y"]+well["height"]+1):
+                            findings.append("1: Remove hides progress or the last activity outside its well")
                 if name == "checked":
                     row=win.get_by_text("Launched",exact=True).locator("..").bounding_box()
                     well=win.locator(".surface-tab-panel > .surface-preference-well").bounding_box()
-                    if row and well and row["y"] < well["y"]+well["height"] and row["y"]+row["height"] > well["y"]+well["height"]+1: findings.append("2: Launched is a partial row")
-                    if not win.get_by_text("Launched",exact=True).evaluate("""el=>{const row=el.closest('.gadget-row'), box=row.getBoundingClientRect();for(let p=row.parentElement;p&&p!==el.closest('.surface-tab-panel');p=p.parentElement){if(['auto','scroll','hidden','clip'].includes(getComputedStyle(p).overflowY)){const b=p.getBoundingClientRect();if(box.top<b.top-1||box.bottom>b.bottom+1)return false;}}return box.height>0;}"""): findings.append("2: Launched is outside its facts or reading well")
+                    if row and well and row["y"] < well["y"]+well["height"] and row["y"]+row["height"] > well["y"]+well["height"]+1:
+                        findings.append("2: Launched is a partial row")
+                    if not win.get_by_text("Launched",exact=True).evaluate("""el=>{const row=el.closest('.gadget-row'), box=row.getBoundingClientRect();for(let p=row.parentElement;p&&p!==el.closest('.surface-tab-panel');p=p.parentElement){if(['auto','scroll','hidden','clip'].includes(getComputedStyle(p).overflowY)){const b=p.getBoundingClientRect();if(box.top<b.top-1||box.bottom>b.bottom+1)return false;}}return box.height>0;}"""):
+                        findings.append("2: Launched is outside its facts or reading well")
                 if name == "restart" and width == 1440:
                     hovering=win.locator('[data-testid="agents-list"] [aria-selected="false"]:hover')
-                    if hovering.count() and hovering.first.evaluate("el=>getComputedStyle(el).backgroundColor !== 'rgba(0, 0, 0, 0)'"): findings.append("3: Another row wears a hover ground at rest")
-                if win.get_by_text("Could not mark it seen",exact=True).count(): findings.append(f"6: {name} shows an automatic seen failure")
-                if width == 393 and not win.locator(".surface-mast-facts").inner_text().endswith("3 here"): findings.append(f"4: {name} drops the agent count")
+                    if hovering.count() and hovering.first.evaluate("el=>getComputedStyle(el).backgroundColor !== 'rgba(0, 0, 0, 0)'"):
+                        findings.append("3: Another row wears a hover ground at rest")
+                if win.get_by_text("Could not mark it seen",exact=True).count():
+                    findings.append(f"6: {name} shows an automatic seen failure")
+                if width == 393 and not win.locator(".surface-mast-facts").inner_text().endswith("3 here"):
+                    findings.append(f"4: {name} does not keep both compact counts")
 
                 if name in {"checked", "remove-question"}:
                     fit = win.locator(".surface-tab-panel > .surface-preference-well").evaluate("""el=>({well:el.getBoundingClientRect().toJSON(),panel:el.parentElement.getBoundingClientRect().toJSON(),scroll:el.scrollHeight,height:el.clientHeight})""")
@@ -354,7 +421,8 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
             _settle(page)
             target.click()
             expect(target).to_have_attribute("aria-selected", "true")
-            if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None: target.press("Enter")
+            if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None:
+                target.press("Enter")
             expect(win.get_by_test_id("conductor-held-call")).to_be_visible()
             assert win.get_by_test_id("agent-row-command").evaluate("""el=>{const box=el.closest('.surface-preference-well').getBoundingClientRect();const range=document.createRange();range.selectNodeContents(el);const first=[...range.getClientRects()].find(r=>r.height>0);return first && first.top>=box.top-1 && first.bottom<=box.bottom+1;}"""), "The held command must remain in view"
             expect(win.get_by_test_id("conductor-deny")).to_be_focused()
@@ -367,7 +435,8 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
             _settle(page)
             target.click()
             expect(target).to_have_attribute("aria-selected", "true")
-            if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None: target.press("Enter")
+            if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None:
+                target.press("Enter")
             shot(win,"checked")
             _press(win,"conductor-bar-remove","Remove")
             question=win.get_by_role("region",name="Remove Draft test scaffolding for flags?",exact=True)
@@ -381,7 +450,8 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
             _settle(page)
             target.click()
             expect(target).to_have_attribute("aria-selected", "true")
-            if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None: target.press("Enter")
+            if width == 393 and win.locator(".surface-list-pane").get_attribute("data-detail-open") is None:
+                target.press("Enter")
             shot(win,"restart")
             _press(win,"conductor-bar-resume","Resume")
             expect(win.get_by_test_id("conductor-stop-receipt")).to_contain_text("Not resumed" if PHASE == "before" else "The agent did not resume; use Hand again.")

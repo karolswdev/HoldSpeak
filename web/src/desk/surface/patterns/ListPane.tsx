@@ -52,6 +52,7 @@ export function ListPane({
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined" || !ref.current) return;
+    let previousSeat = "";
     const update = () => {
       const seat = ref.current;
       const grid = [
@@ -187,6 +188,18 @@ export function ListPane({
         '[data-object-id][aria-selected="true"]',
       );
       const well = row?.closest<HTMLElement>(".object-list-rows");
+      // A column refit during scrolling must not pull the list back. Follow
+      // a changed selection, row order or available seat instead.
+      const pane = seat?.parentElement, layout = pane && getComputedStyle(pane);
+      const available = layout?.display === "grid"
+        ? [pane?.clientWidth, pane?.clientHeight, layout.gridTemplateColumns, layout.gridTemplateRows]
+        : [seat?.clientWidth, seat?.clientHeight];
+      const nextSeat = JSON.stringify([
+        row?.dataset.objectId, Boolean(grid), available,
+        [...(well?.querySelectorAll<HTMLElement>("[data-object-id]") ?? [])].map(row => row.dataset.objectId),
+      ]);
+      if (nextSeat === previousSeat) return;
+      previousSeat = nextSeat;
       if (!row || !well) return;
       const r = row.getBoundingClientRect(),
         w = well.getBoundingClientRect();

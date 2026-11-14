@@ -1657,6 +1657,7 @@ under More; groups within a tab use captions and one form well.
 when inspection opens, reserves the header plus at least three complete rows,
 and keeps the selected row in its scrolling well. The inspector takes the
 remaining height; its content scrolls independently and the pane itself never scrolls.
+A content refit keeps the owner's scroll position. A changed selection, row order or list seat brings the selection into view.
 `PaneInspector` says its `label` once. It takes `rows` plus a typed
 `completion`, or a stateful editor that returns `InspectorForm`. A form
 takes row data (`label`, `control`) or only `GadgetRow` children, including
