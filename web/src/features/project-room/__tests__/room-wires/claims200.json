@@ -1446,7 +1446,204 @@
       "published_at": null,
       "review_id": null,
       "source_manifest_json": "{}",
-      "updated_at": "2026-10-11T16:38:55.673983"
+      "updated_at": "2026-10-11T16:38:55.673983",
+      "editable_claims": [
+       {
+        "span_id": "s1",
+        "section": "progress",
+        "text": "Milestone [high]: Launch v2.0 -- planned",
+        "values": {
+         "subject": "Launch v2.0",
+         "kind": "milestone",
+         "state": "planned",
+         "severity": "high"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         },
+         {
+          "key": "severity",
+          "label": "Severity",
+          "kind": "choice",
+          "values": [
+           "critical",
+           "high",
+           "medium",
+           "low"
+          ]
+         }
+        ]
+       },
+       {
+        "span_id": "s2",
+        "section": "progress",
+        "text": "Priya expects the cut-over at 95% by 2026-12-31",
+        "values": {
+         "subject": "Priya expects the cut-over at 95% by 2026-12-31"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       },
+       {
+        "span_id": "s3",
+        "section": "progress",
+        "text": "Sprint velocity improved over the trailing average",
+        "values": {
+         "subject": "Sprint velocity improved over the trailing average"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       },
+       {
+        "span_id": "s4",
+        "section": "decisions",
+        "text": "API Gateway degraded (risk_attention) -- accepted",
+        "values": {
+         "subject": "API Gateway degraded (risk_attention) -- accepted"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       },
+       {
+        "span_id": "s5",
+        "section": "dependencies",
+        "text": "Dependency: API Gateway -- at_risk",
+        "values": {
+         "subject": "API Gateway",
+         "kind": "dependency",
+         "state": "at_risk"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1523,7 +1720,564 @@
    "published_at": null,
    "review_id": null,
    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":4,\"week_source_refs\":[]}",
-   "updated_at": "2026-10-11T22:38:55+00:00"
+   "updated_at": "2026-10-11T22:38:55+00:00",
+   "editable_claims": [
+    {
+     "span_id": "s_progress_0",
+     "section": "progress",
+     "text": "Risk [critical]: Vendor lock-in -- open",
+     "values": {
+      "subject": "Vendor lock-in",
+      "kind": "risk",
+      "state": "open",
+      "severity": "critical"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "open",
+        "mitigated",
+        "accepted",
+        "closed"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      },
+      {
+       "key": "severity",
+       "label": "Severity",
+       "kind": "choice",
+       "values": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+       ]
+      }
+     ]
+    },
+    {
+     "span_id": "s_progress_1",
+     "section": "progress",
+     "text": "Milestone [high]: Launch v2.0 -- planned",
+     "values": {
+      "subject": "Launch v2.0",
+      "kind": "milestone",
+      "state": "planned",
+      "severity": "high"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "planned",
+        "reached",
+        "missed",
+        "dropped"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      },
+      {
+       "key": "severity",
+       "label": "Severity",
+       "kind": "choice",
+       "values": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+       ]
+      }
+     ]
+    },
+    {
+     "span_id": "s_progress_2",
+     "section": "progress",
+     "text": "Dependency [medium]: API Gateway -- at_risk",
+     "values": {
+      "subject": "API Gateway",
+      "kind": "dependency",
+      "state": "at_risk",
+      "severity": "medium"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "healthy",
+        "at_risk",
+        "broken",
+        "resolved"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      },
+      {
+       "key": "severity",
+       "label": "Severity",
+       "kind": "choice",
+       "values": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+       ]
+      }
+     ]
+    },
+    {
+     "span_id": "s_risks_blockers_0",
+     "section": "risks_blockers",
+     "text": "Risk [critical]: Vendor lock-in -- open",
+     "values": {
+      "subject": "Vendor lock-in",
+      "kind": "risk",
+      "state": "open",
+      "severity": "critical"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "open",
+        "mitigated",
+        "accepted",
+        "closed"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      },
+      {
+       "key": "severity",
+       "label": "Severity",
+       "kind": "choice",
+       "values": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+       ]
+      }
+     ]
+    },
+    {
+     "span_id": "s_risks_blockers_1",
+     "section": "risks_blockers",
+     "text": "Dependency [medium]: API Gateway -- at_risk",
+     "values": {
+      "subject": "API Gateway",
+      "kind": "dependency",
+      "state": "at_risk",
+      "severity": "medium"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "healthy",
+        "at_risk",
+        "broken",
+        "resolved"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      },
+      {
+       "key": "severity",
+       "label": "Severity",
+       "kind": "choice",
+       "values": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+       ]
+      }
+     ]
+    },
+    {
+     "span_id": "s_dependencies_0",
+     "section": "dependencies",
+     "text": "Dependency [medium]: API Gateway -- at_risk",
+     "values": {
+      "subject": "API Gateway",
+      "kind": "dependency",
+      "state": "at_risk",
+      "severity": "medium"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "healthy",
+        "at_risk",
+        "broken",
+        "resolved"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      },
+      {
+       "key": "severity",
+       "label": "Severity",
+       "kind": "choice",
+       "values": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+       ]
+      }
+     ]
+    },
+    {
+     "span_id": "s_next_actions_0",
+     "section": "next_actions",
+     "text": "Milestone: Launch v2.0 -- planned",
+     "values": {
+      "subject": "Launch v2.0",
+      "kind": "milestone",
+      "state": "planned"
+     },
+     "fields": [
+      {
+       "key": "subject",
+       "label": "Subject",
+       "kind": "text"
+      },
+      {
+       "key": "kind",
+       "label": "Kind",
+       "kind": "choice",
+       "values": [
+        "milestone",
+        "risk",
+        "dependency",
+        "signal",
+        "workstream"
+       ]
+      },
+      {
+       "key": "state",
+       "label": "State",
+       "kind": "choice",
+       "values": [
+        "planned",
+        "reached",
+        "missed",
+        "dropped"
+       ],
+       "values_by_kind": {
+        "milestone": [
+         "planned",
+         "reached",
+         "missed",
+         "dropped"
+        ],
+        "risk": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "dependency": [
+         "healthy",
+         "at_risk",
+         "broken",
+         "resolved"
+        ],
+        "signal": [
+         "active",
+         "retired"
+        ],
+        "workstream": [
+         "active",
+         "paused",
+         "done"
+        ]
+       }
+      }
+     ]
+    }
+   ]
   },
   "edit": {
    "answer": {
@@ -1547,7 +2301,417 @@
      "published_at": null,
      "review_id": null,
      "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":4,\"week_source_refs\":[]}",
-     "updated_at": "2026-10-11T22:38:55+00:00"
+     "updated_at": "2026-10-11T22:38:55+00:00",
+     "editable_claims": [
+      {
+       "span_id": "s_progress_1",
+       "section": "progress",
+       "text": "Milestone [high]: Launch v2.0 -- planned",
+       "values": {
+        "subject": "Launch v2.0",
+        "kind": "milestone",
+        "state": "planned",
+        "severity": "high"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        },
+        {
+         "key": "kind",
+         "label": "Kind",
+         "kind": "choice",
+         "values": [
+          "milestone",
+          "risk",
+          "dependency",
+          "signal",
+          "workstream"
+         ]
+        },
+        {
+         "key": "state",
+         "label": "State",
+         "kind": "choice",
+         "values": [
+          "planned",
+          "reached",
+          "missed",
+          "dropped"
+         ],
+         "values_by_kind": {
+          "milestone": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "risk": [
+           "open",
+           "mitigated",
+           "accepted",
+           "closed"
+          ],
+          "dependency": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "signal": [
+           "active",
+           "retired"
+          ],
+          "workstream": [
+           "active",
+           "paused",
+           "done"
+          ]
+         }
+        },
+        {
+         "key": "severity",
+         "label": "Severity",
+         "kind": "choice",
+         "values": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+         ]
+        }
+       ]
+      },
+      {
+       "span_id": "s_progress_2",
+       "section": "progress",
+       "text": "Dependency [medium]: API Gateway -- at_risk",
+       "values": {
+        "subject": "API Gateway",
+        "kind": "dependency",
+        "state": "at_risk",
+        "severity": "medium"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        },
+        {
+         "key": "kind",
+         "label": "Kind",
+         "kind": "choice",
+         "values": [
+          "milestone",
+          "risk",
+          "dependency",
+          "signal",
+          "workstream"
+         ]
+        },
+        {
+         "key": "state",
+         "label": "State",
+         "kind": "choice",
+         "values": [
+          "healthy",
+          "at_risk",
+          "broken",
+          "resolved"
+         ],
+         "values_by_kind": {
+          "milestone": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "risk": [
+           "open",
+           "mitigated",
+           "accepted",
+           "closed"
+          ],
+          "dependency": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "signal": [
+           "active",
+           "retired"
+          ],
+          "workstream": [
+           "active",
+           "paused",
+           "done"
+          ]
+         }
+        },
+        {
+         "key": "severity",
+         "label": "Severity",
+         "kind": "choice",
+         "values": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+         ]
+        }
+       ]
+      },
+      {
+       "span_id": "s_risks_blockers_1",
+       "section": "risks_blockers",
+       "text": "Dependency [medium]: API Gateway -- at_risk",
+       "values": {
+        "subject": "API Gateway",
+        "kind": "dependency",
+        "state": "at_risk",
+        "severity": "medium"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        },
+        {
+         "key": "kind",
+         "label": "Kind",
+         "kind": "choice",
+         "values": [
+          "milestone",
+          "risk",
+          "dependency",
+          "signal",
+          "workstream"
+         ]
+        },
+        {
+         "key": "state",
+         "label": "State",
+         "kind": "choice",
+         "values": [
+          "healthy",
+          "at_risk",
+          "broken",
+          "resolved"
+         ],
+         "values_by_kind": {
+          "milestone": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "risk": [
+           "open",
+           "mitigated",
+           "accepted",
+           "closed"
+          ],
+          "dependency": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "signal": [
+           "active",
+           "retired"
+          ],
+          "workstream": [
+           "active",
+           "paused",
+           "done"
+          ]
+         }
+        },
+        {
+         "key": "severity",
+         "label": "Severity",
+         "kind": "choice",
+         "values": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+         ]
+        }
+       ]
+      },
+      {
+       "span_id": "s_dependencies_0",
+       "section": "dependencies",
+       "text": "Dependency [medium]: API Gateway -- at_risk",
+       "values": {
+        "subject": "API Gateway",
+        "kind": "dependency",
+        "state": "at_risk",
+        "severity": "medium"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        },
+        {
+         "key": "kind",
+         "label": "Kind",
+         "kind": "choice",
+         "values": [
+          "milestone",
+          "risk",
+          "dependency",
+          "signal",
+          "workstream"
+         ]
+        },
+        {
+         "key": "state",
+         "label": "State",
+         "kind": "choice",
+         "values": [
+          "healthy",
+          "at_risk",
+          "broken",
+          "resolved"
+         ],
+         "values_by_kind": {
+          "milestone": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "risk": [
+           "open",
+           "mitigated",
+           "accepted",
+           "closed"
+          ],
+          "dependency": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "signal": [
+           "active",
+           "retired"
+          ],
+          "workstream": [
+           "active",
+           "paused",
+           "done"
+          ]
+         }
+        },
+        {
+         "key": "severity",
+         "label": "Severity",
+         "kind": "choice",
+         "values": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+         ]
+        }
+       ]
+      },
+      {
+       "span_id": "s_next_actions_0",
+       "section": "next_actions",
+       "text": "Milestone: Launch v2.0 -- planned",
+       "values": {
+        "subject": "Launch v2.0",
+        "kind": "milestone",
+        "state": "planned"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        },
+        {
+         "key": "kind",
+         "label": "Kind",
+         "kind": "choice",
+         "values": [
+          "milestone",
+          "risk",
+          "dependency",
+          "signal",
+          "workstream"
+         ]
+        },
+        {
+         "key": "state",
+         "label": "State",
+         "kind": "choice",
+         "values": [
+          "planned",
+          "reached",
+          "missed",
+          "dropped"
+         ],
+         "values_by_kind": {
+          "milestone": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "risk": [
+           "open",
+           "mitigated",
+           "accepted",
+           "closed"
+          ],
+          "dependency": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "signal": [
+           "active",
+           "retired"
+          ],
+          "workstream": [
+           "active",
+           "paused",
+           "done"
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "span_id": "s_owner_0",
+       "section": "progress",
+       "text": "Launch slipped, the owner rewrote this",
+       "values": {
+        "subject": "Launch slipped, the owner rewrote this"
+       },
+       "fields": [
+        {
+         "key": "subject",
+         "label": "Subject",
+         "kind": "text"
+        }
+       ]
+      }
+     ]
     }
    },
    "method": "PUT",
@@ -3202,7 +4366,417 @@
       "published_at": null,
       "review_id": null,
       "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":4,\"week_source_refs\":[]}",
-      "updated_at": "2026-10-11T22:38:55+00:00"
+      "updated_at": "2026-10-11T22:38:55+00:00",
+      "editable_claims": [
+       {
+        "span_id": "s_progress_1",
+        "section": "progress",
+        "text": "Milestone [high]: Launch v2.0 -- planned",
+        "values": {
+         "subject": "Launch v2.0",
+         "kind": "milestone",
+         "state": "planned",
+         "severity": "high"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         },
+         {
+          "key": "severity",
+          "label": "Severity",
+          "kind": "choice",
+          "values": [
+           "critical",
+           "high",
+           "medium",
+           "low"
+          ]
+         }
+        ]
+       },
+       {
+        "span_id": "s_progress_2",
+        "section": "progress",
+        "text": "Dependency [medium]: API Gateway -- at_risk",
+        "values": {
+         "subject": "API Gateway",
+         "kind": "dependency",
+         "state": "at_risk",
+         "severity": "medium"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         },
+         {
+          "key": "severity",
+          "label": "Severity",
+          "kind": "choice",
+          "values": [
+           "critical",
+           "high",
+           "medium",
+           "low"
+          ]
+         }
+        ]
+       },
+       {
+        "span_id": "s_risks_blockers_1",
+        "section": "risks_blockers",
+        "text": "Dependency [medium]: API Gateway -- at_risk",
+        "values": {
+         "subject": "API Gateway",
+         "kind": "dependency",
+         "state": "at_risk",
+         "severity": "medium"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         },
+         {
+          "key": "severity",
+          "label": "Severity",
+          "kind": "choice",
+          "values": [
+           "critical",
+           "high",
+           "medium",
+           "low"
+          ]
+         }
+        ]
+       },
+       {
+        "span_id": "s_dependencies_0",
+        "section": "dependencies",
+        "text": "Dependency [medium]: API Gateway -- at_risk",
+        "values": {
+         "subject": "API Gateway",
+         "kind": "dependency",
+         "state": "at_risk",
+         "severity": "medium"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "healthy",
+           "at_risk",
+           "broken",
+           "resolved"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         },
+         {
+          "key": "severity",
+          "label": "Severity",
+          "kind": "choice",
+          "values": [
+           "critical",
+           "high",
+           "medium",
+           "low"
+          ]
+         }
+        ]
+       },
+       {
+        "span_id": "s_next_actions_0",
+        "section": "next_actions",
+        "text": "Milestone: Launch v2.0 -- planned",
+        "values": {
+         "subject": "Launch v2.0",
+         "kind": "milestone",
+         "state": "planned"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         },
+         {
+          "key": "kind",
+          "label": "Kind",
+          "kind": "choice",
+          "values": [
+           "milestone",
+           "risk",
+           "dependency",
+           "signal",
+           "workstream"
+          ]
+         },
+         {
+          "key": "state",
+          "label": "State",
+          "kind": "choice",
+          "values": [
+           "planned",
+           "reached",
+           "missed",
+           "dropped"
+          ],
+          "values_by_kind": {
+           "milestone": [
+            "planned",
+            "reached",
+            "missed",
+            "dropped"
+           ],
+           "risk": [
+            "open",
+            "mitigated",
+            "accepted",
+            "closed"
+           ],
+           "dependency": [
+            "healthy",
+            "at_risk",
+            "broken",
+            "resolved"
+           ],
+           "signal": [
+            "active",
+            "retired"
+           ],
+           "workstream": [
+            "active",
+            "paused",
+            "done"
+           ]
+          }
+         }
+        ]
+       },
+       {
+        "span_id": "s_owner_0",
+        "section": "progress",
+        "text": "Launch slipped, the owner rewrote this",
+        "values": {
+         "subject": "Launch slipped, the owner rewrote this"
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       }
+      ]
      }
     ]
    },

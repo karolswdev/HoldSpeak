@@ -1,12 +1,11 @@
 import { useState } from "react";
 import {
-  CycleGadget,
-  PaneActions,
   InspectorForm,
   PaneInspector,
   PreferencePane,
   StringGadget,
   type ListVerb,
+  wireDayClock,
 } from "../../../desk/surface";
 import { openRef, refOpener } from "../../../desk/openObject";
 import { openProjectRoom } from "../../../desk/shell";
@@ -75,8 +74,8 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
       kindWord: "Commitment",
       cells: { state: row.status },
       facts: [
-        { label: "Owner", value: row.owner || "Not set" },
-        { label: "Due", value: row.due_at || "Not set" },
+        { label: "Owner", value: row.owner || undefined },
+        { label: "Due", value: row.due_at || undefined },
         { label: "Source", value: row.source?.title },
       ],
       open: refOpener(row.ref) ?? undefined,
@@ -99,7 +98,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
           })),
           ...row.history.map((history, i) => ({
             key: `history:${i}`,
-            label: history.at,
+            label: wireDayClock(history.at),
             value: `${history.text} · ${history.reason}`,
           })),
         ],
@@ -213,27 +212,11 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
           setEdit("");
         }}
         verbs={verbs}
-        field={
-          <PaneActions>
-            <StringGadget
-              label="Search memory"
-              value={ctrl.query}
-              onChange={ctrl.setQuery}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-                  event.preventDefault();
-                  void ctrl.search();
-                }
-              }}
-            />
-            <CycleGadget
-              label="Memory kind"
-              value={ctrl.filter}
-              options={RECALL_FILTERS}
-              onChange={(value) => ctrl.setFilter(value as RecallFilter)}
-            />
-          </PaneActions>
-        }
+        scopes={[{id:"kind", label:"Memory kind", kind:"cycle", value:ctrl.filter,
+          options:RECALL_FILTERS, onChange:value => ctrl.setFilter(value as RecallFilter)}]}
+        field={<StringGadget label="Search memory" value={ctrl.query} onChange={ctrl.setQuery}
+          onKeyDown={event => {if (event.key === "Enter" && !event.nativeEvent.isComposing) {event.preventDefault(); void ctrl.search();}}} />}
+
         loading={ctrl.reading || ctrl.status === "searching"}
         error={ctrl.error}
         retry={() => {

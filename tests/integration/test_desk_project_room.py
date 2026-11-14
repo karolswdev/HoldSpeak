@@ -726,7 +726,7 @@ def test_a_slow_model_draft_never_freezes_the_hub_and_a_bad_answer_says_why(
         assert answer["status"] == 409, answer
         body = answer["body"]
         assert (body["code"], body["reason"]) == ("project_update_model_failed", "not_usable"), body
-        assert body["detail"] == "it did not return JSON", body
+        assert body["detail"] == "The engine did not return a readable update.", body
         command = hub.db.projects.get_project_command("p0-slow-draft")
         assert command and (command["status"], command["error_code"]) == ("failed", "not_usable"), command
         assert hub.ok("GET", f"/api/projects/{pid}/updates")["updates"] == [], "nothing is saved"
@@ -1178,7 +1178,7 @@ def test_the_engine_never_overwrites_his_words_and_a_failure_keeps_the_records_d
         job = hub.ok("POST", f"/api/updates/{records['id']}/engine-pass")["job"]
         failed = _poll_job(hub, job["id"], until=("succeeded", "failed"))
         assert (failed["state"], failed["reason"], failed["detail"]) == (
-            "failed", "not_usable", "it did not return JSON"), failed
+            "failed", "not_usable", "The engine did not return a readable update."), failed
         drafts = hub.ok("GET", f"/api/projects/{pid}/updates?lifecycle=draft")["updates"]
         assert [d["id"] for d in drafts] == [records["id"]]
         assert hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={}).status_code == 409
@@ -1770,7 +1770,7 @@ def test_a_repository_added_in_the_room_stays_and_the_same_one_again_is_already_
         assert before, "the added repository arms its watches"
         again = hub.client.post("/api/projects/door", json={"project_id": pid, "sources": [GITHUB_SOURCE]})
         assert again.status_code == 409, again.text
-        assert again.json()["message"] == "Already watched", again.text
+        assert again.json()["message"] == "This source is already watched.", again.text
         assert watch_ids() == before
 
 

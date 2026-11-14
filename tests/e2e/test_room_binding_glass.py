@@ -11,7 +11,7 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, cle
 from .test_room_os_grammar_glass import _verb, _view
 
 TOKEN = "room-binding-glass"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room14r2"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room14r3"
 
 
 @pytest.mark.parametrize("width", (1440, 393))
@@ -130,7 +130,7 @@ def test_room_refusals_keep_the_saved_object_and_offer_read_again(tmp_path, monk
                     expect(win.locator('.kit-statusbar')).to_contain_text("1 source")
                     expect(win.locator('.kit-statusbar')).not_to_contain_text("1 sources")
                 if operation == "discard":
-                    expect(win.get_by_role("combobox", name="View", exact=True)).to_have_value("brief")
+                    expect(win.get_by_role("button", name="Project view", exact=True).first).to_contain_text("Prepared brief")
                     expect(win.locator('.surface-object-reader')).to_contain_text("Draft")
                     expect(win.locator('.surface-object-reader')).not_to_contain_text("draft")
                 for notice in win.locator(".surface-action-notice[role=alert]").all():

@@ -392,10 +392,14 @@ class DeltaRepository(BaseRepository):
         decided_by_ref: Optional[str] = None,
         deferred_until: Optional[str] = None,
         dismissal_basis_hash: Optional[str] = None,
+        patch_json: Optional[str] = None,
     ) -> None:
         """Update mutable proposal fields on a caller-owned connection."""
         updates: list[str] = []
         params: list[Any] = []
+        if patch_json is not None:
+            updates.append("patch_json = ?")
+            params.append(patch_json)
         if lifecycle is not None:
             updates.append("lifecycle = ?")
             params.append(lifecycle)

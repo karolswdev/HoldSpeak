@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { roomEditRows } from "../RoomEditFields";
 import {
   InspectorForm,
   InspectorQuestion,
@@ -9,7 +10,7 @@ import {
   type ListVerb,
 } from "../../../desk/surface";
 import { refOpener } from "../../../desk/openObject";
-import { RoomList, roomFacts, roomObject, roomWord } from "../RoomList";
+import { RoomList, roomFacts, roomObject } from "../RoomList";
 import { kindLabel, humanFields, renderValue, type Proposal } from "./model";
 import type { ReviewController } from "./useReviewController";
 
@@ -42,6 +43,7 @@ export function ReviewPosture({
   const verbs: ListVerb[] = [
     {
       id: "accept",
+      variant: "primary",
       label: "Accept",
       enabled: () => Boolean(proposal) && !ctrl.decidingId,
       run: () => {
@@ -73,6 +75,7 @@ export function ReviewPosture({
     },
     {
       id: "undo",
+      toolbar: false,
       label: "Undo dismissal",
       enabled: () => ctrl.undoStack.length > 0,
       run: () => {
@@ -81,6 +84,7 @@ export function ReviewPosture({
     },
     {
       id: "finish",
+      toolbar: false,
       label: "Finish review",
       enabled: () =>
         !ctrl.checkpointed && Boolean(ctrl.window) && !ctrl.decidingId,
@@ -91,6 +95,7 @@ export function ReviewPosture({
     {
       enabled: () => true,
       id: "close",
+      toolbar: false,
       label: "Close review",
       run: () => {
         ctrl.exitReview();
@@ -151,7 +156,7 @@ export function ReviewPosture({
             label: "Dismiss",
             busy: Boolean(ctrl.decidingId),
             run: () => {
-              void ctrl.dismissProposal(proposal.id).then(() => setArmed(null));
+              void ctrl.dismissProposal(proposal.id).then(saved => {if(saved)setArmed(null);});
             },
           }}
         />
@@ -175,20 +180,7 @@ export function ReviewPosture({
                       ),
                     },
                   ]
-                : humanFields(ctrl.editingPatch ?? {}).map(
-                    ({key, label, value}) => ({
-                      label: roomWord(label),
-                      control: (
-                        <div className="surface-inspector-control" data-feedback-redact="true">
-                          <StringGadget
-                            label={roomWord(label)}
-                            value={["state", "lifecycle", "review_status"].includes(key) ? roomWord(String(value ?? "")) : String(value ?? "")}
-                            onChange={(next) => ctrl.updateEditField(key, ["state", "lifecycle", "review_status"].includes(key) ? next.toLowerCase().replaceAll(" ", "_") : next)}
-                          />
-                        </div>
-                      ),
-                    }),
-                  )
+                : roomEditRows(proposal.editableFields ?? [], ctrl.editingPatch ?? {}, ctrl.updateEditField)
             }
             completion={{
               cancel: () => {
@@ -209,7 +201,7 @@ export function ReviewPosture({
                           proposal.id,
                           ctrl.deferDate || undefined,
                         );
-                  void work.then(() => setMode(""));
+                  void work.then(saved => {if(saved)setMode("");});
                 },
               },
             }}

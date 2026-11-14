@@ -1446,7 +1446,24 @@
       "published_at": null,
       "review_id": null,
       "source_manifest_json": "{}",
-      "updated_at": "2026-10-11T16:38:55.253236"
+      "updated_at": "2026-10-11T16:38:55.253236",
+      "editable_claims": [
+       {
+        "span_id": "s1",
+        "section": "progress",
+        "text": "API schema migration merged.",
+        "values": {
+         "subject": "API schema migration merged."
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2950,7 +2967,69 @@
       "published_at": null,
       "review_id": null,
       "source_manifest_json": "{}",
-      "updated_at": "2026-10-11T16:38:55.250939"
+      "updated_at": "2026-10-11T16:38:55.250939",
+      "editable_claims": [
+       {
+        "span_id": "s1",
+        "section": "progress",
+        "text": "The API schema migration merged with zero rollback risk.",
+        "values": {
+         "subject": "The API schema migration merged with zero rollback risk."
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       },
+       {
+        "span_id": "s2",
+        "section": "progress",
+        "text": "Payments cut-over runbook overdue by 2 days.",
+        "values": {
+         "subject": "Payments cut-over runbook overdue by 2 days."
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       },
+       {
+        "span_id": "s3",
+        "section": "progress",
+        "text": "Team agreed to target Oct 12 for the cut-over.",
+        "values": {
+         "subject": "Team agreed to target Oct 12 for the cut-over."
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       },
+       {
+        "span_id": "s4",
+        "section": "progress",
+        "text": "Sprint velocity improved 15% over the trailing average.",
+        "values": {
+         "subject": "Sprint velocity improved 15% over the trailing average."
+        },
+        "fields": [
+         {
+          "key": "subject",
+          "label": "Subject",
+          "kind": "text"
+         }
+        ]
+       }
+      ]
      }
     ]
    },

@@ -27,7 +27,10 @@ SRS traceability
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
 from .room_binding import room_binding, check_room_binding
+from .room_edit_fields import review_edit_fields, validate_edit_fields
 
 import hashlib
 import json
@@ -635,7 +638,7 @@ class ProjectDeltaService:
         project_id = str(project_id).strip()
         # An unknown project is a typed refusal, not a FOREIGN KEY crash.
         if self._db.projects.get_project(project_id) is None:
-            raise NotFound("project", project_id)
+            raise room_not_found("project", project_id)
 
         # ── One-open-review check ────────────────────────────────────
         existing = self._find_open_review(project_id)
@@ -765,13 +768,13 @@ class ProjectDeltaService:
     def _check_review_binding(self, conn: Any, project_id: str, review_id: str, binding: Any) -> None:
         review = conn.execute("SELECT * FROM project_reviews WHERE id=? AND project_id=?", (review_id, project_id)).fetchone()
         if review is None:
-            raise ValidationError(f"Review {review_id!r} not found", code="validation")
+            raise ValidationError('This review is not available.', code="validation")
         check_room_binding(binding, self._review_binding(conn, review))
 
     def _check_proposal_binding(self, conn: Any, project_id: str, proposal_id: str, review_id: Any, binding: Any) -> None:
         proposal = conn.execute("SELECT * FROM project_proposals WHERE id=? AND project_id=?", (proposal_id, project_id)).fetchone()
         if proposal is None or (review_id is not None and proposal["review_window_key"] != review_id):
-            raise NotFound("proposal", proposal_id)
+            raise room_not_found("proposal", proposal_id)
         project = conn.execute("SELECT name FROM projects WHERE id=?", (project_id,)).fetchone()
         check_room_binding(binding, room_binding(dict(proposal), str(project["name"] or "") if project else ""))
         review = conn.execute("SELECT status FROM project_reviews WHERE id=?", (proposal["review_window_key"],)).fetchone()
@@ -833,17 +836,16 @@ class ProjectDeltaService:
         if review_id is not None:
             proposal = self._db.project_observations.get_proposal(proposal_id)
             if proposal is None:
-                raise NotFound("proposal", proposal_id)
+                raise room_not_found("proposal", proposal_id)
             if proposal.get("review_window_key") != review_id:
-                mismatch = NotFound("proposal", proposal_id)
-                mismatch.detail = f"Proposal {proposal_id!r} does not belong to review {review_id!r}"
+                mismatch = room_not_found("proposal", proposal_id)
+                mismatch.detail = "This proposal belongs to another review."
                 mismatch.context.update({"proposal_id": proposal_id, "review_id": review_id})
                 raise mismatch
         verb = str(verb).strip()
         if verb not in DECISION_VERBS:
             raise ValidationError(
-                f"Unknown decision verb: {verb!r}; "
-                f"must be one of {sorted(DECISION_VERBS)}",
+                'Choose Accept, Edit and accept, Defer or Dismiss.',
                 code="validation",
             )
 
@@ -869,8 +871,7 @@ class ProjectDeltaService:
                             "project_id": project_id}
                 if existing_cmd["request_hash"] != req_hash:
                     raise ConflictError(
-                        "idempotency conflict: same command_id "
-                        "with different request hash",
+                        'This command was used for different work.',
                         code="idempotency_conflict",
                         context={"command_id": command_id},
                     )
@@ -879,21 +880,19 @@ class ProjectDeltaService:
         proposal = self._db.project_observations.get_proposal(proposal_id)
         if proposal is None:
             raise ValidationError(
-                f"Proposal {proposal_id!r} not found",
+                'This proposal is not available.',
                 code="validation",
             )
         if proposal["project_id"] != project_id:
             raise ValidationError(
-                f"Proposal {proposal_id!r} does not belong to "
-                f"project {project_id!r}",
+                'This proposal belongs to another project.',
                 code="validation",
             )
 
         # Already-decided guard
         if proposal.get("lifecycle") != "open":
             raise ConflictError(
-                f"Proposal {proposal_id!r} already decided "
-                f"(lifecycle={proposal.get('lifecycle')!r})",
+                'This proposal already has an answer.',
                 code="already_decided",
                 context={
                     "proposal_id": proposal_id,
@@ -919,9 +918,7 @@ class ProjectDeltaService:
             # Conflict kind refuses accept
             if handler_action == "refuse":
                 raise ValidationError(
-                    f"Proposal kind {proposal_kind!r} cannot be accepted "
-                    f"(conflict proposals are for judgment framing -- "
-                    f"dismiss or defer only)",
+                    'This conflict cannot be accepted; dismiss or defer it.',
                     code="capability",
                 )
 
@@ -935,6 +932,7 @@ class ProjectDeltaService:
                 except (json.JSONDecodeError, TypeError):
                     base_patch = {}
                 base_patch.update(effective_patch)
+                validate_edit_fields(review_edit_fields(base_patch, proposal_kind), effective_patch)
                 patch_json_str = _deterministic_json(base_patch)
 
             # HS-161-07 S-2 fix: decide + create_item in ONE transaction
@@ -1009,6 +1007,7 @@ class ProjectDeltaService:
                 self._db.project_observations.update_proposal_in_transaction(
                     conn, proposal_id,
                     lifecycle="accepted",
+                    patch_json=patch_json_str if effective_patch is not None else None,
                     decided_at=now,
                     decided_by_ref=decided_by,
                 )
@@ -1156,8 +1155,7 @@ class ProjectDeltaService:
                             "project_id": project_id}
                 if existing_cmd["request_hash"] != req_hash:
                     raise ConflictError(
-                        "idempotency conflict: same command_id "
-                        "with different request hash",
+                        'This command was used for different work.',
                         code="idempotency_conflict",
                         context={"command_id": command_id},
                     )
@@ -1166,17 +1164,15 @@ class ProjectDeltaService:
         review = self._db.project_observations.get_review(review_id)
         if review is None:
             raise ValidationError(
-                f"Review {review_id!r} not found", code="validation",
+                'This review is not available.', code="validation",
             )
         if review["project_id"] != project_id:
             raise ValidationError(
-                f"Review {review_id!r} does not belong to "
-                f"project {project_id!r}", code="validation",
+                'This review belongs to another project.', code="validation",
             )
         if review.get("status") != "open":
             raise ConflictError(
-                f"Review {review_id!r} is not open "
-                f"(status={review.get('status')!r})",
+                'This review is already closed.',
                 code="already_decided",
                 context={"review_id": review_id,
                          "status": review.get("status")},
@@ -1197,7 +1193,7 @@ class ProjectDeltaService:
             ).fetchone()
             if row is None:
                 raise ValidationError(
-                    f"Project {project_id!r} not found", code="validation",
+                    'This project is not available.', code="validation",
                 )
             current_rev = int(row["revision"])
             new_revision = current_rev + 1
@@ -1870,7 +1866,7 @@ class ProjectDeltaService:
         A review of another project is not found, as an unknown one is."""
         review = self._db.project_observations.get_review(review_id)
         if review is None or review["project_id"] != project_id:
-            raise NotFound("review", review_id)
+            raise room_not_found("review", review_id)
         return self._load_frozen_window(review)
 
     def get_delta(self, principal: Any, project_id: str) -> dict[str, Any]:
@@ -1881,7 +1877,7 @@ class ProjectDeltaService:
         carried a copy of this glue before).
         """
         if self._db.projects.get_project(project_id) is None:
-            raise NotFound("project", project_id)
+            raise room_not_found("project", project_id)
         open_review = self._find_open_review(project_id)
         if open_review is not None:
             return self._load_frozen_window(open_review)
@@ -1935,7 +1931,7 @@ class ProjectDeltaService:
             conn.execute("BEGIN")
             saved_review = conn.execute("SELECT * FROM project_reviews WHERE id=?", (review_id,)).fetchone()
             if saved_review is None:
-                raise NotFound("review", review_id)
+                raise room_not_found("review", review_id)
             review_row = dict(saved_review)
             proposals = [dict(row) for row in conn.execute(
                 "SELECT * FROM project_proposals WHERE review_window_key=? ORDER BY id", (review_id,),
@@ -2004,6 +2000,7 @@ class ProjectDeltaService:
                     "title": p.get("title", ""),
                     "rationale": p.get("rationale", ""),
                     "patch_json": p.get("patch_json", "{}"),
+                    "editable_fields": review_edit_fields(_parse_facts(p), p.get("proposal_kind", "")),
                     "materiality": p.get("materiality", "0"),
                     "producer_kind": p.get("producer_kind", ""),
                     "lifecycle": p.get("lifecycle", "open"),

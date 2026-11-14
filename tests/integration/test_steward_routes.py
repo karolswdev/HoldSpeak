@@ -391,7 +391,7 @@ class TestPolicyRoundTrip:
         )
         assert resp.status_code == 400
         assert resp.json()["code"] == "validation_error"
-        assert "nonexistent_kind" in resp.json()["message"]
+        assert resp.json()["message"] == "Choose the effects from the list."
 
     def test_negative_max_retries_rejected(self, rig) -> None:
         db, client, _ = rig

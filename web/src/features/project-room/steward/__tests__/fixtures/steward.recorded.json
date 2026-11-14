@@ -1998,7 +1998,8 @@
    "published_at": null,
    "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
-   "updated_at": "2026-10-12T18:03:53+00:00"
+   "updated_at": "2026-10-12T18:03:53+00:00",
+   "editable_claims": []
   }
  },
  "updates": {
@@ -2024,7 +2025,240 @@
     "published_at": null,
     "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
-    "updated_at": "2026-10-12T18:03:53+00:00"
+    "updated_at": "2026-10-12T18:03:53+00:00",
+    "editable_claims": [
+     {
+      "span_id": "s_progress_0",
+      "section": "progress",
+      "text": "Risk [high]: Vendor contract lapses -- open",
+      "values": {
+       "subject": "Vendor contract lapses",
+       "kind": "risk",
+       "state": "open",
+       "severity": "high"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       },
+       {
+        "key": "kind",
+        "label": "Kind",
+        "kind": "choice",
+        "values": [
+         "milestone",
+         "risk",
+         "dependency",
+         "signal",
+         "workstream"
+        ]
+       },
+       {
+        "key": "state",
+        "label": "State",
+        "kind": "choice",
+        "values": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "values_by_kind": {
+         "milestone": [
+          "planned",
+          "reached",
+          "missed",
+          "dropped"
+         ],
+         "risk": [
+          "open",
+          "mitigated",
+          "accepted",
+          "closed"
+         ],
+         "dependency": [
+          "healthy",
+          "at_risk",
+          "broken",
+          "resolved"
+         ],
+         "signal": [
+          "active",
+          "retired"
+         ],
+         "workstream": [
+          "active",
+          "paused",
+          "done"
+         ]
+        }
+       },
+       {
+        "key": "severity",
+        "label": "Severity",
+        "kind": "choice",
+        "values": [
+         "critical",
+         "high",
+         "medium",
+         "low"
+        ]
+       }
+      ]
+     },
+     {
+      "span_id": "s_risks_blockers_0",
+      "section": "risks_blockers",
+      "text": "Risk [high]: Vendor contract lapses -- open",
+      "values": {
+       "subject": "Vendor contract lapses",
+       "kind": "risk",
+       "state": "open",
+       "severity": "high"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       },
+       {
+        "key": "kind",
+        "label": "Kind",
+        "kind": "choice",
+        "values": [
+         "milestone",
+         "risk",
+         "dependency",
+         "signal",
+         "workstream"
+        ]
+       },
+       {
+        "key": "state",
+        "label": "State",
+        "kind": "choice",
+        "values": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "values_by_kind": {
+         "milestone": [
+          "planned",
+          "reached",
+          "missed",
+          "dropped"
+         ],
+         "risk": [
+          "open",
+          "mitigated",
+          "accepted",
+          "closed"
+         ],
+         "dependency": [
+          "healthy",
+          "at_risk",
+          "broken",
+          "resolved"
+         ],
+         "signal": [
+          "active",
+          "retired"
+         ],
+         "workstream": [
+          "active",
+          "paused",
+          "done"
+         ]
+        }
+       },
+       {
+        "key": "severity",
+        "label": "Severity",
+        "kind": "choice",
+        "values": [
+         "critical",
+         "high",
+         "medium",
+         "low"
+        ]
+       }
+      ]
+     },
+     {
+      "span_id": "s_next_actions_0",
+      "section": "next_actions",
+      "text": "Risk: Vendor contract lapses -- open, due 2026-01-15",
+      "values": {
+       "subject": "Vendor contract lapses",
+       "kind": "risk",
+       "state": "open"
+      },
+      "fields": [
+       {
+        "key": "subject",
+        "label": "Subject",
+        "kind": "text"
+       },
+       {
+        "key": "kind",
+        "label": "Kind",
+        "kind": "choice",
+        "values": [
+         "milestone",
+         "risk",
+         "dependency",
+         "signal",
+         "workstream"
+        ]
+       },
+       {
+        "key": "state",
+        "label": "State",
+        "kind": "choice",
+        "values": [
+         "open",
+         "mitigated",
+         "accepted",
+         "closed"
+        ],
+        "values_by_kind": {
+         "milestone": [
+          "planned",
+          "reached",
+          "missed",
+          "dropped"
+         ],
+         "risk": [
+          "open",
+          "mitigated",
+          "accepted",
+          "closed"
+         ],
+         "dependency": [
+          "healthy",
+          "at_risk",
+          "broken",
+          "resolved"
+         ],
+         "signal": [
+          "active",
+          "retired"
+         ],
+         "workstream": [
+          "active",
+          "paused",
+          "done"
+         ]
+        }
+       }
+      ]
+     }
+    ]
    },
    {
     "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
@@ -2046,7 +2280,8 @@
     "published_at": null,
     "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
-    "updated_at": "2026-10-12T18:03:53+00:00"
+    "updated_at": "2026-10-12T18:03:53+00:00",
+    "editable_claims": []
    }
   ]
  },

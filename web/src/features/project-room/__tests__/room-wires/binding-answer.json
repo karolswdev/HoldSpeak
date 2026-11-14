@@ -13,7 +13,8 @@
     "patch_json": "{}",
     "materiality": null,
     "producer_kind": null,
-    "lifecycle": "open"
+    "lifecycle": "open",
+    "editable_fields": []
   },
   "gets": {
     "/api/projects/proj-fdb8344c76f6/room": {
@@ -290,7 +291,8 @@
           "patch_json": "{}",
           "materiality": null,
           "producer_kind": null,
-          "lifecycle": "open"
+          "lifecycle": "open",
+          "editable_fields": []
         }
       ]
     }

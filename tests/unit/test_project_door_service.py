@@ -585,7 +585,7 @@ def test_a_source_already_watched_is_never_armed_twice(db: Any) -> None:
     with pytest.raises(ConflictError) as refused:
         door.add_sources(OWNER, project_id, source)
     assert refused.value.code == "already_watched"
-    assert refused.value.detail == "Already watched"
+    assert refused.value.detail == "This source is already watched."
     after = sorted(w["id"] for w in db.automations.list_watches() if w.get("project_id") == project_id)
     assert after == before
     # A wider pick adds only what is new (CI), never a second PR queue.
@@ -633,7 +633,7 @@ def test_hub_route_adds_to_the_project(tmp_path: Path, monkeypatch: pytest.Monke
             "sources": [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}],
         })
         assert again.status_code == 409, again.text
-        assert again.json()["message"] == "Already watched"
+        assert again.json()["message"] == "This source is already watched."
         empty = c.post("/api/projects/door", json={"project_id": project_id, "sources": []})
         assert empty.status_code == 400, empty.text
     finally:

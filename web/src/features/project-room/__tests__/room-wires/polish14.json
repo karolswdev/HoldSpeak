@@ -316,7 +316,7 @@
           "source": "item",
           "kind": "milestone",
           "title": "Production cutover",
-          "why": "OVERDUE \u00b7 43 DAYS",
+          "why": "OVERDUE · 43 DAYS",
           "since": "2026-10-01",
           "due_at": "2026-10-01",
           "url": null,
@@ -330,7 +330,7 @@
           "source": "proposal",
           "kind": "proposal",
           "title": "Approve the cutover window",
-          "why": "PROPOSED \u00b7 Architecture review",
+          "why": "PROPOSED · Architecture review",
           "since": "2026-11-13T12:41:54.433070",
           "url": null,
           "verb": "confirm",
@@ -358,7 +358,7 @@
           "source": "commitment",
           "kind": "commitment",
           "title": "Load test rerun",
-          "why": "DUE \u00b7 UNKNOWN",
+          "why": "DUE · UNKNOWN",
           "since": "2026-11-13T19:41:54.440627+00:00",
           "due_at": null,
           "url": null,
@@ -1185,7 +1185,963 @@
     "fallback_reason": null,
     "fallback_receipt": null,
     "generatorHost": null,
-    "generatorModel": null
+    "generatorModel": null,
+    "editable_claims": [
+      {
+        "span_id": "s_progress_0",
+        "section": "progress",
+        "text": "Risk [critical]: Settlement latency under load -- open",
+        "values": {
+          "subject": "Settlement latency under load",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_progress_1",
+        "section": "progress",
+        "text": "Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team -- open",
+        "values": {
+          "subject": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_progress_2",
+        "section": "progress",
+        "text": "Risk [critical]: review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open",
+        "values": {
+          "subject": "review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_progress_3",
+        "section": "progress",
+        "text": "Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team -- open",
+        "values": {
+          "subject": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_progress_4",
+        "section": "progress",
+        "text": "Risk [critical]: review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open",
+        "values": {
+          "subject": "review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_progress_program_0",
+        "section": "progress",
+        "text": "Program Read the cutover plan: drafting, 0 of 1 steps done",
+        "values": {
+          "subject": "Program Read the cutover plan: drafting, 0 of 1 steps done"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      },
+      {
+        "span_id": "s_risks_blockers_0",
+        "section": "risks_blockers",
+        "text": "Risk [critical]: Settlement latency under load -- open",
+        "values": {
+          "subject": "Settlement latency under load",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_risks_blockers_1",
+        "section": "risks_blockers",
+        "text": "Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team -- open",
+        "values": {
+          "subject": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_risks_blockers_2",
+        "section": "risks_blockers",
+        "text": "Risk [critical]: review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open",
+        "values": {
+          "subject": "review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_risks_blockers_3",
+        "section": "risks_blockers",
+        "text": "Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team -- open",
+        "values": {
+          "subject": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_risks_blockers_4",
+        "section": "risks_blockers",
+        "text": "Risk [critical]: review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open",
+        "values": {
+          "subject": "review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "kind": "risk",
+          "state": "open",
+          "severity": "critical"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          },
+          {
+            "key": "severity",
+            "label": "Severity",
+            "kind": "choice",
+            "values": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        ]
+      },
+      {
+        "span_id": "s_next_actions_0",
+        "section": "next_actions",
+        "text": "Risk: Settlement latency under load -- open, due 2026-09-15",
+        "values": {
+          "subject": "Settlement latency under load",
+          "kind": "risk",
+          "state": "open"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          },
+          {
+            "key": "kind",
+            "label": "Kind",
+            "kind": "choice",
+            "values": [
+              "milestone",
+              "risk",
+              "dependency",
+              "signal",
+              "workstream"
+            ]
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "mitigated",
+              "accepted",
+              "closed"
+            ],
+            "values_by_kind": {
+              "milestone": [
+                "planned",
+                "reached",
+                "missed",
+                "dropped"
+              ],
+              "risk": [
+                "open",
+                "mitigated",
+                "accepted",
+                "closed"
+              ],
+              "dependency": [
+                "healthy",
+                "at_risk",
+                "broken",
+                "resolved"
+              ],
+              "signal": [
+                "active",
+                "retired"
+              ],
+              "workstream": [
+                "active",
+                "paused",
+                "done"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "span_id": "s_source_coverage_0",
+        "section": "source_coverage",
+        "text": "Meetings partly read: meeting summary unavailable",
+        "values": {
+          "subject": "Meetings partly read: meeting summary unavailable"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      },
+      {
+        "span_id": "s_decisions_meeting_0",
+        "section": "decisions",
+        "text": "Decision: Use idempotency keys on retries -- active",
+        "values": {
+          "subject": "Decision: Use idempotency keys on retries -- active"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      },
+      {
+        "span_id": "s_next_actions_meeting_0",
+        "section": "next_actions",
+        "text": "Action: Load test rerun -- open, owner Dana",
+        "values": {
+          "subject": "Action: Load test rerun -- open, owner Dana"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      },
+      {
+        "span_id": "s_source_coverage_read_0",
+        "section": "source_coverage",
+        "text": "Read: 1 note, 1 decision, 1 action, 5 project items, GitHub org/repo, Jira jira.example.com|team@example.com",
+        "values": {
+          "subject": "Read: 1 note, 1 decision, 1 action, 5 project items, GitHub org/repo, Jira jira.example.com|team@example.com"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      }
+    ]
   },
   "brief": {
     "binding": {
@@ -1302,7 +2258,54 @@
     "elapsed_ms": 0,
     "created_at": "2026-11-13T19:41:55.421431+00:00",
     "updated_at": "2026-11-13T19:41:55.421431+00:00",
-    "kept_at": null
+    "kept_at": null,
+    "editable_claims": [
+      {
+        "span_id": "s_priorities_0",
+        "section": "priorities",
+        "text": "Use idempotency keys on retries",
+        "values": {
+          "subject": "Use idempotency keys on retries"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      },
+      {
+        "span_id": "s_questions_0",
+        "section": "questions",
+        "text": "When is it due: Load test rerun?",
+        "values": {
+          "subject": "When is it due: Load test rerun?"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      },
+      {
+        "span_id": "s_obligations_0",
+        "section": "obligations",
+        "text": "Load test rerun -- owner Dana",
+        "values": {
+          "subject": "Load test rerun -- owner Dana"
+        },
+        "fields": [
+          {
+            "key": "subject",
+            "label": "Subject",
+            "kind": "text"
+          }
+        ]
+      }
+    ]
   },
   "review": {
     "binding": {
@@ -1332,7 +2335,23 @@
         "patch_json": "{\"text\": \"web/src/features/project-room/review/ReviewPosture.tsx: keep the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team\", \"state\": \"open\"}",
         "materiality": null,
         "producer_kind": null,
-        "lifecycle": "open"
+        "lifecycle": "open",
+        "editable_fields": [
+          {
+            "key": "text",
+            "label": "Text",
+            "kind": "text"
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "kind": "choice",
+            "values": [
+              "open",
+              "closed"
+            ]
+          }
+        ]
       }
     ]
   }

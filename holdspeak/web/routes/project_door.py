@@ -129,7 +129,7 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
         if not isinstance(body, dict):
             # Identifiable, but the exempt form cannot be proved: invalid_arguments, with its receipt.
             kernel = refuse_identifiable(ops(), p, "project.door.create", "invalid_arguments")
-            return JSONResponse({"code": "validation", "message": "the body must be a JSON object",
+            return JSONResponse({"code": "validation", "message": "Enter the source fields as an object.",
                                  **kernel_fields(kernel)}, status_code=400)
         sources = body.get("sources", [])
         found = body.get("found")

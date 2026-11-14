@@ -45,6 +45,63 @@ from holdspeak.services.project_service import ProjectService
 OWNER = Principal(PrincipalKind.OWNER, "decision-test")
 
 
+def test_room_refuses_unknown_item_kind_with_a_sentence(rig):
+    db, project, _ = rig
+    pid = _seed_project(db)
+    with pytest.raises(ValidationError) as refused:
+        project.create_item(OWNER, pid, {"item_type": "surprise", "title": "Read the plan"})
+    assert refused.value.detail == "Choose an item kind from the list."
+
+
+def test_room_steward_bounds_refuse_with_the_field_and_a_sentence():
+    from holdspeak.services.steward_contract import _validate_policy_fields
+
+    with pytest.raises(ValidationError) as refused:
+        _validate_policy_fields({"max_retries": -1}, ())
+    assert refused.value.code == "validation_error"
+    assert refused.value.detail == "Enter a whole number of zero or more for max retries."
+    _validate_policy_fields({"max_retries": 0}, ())
+
+
+
+def test_review_boolean_choices_do_not_accept_numbers():
+    from holdspeak.services.room_edit_fields import review_edit_fields, validate_edit_fields
+
+    fields = review_edit_fields({"enabled": False}, "review_flag")
+    validate_edit_fields(fields, {"enabled": True})
+    with pytest.raises(ValidationError, match="Choose True or False for enabled"):
+        validate_edit_fields(fields, {"enabled": 0})
+
+
+def test_review_read_declares_fields_and_the_same_choices_refuse_an_invalid_edit(rig):
+    db, _, delta = rig
+    pid = _seed_project(db)
+    db.project_observations.insert_review(
+        review_id="review-fields", project_id=pid, status="open",
+        opened_at="2026-11-14T12:00:00+00:00",
+    )
+    db.project_observations.insert_proposal(
+        proposal_id="proposal-fields", project_id=pid, review_window_key="review-fields",
+        proposal_kind="review_flag", title="Read the rollback plan", target_ref=f"project:{pid}",
+        patch_json=json.dumps({"text": "Keep the rollback plan", "state": "open"}),
+    )
+    proposal = delta.get_review(OWNER, pid, "review-fields")["proposals"][0]
+    fields = {field["key"]: field for field in proposal["editable_fields"]}
+    assert fields["text"]["kind"] == "text"
+    assert fields["state"]["kind"] == "choice"
+    assert "open" in fields["state"]["values"]
+    with pytest.raises(ValidationError, match="Choose a state from the list\\."):
+        delta.decide_proposal(OWNER, pid, proposal["id"], "edit_accept",
+                              patch={"state": "not-a-state"}, binding=proposal["binding"])
+    assert db.project_observations.get_proposal(proposal["id"])["lifecycle"] == "open"
+    chosen = next(value for value in fields["state"]["values"] if value != "open")
+    delta.decide_proposal(OWNER, pid, proposal["id"], "edit_accept",
+                         patch={"text": "Read the saved plan", "state": chosen}, binding=proposal["binding"])
+    stored = db.project_observations.get_proposal(proposal["id"])
+    assert json.loads(stored["patch_json"])["state"] == chosen
+    assert json.loads(stored["patch_json"])["text"] == "Read the saved plan"
+
+
 # ── Fixtures ──────────────────────────────────────────────────────────
 
 
@@ -388,7 +445,7 @@ class TestDecideProposal:
         delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"))
 
         # Try again -> conflict
-        with pytest.raises(ConflictError, match="already decided"):
+        with pytest.raises(ConflictError, match="already has an answer"):
             delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"))
 
     def test_idempotent_replay(self, rig) -> None:
@@ -440,7 +497,7 @@ class TestDecideProposal:
             OWNER, pid, risk_prop["id"], "dismiss",
             command_id=cmd_id, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"),
         )
-        with pytest.raises(ConflictError, match="idempotency conflict"):
+        with pytest.raises(ConflictError, match="This command was used for different work"):
             delta_svc.decide_proposal(
                 OWNER, pid, risk_prop["id"], "accept",
                 command_id=cmd_id, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"),
@@ -464,7 +521,7 @@ class TestDecideProposal:
             lifecycle="open",
         )
 
-        with pytest.raises(ValidationError, match="Unknown decision verb"):
+        with pytest.raises(ValidationError, match="Choose Accept, Edit and accept, Defer or Dismiss"):
             delta_svc.decide_proposal(
                 OWNER, pid, "pprop_" + "b" * 32, "reject", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, "pprop_" + "b" * 32, "reject"),
             )
@@ -847,7 +904,7 @@ class TestAcceptReview:
 
         delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
 
-        with pytest.raises(ConflictError, match="not open"):
+        with pytest.raises(ConflictError, match="already closed"):
             delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
 
     def test_undecided_proposals_superseded(self, rig) -> None:

@@ -28,6 +28,7 @@ export type Proposal = {
   title: string;
   rationale: string;
   patchJson: Record<string, unknown>;
+  editableFields?: import("../RoomEditFields").RoomEditField[];
   materiality: string;
   producerKind: string;
   lifecycle: ProposalLifecycle;
@@ -53,6 +54,7 @@ export function decodeProposal(raw: Record<string, unknown>): Proposal {
     title: String(raw.title ?? ""),
     rationale: String(raw.rationale ?? ""),
     patchJson,
+    editableFields: Array.isArray(raw.editable_fields) ? raw.editable_fields as import("../RoomEditFields").RoomEditField[] : [],
     materiality: String(raw.materiality ?? "0"),
     producerKind: String(raw.producer_kind ?? ""),
     lifecycle: String(raw.lifecycle ?? "open") as ProposalLifecycle,

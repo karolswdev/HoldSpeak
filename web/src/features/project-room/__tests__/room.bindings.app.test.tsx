@@ -74,9 +74,14 @@ describe("Room answers carry their saved bindings", () => {
   it.each([["Accept", ANSWER], ["Finish review", ACCEPT]] as const)("binds review %s and renders the hub refusal", async (verb, raw) => {
     const tape = raw as Tape; replay(tape); render(<Review tape={tape} />);
     await screen.findByRole("grid", { name: "Review" });
-    await waitFor(() => expect(screen.getByRole("button", { name: verb })).toBeEnabled());
+    if (verb === "Finish review") {
+      press("Actions ▾");
+      await waitFor(() => expect(screen.getByRole("menuitem", { name: verb })).toBeEnabled());
+    } else await waitFor(() => expect(screen.getByRole("button", { name: verb })).toBeEnabled());
     expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
-    press(verb); await assertRefused(tape);
+    if (verb === "Finish review") fireEvent.click(screen.getByRole("menuitem", {name:verb}));
+    else press(verb);
+    await assertRefused(tape);
   });
   it("binds brief discard, keeps the brief on refusal, and can read it again", async () => {
     const tape = DISCARD as Tape; replay(tape); render(<Brief tape={tape} />);

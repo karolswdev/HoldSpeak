@@ -45,7 +45,7 @@ describe("Room Try again keeps his newer words", () => {
     act(() => result.current.handleEditBody("sent text"));
     let answer!: (u: ProjectUpdate) => void;
     saveUpdate.mockImplementationOnce(() => new Promise((r) => { answer = r; }));
-    let pending!: Promise<void>;
+    let pending!: Promise<unknown>;
     act(() => { pending = result.current.save(); });
     act(() => result.current.handleEditBody("sent text plus more"));
     await act(async () => { answer(saved("sent text")); await pending; });

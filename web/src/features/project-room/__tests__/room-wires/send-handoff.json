@@ -180,7 +180,7 @@
           "summary": "1 updated",
           "entries": [
             {
-              "phrase": "updated \u00b7 update.published",
+              "phrase": "updated · update.published",
               "at": "2026-11-12T11:20:43.965019+00:00",
               "url": null
             }
@@ -337,7 +337,8 @@
         "fallback_receipt": null,
         "deliveries": [],
         "generatorHost": null,
-        "generatorModel": null
+        "generatorModel": null,
+        "editable_claims": []
       },
       {
         "id": "pupd_85a4f6c086b74282994c1ca5ad7dbb2e",
@@ -359,7 +360,8 @@
         "fallback_receipt": null,
         "deliveries": [],
         "generatorHost": null,
-        "generatorModel": null
+        "generatorModel": null,
+        "editable_claims": []
       }
     ],
     "latest_published_update_id": "pupd_966aea858048455a861825a75249d3e2"
@@ -389,15 +391,15 @@
   },
   "preview": {
     "document_ref": "project_update:pupd_966aea858048455a861825a75249d3e2",
-    "title": "Ledger cutover \u2014 update r1",
+    "title": "Ledger cutover — update r1",
     "destination_id": "holdspeak-folder",
     "channel": "file",
     "badge": "local",
     "payload_digest": "f2e086d0f19a4c41b63f29e51fc551be3c1f30d149a849fedabe7c5b998ac072",
     "size": 583,
     "preview": {
-      "text": "# Ledger cutover \u2014 update r1\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
-      "markdown": "# Ledger cutover \u2014 update r1\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
+      "text": "# Ledger cutover — update r1\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
+      "markdown": "# Ledger cutover — update r1\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
       "credential_blocked": false
     }
   }

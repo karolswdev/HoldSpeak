@@ -85,6 +85,15 @@ export function claimSends(claim: UpdateClaim): boolean {
   return claim.refs.length > 0;
 }
 
+export type EditableClaim = {
+  span_id: string;
+  section?: string;
+  text: string;
+  values: Record<string, unknown>;
+  fields: import("../RoomEditFields").RoomEditField[];
+};
+export type ClaimEdit = Pick<EditableClaim, "span_id" | "text" | "values">;
+
 export type ProjectUpdate = {
   id: string;
   projectId: string;
@@ -96,6 +105,7 @@ export type ProjectUpdate = {
   title?: string;
   audience?: string;
   claims: UpdateClaim[];
+  editableClaims?: EditableClaim[];
   sourceManifestJson: string;
   generator: string;
   generatorHost: string | null;
@@ -266,6 +276,7 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
   }
 
   return {
+    editableClaims: Array.isArray(raw.editable_claims) ? raw.editable_claims as EditableClaim[] : [],
     id: String(raw.id ?? ""),
     projectId: String(raw.project_id ?? ""),
     projectRevision: Number(raw.project_revision ?? 0),

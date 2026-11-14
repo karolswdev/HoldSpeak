@@ -186,7 +186,8 @@ def test_configure_steward_invalid_effect_kind(db: Database) -> None:
         "eligible_effect_kinds": ["bogus_kind"],
     })
     assert is_error is True
-    assert "bogus_kind" in data.get("error", "")
+    assert data["code"] == "validation_error"
+    assert data["error"] == "Choose the effects from the list."
 
 
 def test_configure_steward_emits_event(db: Database) -> None:
@@ -476,7 +477,7 @@ def test_setup_proposal_tools_refuse_unknown_fields_and_nonowner(db: Database, v
     name = f"project.setup.{verb}"
     error, result = _call(name, {"session_id": "unknown", "proposal_id": "unknown", "unreviewed": True})
     assert error and result.get("code") == "validation_error"
-    with pytest.raises(ServiceError, match="OWNER"):
+    with pytest.raises(ServiceError, match="Only the owner can set up a project"):
         project_family.dispatch(name, {}, Principal(PrincipalKind.AGENT, "unrelated-agent"))
 
 

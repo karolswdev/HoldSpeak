@@ -1179,12 +1179,98 @@ def door169(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
     return {"pid": pid, "gets": gets, "counts": counts, "create": create, "register": register, "room": room}
 
 
+def edit14(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
+    """Room edit contract: actual HTTP reads, refusals, writes and stored reads."""
+    pid = _project(hub, "Room edit contract", "room-edit-contract")
+    subject = "web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team"
+    hub.ok("POST", f"/api/projects/{pid}/items", {"item_type":"risk", "title":subject, "severity":"critical", "lifecycle":"open", "details":{"likelihood":"high", "impact":"critical", "mitigation":"Read the rollback plan"}})
+    hub.db.project_observations.insert_review(review_id="room-edit-review",project_id=pid,status="open",opened_at="2026-11-14T12:00:00+00:00")
+    hub.db.project_observations.insert_proposal(proposal_id="room-edit-proposal",project_id=pid,review_window_key="room-edit-review",proposal_kind="review_flag",title=subject,target_ref=f"project:{pid}",patch_json=json.dumps({"text":subject,"state":"open"}))
+    path=f"/api/projects/{pid}/reviews/room-edit-review"
+    missing = _call(hub, "GET", f"/api/projects/{pid}/reviews/missing-review")
+    assert missing["status"] == 404 and missing["answer"]["body"]["message"] == "The review is not available."
+    review=hub.ok("GET",path)
+    proposal=review["proposals"][0]
+    fields={field["key"]:field for field in proposal["editable_fields"]}
+    assert fields["text"]["kind"] == "text" and fields["state"]["kind"] == "choice"
+    decide=path+"/proposals/room-edit-proposal/decide"
+    refused=_call(hub,"POST",decide,{"verb":"edit_accept","patch":{"state":"garbage"},"binding":proposal["binding"]})
+    assert refused["status"] == 400, refused
+    accepted=hub.ok("POST",decide,{"verb":"edit_accept","patch":{"text":"Keep the tested rollback ready","state":"closed"},"binding":proposal["binding"]})
+    review_saved=hub.ok("GET",path)
+    assert review_saved["proposals"][0]["lifecycle"] == "accepted"
+    assert json.loads(review_saved["proposals"][0]["patch_json"])["state"] == "closed"
+    update=hub.ok("POST",f"/api/projects/{pid}/updates/draft",{"generator":"deterministic"})["update"]
+    claim=next(row for row in update["editable_claims"] if row["values"].get("state") == "open")
+    values={**claim["values"],"subject":"Read the saved rollback plan","state":"mitigated"}
+    edit={"span_id":claim["span_id"],"text":claim["text"],"values":values}
+    saved=hub.ok("PUT",f"/api/updates/{update['id']}",{"claim_edits":[edit]})
+    assert "Risk [critical]: Read the saved rollback plan -- mitigated" in saved["update"]["body_md"]
+    stale=_call(hub,"PUT",f"/api/updates/{update['id']}",{"claim_edits":[edit]})
+    assert stale["status"] == 409, stale
+    assert hub.ok("GET",f"/api/updates/{update['id']}")["update"]["body_md"] == saved["update"]["body_md"]
+    hub.db.project_observations.insert_proposal(proposal_id="room-edit-item",project_id=pid,review_window_key="room-edit-review",proposal_kind="risk_attention",title="Read the cutover",target_ref=f"project:{pid}",patch_json=json.dumps({"item_type":"risk","title":"Read the cutover","lifecycle":"open"}))
+    item_review=hub.ok("GET",path)
+    item=next(row for row in item_review["proposals"] if row["id"] == "room-edit-item")
+    from holdspeak.services.project_definitions import ITEM_LIFECYCLES
+    states=next(field for field in item["editable_fields"] if field["key"] == "lifecycle")
+    assert states["values_by_item_type"]["dependency"] == list(ITEM_LIFECYCLES["dependency"])
+    item_saved=hub.ok("POST",path+"/proposals/room-edit-item/decide",{"verb":"edit_accept","patch":{"item_type":"dependency","lifecycle":"healthy"},"binding":item["binding"]})
+    item_review_saved=hub.ok("GET",path)
+    return {"pid":pid,"missing_review":missing,"review":review,"review_refused":refused,"accepted":accepted,"review_saved":review_saved,"update":update,"edit":edit,"saved":saved,"stale":stale,"item_review":item_review,"item_saved":item_saved,"item_review_saved":item_review_saved}
+
+
+def refresh_edit_fields() -> None:
+    """Replay the read projection over recorded stored rows, without live effects."""
+    from holdspeak.services.project_update_service import ProjectUpdateService
+    from holdspeak.services.project_delta_service import _parse_facts
+    from holdspeak.services.room_edit_fields import review_edit_fields
+
+    def project(value: Any) -> bool:
+        changed = False
+        if isinstance(value, dict):
+            if {"claims_json", "body_md", "id"} <= value.keys():
+                editing = ProjectUpdateService._project_axes(value)["editable_claims"]
+                if value.get("editable_claims") != editing:
+                    value["editable_claims"] = editing
+                    changed = True
+            if {"patch_json", "proposal_kind"} <= value.keys():
+                fields = review_edit_fields(_parse_facts(value), value["proposal_kind"])
+                if value.get("editable_fields") != fields:
+                    value["editable_fields"] = fields
+                    changed = True
+            for item in list(value.values()):
+                changed = project(item) or changed
+        elif isinstance(value, list):
+            for item in value:
+                changed = project(item) or changed
+        return changed
+
+    for path in (REPO / "web/src/features/project-room").rglob("*.json"):
+        if "_parked" in path.parts:
+            continue
+        source = path.read_text()
+        try:
+            data = json.loads(source)
+        except ValueError:
+            continue
+        if project(data):
+            first = next((line for line in source.splitlines()[1:] if line.strip()), " ")
+            indent = len(first) - len(first.lstrip())
+            path.write_text(json.dumps(data, indent=indent or None, ensure_ascii=False) + "\n")
+            print(path.relative_to(REPO))
+
+
 def main() -> int:
     ROOM_DIR.mkdir(parents=True, exist_ok=True)
     STEWARD_DIR.mkdir(parents=True, exist_ok=True)
     DOOR_DIR.mkdir(parents=True, exist_ok=True)
     wanted = set(sys.argv[1:])
+    if wanted == {"edit-fields"}:
+        refresh_edit_fields()
+        return 0
     jobs: list[tuple[Path, str, Callable[..., dict[str, Any]], Any]] = [
+        (ROOM_DIR, "edit14", edit14, {}),
         (ROOM_DIR, "update173", update173, {}),
         (ROOM_DIR, "draft409", draft409, {}),
         (ROOM_DIR, "write1", write1, {}),

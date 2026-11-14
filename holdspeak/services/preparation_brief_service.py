@@ -37,6 +37,8 @@ The story's five criteria, and where each is paid here:
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
 from .room_binding import room_binding, check_room_binding
 
 import hashlib
@@ -143,6 +145,16 @@ ROUTE_TOKENS: dict[str, str] = {
     ROUTE_STOPPED: "STOPPED",
 }
 
+ROUTE_SENTENCES = {
+    ROUTE_NOT_SET: "Choose an engine for the brief.",
+    ROUTE_KEY_MISSING: "Set the engine key before you prepare the brief.",
+    ROUTE_UNAVAILABLE: "The brief engine is not available.",
+    ROUTE_UNREACHABLE: "The brief engine did not answer.",
+    ROUTE_NO_OUTPUT: "The brief engine returned no text.",
+    ROUTE_UNUSABLE: "The brief engine did not return a readable brief.",
+    ROUTE_STOPPED: "The brief was stopped.",
+}
+
 _ON_MACHINE_BOUNDARIES = frozenset({"same_device", "local", ""})
 
 
@@ -158,9 +170,10 @@ class PreparationRefused(ServiceError):
     def __init__(self, route: dict[str, Any], purpose: str) -> None:
         route = dict(route)
         route.setdefault("invoke", empty_invoke_receipt())
+        route["reason"] = ROUTE_SENTENCES.get(route.get("state"), "The brief could not be prepared.")
         super().__init__(
             "preparation_refused",
-            route.get("reason") or ROUTE_TOKENS.get(route.get("state", ""), "refused"),
+            route["reason"],
             context={"route": route, "purpose": purpose, "status": 409},
         )
         self.route = route
@@ -776,14 +789,14 @@ class PreparationBriefService:
                 "repair": "Set up model", "invoke": empty_invoke_receipt()}
         broker = self._broker
         if broker is None:
-            base["reason"] = "no inference broker"
+            base["reason"] = ROUTE_SENTENCES[ROUTE_NOT_SET]
             return base
         try:
             deployment_id, _assignment_id, route_profile = _resolve_for_capability(
                 broker, PREPARATION_BRIEF_CAPABILITY,
             )
         except RuntimeError as exc:
-            base["reason"] = str(exc)
+            base["reason"] = ROUTE_SENTENCES[ROUTE_NOT_SET]
             return base
         db = getattr(broker, "database", broker)
         facts = self._deployment_facts(db, deployment_id)
@@ -795,13 +808,13 @@ class PreparationBriefService:
         if facts["secret_slot"]:
             if not self._slot_has_key(facts["secret_slot"]):
                 state = ROUTE_KEY_MISSING
-                reason = f"Destination '{model or route_profile}' needs a key in ${facts['secret_slot']}"
+                reason = ROUTE_SENTENCES[ROUTE_KEY_MISSING]
         elif facts["model_path"] and facts["kind"] in ("this_device", "local"):
             from pathlib import Path
 
             if not Path(facts["model_path"]).expanduser().exists():
                 state = ROUTE_UNAVAILABLE
-                reason = f"model file not found: {facts['model_path']}"
+                reason = ROUTE_SENTENCES[ROUTE_UNAVAILABLE]
         on_machine = boundary in _ON_MACHINE_BOUNDARIES and not host
         return {
             "state": state,
@@ -884,7 +897,7 @@ class PreparationBriefService:
         attempt so a run that still completes writes no draft."""
         attempt_id = str(attempt_id or "").strip()
         if not attempt_id:
-            raise ValidationError("attempt_id is required", code="attempt_required")
+            raise ValidationError('Start preparation again because its saved request is missing.', code="attempt_required")
         disposition = "not_running"
         with self._lock:
             self._stopped.add(attempt_id)
@@ -917,15 +930,15 @@ class PreparationBriefService:
     ) -> dict[str, Any]:
         purpose = str(purpose or "").strip()
         if not purpose:
-            raise ValidationError("purpose is required", code="purpose_required")
+            raise ValidationError('Enter a purpose for the brief.', code="purpose_required")
         if generator not in (GENERATOR_MODEL, GENERATOR_DETERMINISTIC):
             raise ValidationError(
-                f"generator must be '{GENERATOR_MODEL}' or '{GENERATOR_DETERMINISTIC}'",
+                'Choose an engine or the project records to prepare the brief.',
                 code="generator_invalid",
             )
         attempt_id = str(attempt_id or "").strip()
         if attempt_id and (len(attempt_id) > 64 or not attempt_id.replace("-", "").replace("_", "").isalnum()):
-            raise ValidationError("attempt_id is invalid", code="attempt_invalid")
+            raise ValidationError('Start preparation again because its saved request is not valid.', code="attempt_invalid")
         room = self._projects.room(principal, project_id)
         now = self._clock()
         manifest = build_manifest(room, purpose, now=now)
@@ -1140,7 +1153,7 @@ class PreparationBriefService:
         with self._db._connection() as conn:
             row = conn.execute("SELECT * FROM project_briefs WHERE id = ?", (brief_id,)).fetchone()
         if row is None:
-            raise NotFound("brief", brief_id)
+            raise room_not_found("brief", brief_id)
         return self._row_to_dict(row)
 
     def list_briefs(
@@ -1170,10 +1183,10 @@ class PreparationBriefService:
         if current["lifecycle"] == LIFECYCLE_KEPT:
             return current
         if current["lifecycle"] == LIFECYCLE_DISCARDED:
-            raise ConflictError("a discarded brief cannot be kept", code="brief_discarded")
+            raise ConflictError('A discarded brief cannot be kept.', code="brief_discarded")
         if current["integrity"] != "verified":
             raise ConflictError(
-                "the manifest no longer matches its freeze", code="manifest_mismatch",
+                'Read the brief again because its sources changed.', code="manifest_mismatch",
             )
         now = self._clock().isoformat()
         with self._db._connection() as conn:
@@ -1190,10 +1203,10 @@ class PreparationBriefService:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute("SELECT * FROM project_briefs WHERE id=?", (brief_id,)).fetchone()
             if row is None:
-                raise NotFound("brief", brief_id)
+                raise room_not_found("brief", brief_id)
             check_room_binding(binding, room_binding(dict(row)))
             if row["lifecycle"] == LIFECYCLE_KEPT:
-                raise ConflictError("a kept brief is not discarded", code="brief_kept")
+                raise ConflictError('A kept brief cannot be discarded.', code="brief_kept")
             conn.execute(
                 "UPDATE project_briefs SET lifecycle = ?, updated_at = ? WHERE id = ?",
                 (LIFECYCLE_DISCARDED, now, brief_id),

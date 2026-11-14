@@ -127,7 +127,7 @@ class TestSessionLifecycle:
 
     def test_non_owner_rejected(self, rig) -> None:
         _db, _ps, svc = rig
-        with pytest.raises(ServiceError, match="OWNER"):
+        with pytest.raises(ServiceError, match="Only the owner can set up a project"):
             svc.start_setup(NON_OWNER)
 
     def test_resume_at_outcome_stage(self, rig) -> None:
@@ -195,7 +195,7 @@ class TestSessionLifecycle:
     def test_unknown_question_rejected(self, rig) -> None:
         _db, _ps, svc = rig
         session = svc.start_setup(OWNER)
-        with pytest.raises(ValidationError, match="Unknown question_id"):
+        with pytest.raises(ValidationError, match="Read the setup questions again because this question is not available"):
             svc.answer(OWNER, session["id"], "bogus_q", {"text": "x"})
 
     def test_resume_after_proposals_stage(self, rig) -> None:
@@ -593,10 +593,10 @@ class TestAbandonExpire:
         session = svc.start_setup(OWNER)
         svc.abandon(OWNER, session["id"])
 
-        with pytest.raises(ServiceError, match="not active"):
+        with pytest.raises(ServiceError, match="This setup session is closed"):
             svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "x"})
 
-        with pytest.raises(ServiceError, match="not active"):
+        with pytest.raises(ServiceError, match="This setup session is closed"):
             svc.finalize(OWNER, session["id"])
 
     def test_expire_on_read(self, rig) -> None:
@@ -623,7 +623,7 @@ class TestAbandonExpire:
         # Trigger the expiry
         svc.get_setup(session["id"])
 
-        with pytest.raises(ServiceError, match="not active"):
+        with pytest.raises(ServiceError, match="This setup session is closed"):
             svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "x"})
 
 
@@ -1024,7 +1024,7 @@ class TestGitHubPullRequestTestRead:
         result = svc.test_proposal(OWNER, session["id"], proposal_id)
         # Without adapter, test fails (caught exception)
         assert result["test_state"] == "failed"
-        assert "adapter" in result["result"]["error"]["message"].lower()
+        assert result["result"]["error"]["message"] == "Connect GitHub before you check the pull request."
         reset_database()
 
 

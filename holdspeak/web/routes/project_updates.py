@@ -183,6 +183,7 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             cmd_id = payload.get("command_id")
             result = ops().invoke(principal(request), "project.update_draft", {
                 "update_id": update_id, "body_md": body_md, "command_id": cmd_id,
+                **({"claim_edits": payload["claim_edits"]} if "claim_edits" in payload else {}),
             })
             return JSONResponse({"success": True, "update": _enrich_update(result)})
         except OperationRefused as exc:

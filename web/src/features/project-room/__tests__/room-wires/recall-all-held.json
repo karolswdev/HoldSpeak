@@ -1,0 +1,527 @@
+{
+ "recordedBy": "test_room_os_grammar_glass.py::test_recall_all_keeps_the_same_seeded_records_with_and_without_a_selection (real isolated hub)",
+ "all": {
+  "query": "",
+  "recent": true,
+  "filter": "all",
+  "searched_at": "2026-11-14T14:31:09.913411+00:00",
+  "projects_searched": 1,
+  "current": [
+   {
+    "id": "record-76292f667f034d9c",
+    "ref": "decision_record:record-76292f667f034d9c",
+    "text": "Use idempotency keys on retries",
+    "rationale": "",
+    "lifecycle": "active",
+    "state": "current",
+    "dec_token": "DEC 11-14",
+    "decided_at": "2026-11-14T05:31:09.832071",
+    "axes": [
+     "DECISION",
+     "NO SOURCE",
+     "ACCEPTED"
+    ],
+    "support": "NO SOURCE",
+    "acceptance": "ACCEPTED",
+    "successor": null,
+    "predecessor_id": null,
+    "supersession_reason": null,
+    "dispute_reason": null,
+    "project": {
+     "id": "proj-3ec836c7dab9",
+     "name": "Payments Platform Rewrite"
+    },
+    "source": {
+     "kind": "meeting",
+     "meeting_id": "m-review",
+     "title": "Architecture review",
+     "started_at": "2026-11-14T05:31:09.832071",
+     "offset_seconds": 15,
+     "segment_index": 3,
+     "token": "MTG 11-14 · 05:31",
+     "scope": "meeting:m-review?segment=3"
+    },
+    "carried": false,
+    "commitment_ids": []
+   }
+  ],
+  "superseded": [],
+  "disputed": [],
+  "owed": [
+   {
+    "id": "commitment-89f74760a05e4776",
+    "ref": "commitment:commitment-89f74760a05e4776",
+    "action_item_id": "action-9313d66e368949bc",
+    "text": "Load test rerun",
+    "owner": "Dana",
+    "owner_token": "OWNER · DANA",
+    "due_at": null,
+    "due_token": "DUE · UNKNOWN",
+    "due_tone": "idle",
+    "status": "open",
+    "unknowns": [
+     "due"
+    ],
+    "next_action": "set_date",
+    "project": {
+     "id": "proj-3ec836c7dab9",
+     "name": "Payments Platform Rewrite"
+    },
+    "source": {
+     "kind": "meeting",
+     "meeting_id": "m-review",
+     "title": "Architecture review",
+     "started_at": "2026-11-14T05:31:09.832071",
+     "scope": "meeting:m-review"
+    },
+    "decision_record_id": "record-c4e00e0e6ad6492b",
+    "decision_state": null
+   }
+  ],
+  "meetings": [],
+  "briefs": [],
+  "also": [
+   {
+    "kind": "note",
+    "source_ref": "note:recall-parity-note",
+    "title": "Note recall-parity-note",
+    "snippet": "Cutover status is ready. Rollback status is tested.",
+    "occurred_at": "2026-11-14T14:31:09Z",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "prep_brief",
+    "source_ref": "prep_brief:pbrief_900d9fd22f89e49e5f7c60e7",
+    "title": "Payments Platform Rewrite prep · Read the cutover plan",
+    "snippet": "## DECIDE TODAY\n- Use idempotency keys on retries\n\n## ASK THEM\n- When is it due: Load test rerun?\n\n## YOU OWE\n- Load test rerun -- owner Dana",
+    "occurred_at": "2026-11-14T14:31:09.908273+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_b0a6d85d96ac4d38ab904527004e4781",
+    "title": "review_binding_49_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.828833+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_5cbfce3f974241b494fa21b5b19b563e",
+    "title": "review_binding_48_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.822300+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_dd71a50ae6ed48d2b537b0061410f0ff",
+    "title": "review_binding_47_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.816211+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_fc6f535b4b95401f8fcb153718b9f032",
+    "title": "review_binding_46_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.809409+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_4b64182589994a9fb64c9fd2f8ef9887",
+    "title": "review_binding_45_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.802757+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_547f7252c4cc4293bd6d85a8ce8e44c3",
+    "title": "review_binding_44_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.796612+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_4549925710d14bcba671a694bd9aa5be",
+    "title": "review_binding_43_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.789766+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_a5fe545b73a243a49ebee2534d4aaf68",
+    "title": "review_binding_42_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.783475+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_804a15a94cda49d4bde42e27eedec7e3",
+    "title": "review_binding_41_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.776085+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_94d648ca0684487cb222f896471e2c2c",
+    "title": "review_binding_40_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.768287+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_da973abda0a5414ea620579f0a94416e",
+    "title": "review_binding_39_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.761690+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_f7246c00bb3d4ef5a4ae1a92c889e79a",
+    "title": "review_binding_38_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.754949+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_f582c80f939c45789266cb7e21bf9cf0",
+    "title": "review_binding_37_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.748889+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_88011a611c2945579f0c17aafaeaed32",
+    "title": "review_binding_36_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.742277+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_05472af9e672473b829b469cfd8299ee",
+    "title": "review_binding_35_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.735892+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_37b572edf1da405cb23f7e34e788bdf6",
+    "title": "review_binding_34_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.729157+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_23eaf53972344b12a80e1737193ec46d",
+    "title": "review_binding_33_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.722829+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_6a30566fdb17407d8729d97d80e95809",
+    "title": "review_binding_32_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.716045+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_833f859e51d04f6ebf9e98a58b1c9fdd",
+    "title": "review_binding_31_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.708837+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_5a0cd7d2aa334b77974cd8f81e5cfcb5",
+    "title": "review_binding_30_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.701151+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_137c32098e4f41a5850020601103117c",
+    "title": "review_binding_29_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.694670+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_33fed6545a8043b1b484d75094fe394f",
+    "title": "review_binding_28_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.688011+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_d2e5009dccd14ee19bd054f0e21def64",
+    "title": "review_binding_27_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.681336+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_b692402c2c024145861ac0f83d1a56ca",
+    "title": "review_binding_26_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.675274+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_0272856512404ab2b89459a3a117dbbd",
+    "title": "review_binding_25_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.668601+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_7ec92e7ba9af45c4bc70a08814fa92f7",
+    "title": "review_binding_24_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.661412+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_6ceaa5dacbcf46d8aaf10c811dc21151",
+    "title": "review_binding_23_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.654440+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_387fd331db474a30ae238f83c40b5443",
+    "title": "review_binding_22_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.647804+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_9408438b23d34667a22df900b82507d6",
+    "title": "review_binding_21_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.640775+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_dbfabc78273f40cf8f2101af18273a4e",
+    "title": "review_binding_20_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.633507+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_9f510a3d8700412fa699fbaa2727ef13",
+    "title": "review_binding_19_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.625817+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_9503f69e67114da6928d7827f2aff4fa",
+    "title": "review_binding_18_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.619265+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_b1606859cc164b81970e6d60717b3896",
+    "title": "review_binding_17_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.612692+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_635635b510c644999cc98b4a8192b24d",
+    "title": "review_binding_16_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.606280+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_efd161adca2942199ee431e944967601",
+    "title": "review_binding_15_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.600305+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_1f0f92e9213d4adabcbbe1fda20c12d0",
+    "title": "review_binding_14_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.592873+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_87ac6619231f4c4fb62394e6aed8842f",
+    "title": "review_binding_13_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.586172+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_9ba76f32c3f74f2db6d0c9a5b1bf9474",
+    "title": "review_binding_12_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.579534+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_a1c78940765f4102822b7ef3985a67bd",
+    "title": "review_binding_11_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.570257+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_7ce589af377c427f9a6cca2bde3a354f",
+    "title": "review_binding_10_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.563117+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_b478970bdc6f41c391ef423d5d8d0b11",
+    "title": "review_binding_09_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.555480+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_74eff309b5a743ecab3f5d8b16292c74",
+    "title": "review_binding_08_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.548837+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_8fa6f275b132472ba3d17b9db176a45c",
+    "title": "review_binding_07_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.541462+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_568b10b8945c4703acde03f66fbc110f",
+    "title": "review_binding_06_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.534832+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_037c1d84dd0e45659761e48914a4316d",
+    "title": "review_binding_05_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.527755+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_220cac2a3b2d4557a1ef4398407e2697",
+    "title": "review_binding_04_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.520632+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   },
+   {
+    "kind": "project_item",
+    "source_ref": "project_item:pitem_4321cfee6db24854b7394e4d25faebf3",
+    "title": "review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+    "snippet": " {\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"} risk open ",
+    "occurred_at": "2026-11-14T14:31:09.514220+00:00",
+    "project_id": "proj-3ec836c7dab9"
+   }
+  ],
+  "beliefs": [
+   {
+    "id": "obs_51f6e6351367060f4843b3c2",
+    "kind": "belief",
+    "text": "Cutover status is ready.",
+    "state": "current",
+    "proof_count": 1,
+    "source_count": 1,
+    "seen": "11-14",
+    "since": "",
+    "project": {
+     "id": "proj-3ec836c7dab9",
+     "name": "Payments Platform Rewrite"
+    },
+    "evidence": [
+     {
+      "ref": "note:recall-parity-note",
+      "token": "NOTE 11-14",
+      "opens": true,
+      "against": false
+     }
+    ],
+    "history": []
+   },
+   {
+    "id": "obs_5e51ee2604135f48cffb1440",
+    "kind": "belief",
+    "text": "Rollback status is tested.",
+    "state": "current",
+    "proof_count": 1,
+    "source_count": 1,
+    "seen": "11-14",
+    "since": "",
+    "project": {
+     "id": "proj-3ec836c7dab9",
+     "name": "Payments Platform Rewrite"
+    },
+    "evidence": [
+     {
+      "ref": "note:recall-parity-note",
+      "token": "NOTE 11-14",
+      "opens": true,
+      "against": false
+     }
+    ],
+    "history": []
+   }
+  ],
+  "remembered": 53
+ }
+}

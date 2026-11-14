@@ -1834,7 +1834,14 @@
           "proposal_kind": "conflict",
           "rationale": "Two observations disagree about watch.transition on watch:cw_circuit_glass_001: sources ['psrc_cw_circuit_glass_001']",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001"
+          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "observation_kind",
+            "label": "Observation kind",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_05b57d18ce65db0ce67bac5c820d1043",
@@ -1845,7 +1852,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_0c2a59f1f643ece5c12632d05a234536",
@@ -1856,7 +1870,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_60fdd8b325422fe0c0314e8334d94ef9",
@@ -1867,7 +1898,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_68c5a3482b1e555694908be05433cd9c",
@@ -1878,7 +1926,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_7c5bcadfc4e56afa07d1149eed6ce4ff",
@@ -1889,7 +1954,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_b472281f8c6fdb499063fd6f9eed2d9f",
@@ -1900,7 +1982,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_dd33404172d22d4fad8cf36a5ac6e648",
@@ -1911,7 +2010,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          }
         ],
         "review_id": "prev_37e9b1d5f0084b2c87b26d66e1d66f74"
@@ -1957,7 +2063,14 @@
           "proposal_kind": "conflict",
           "rationale": "Two observations disagree about watch.transition on watch:cw_circuit_glass_001: sources ['psrc_cw_circuit_glass_001']",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001"
+          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "observation_kind",
+            "label": "Observation kind",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_05b57d18ce65db0ce67bac5c820d1043",
@@ -1968,7 +2081,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_0c2a59f1f643ece5c12632d05a234536",
@@ -1979,7 +2099,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_60fdd8b325422fe0c0314e8334d94ef9",
@@ -1990,7 +2127,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_68c5a3482b1e555694908be05433cd9c",
@@ -2001,7 +2155,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_7c5bcadfc4e56afa07d1149eed6ce4ff",
@@ -2012,7 +2183,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_b472281f8c6fdb499063fd6f9eed2d9f",
@@ -2023,7 +2211,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_dd33404172d22d4fad8cf36a5ac6e648",
@@ -2034,7 +2239,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          }
         ],
         "review_id": "prev_37e9b1d5f0084b2c87b26d66e1d66f74"
@@ -2447,7 +2659,14 @@
           "proposal_kind": "conflict",
           "rationale": "Two observations disagree about watch.transition on watch:cw_circuit_glass_001: sources ['psrc_cw_circuit_glass_001']",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001"
+          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "observation_kind",
+            "label": "Observation kind",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_05b57d18ce65db0ce67bac5c820d1043",
@@ -2458,7 +2677,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_0c2a59f1f643ece5c12632d05a234536",
@@ -2469,7 +2695,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_60fdd8b325422fe0c0314e8334d94ef9",
@@ -2480,7 +2723,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_68c5a3482b1e555694908be05433cd9c",
@@ -2491,7 +2751,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_7c5bcadfc4e56afa07d1149eed6ce4ff",
@@ -2502,7 +2779,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_b472281f8c6fdb499063fd6f9eed2d9f",
@@ -2513,7 +2807,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_dd33404172d22d4fad8cf36a5ac6e648",
@@ -2524,7 +2835,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          }
         ],
         "review_id": "prev_37e9b1d5f0084b2c87b26d66e1d66f74"
@@ -2570,7 +2888,14 @@
           "proposal_kind": "conflict",
           "rationale": "Two observations disagree about watch.transition on watch:cw_circuit_glass_001: sources ['psrc_cw_circuit_glass_001']",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001"
+          "title": "Conflict: watch.transition on watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "observation_kind",
+            "label": "Observation kind",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_05b57d18ce65db0ce67bac5c820d1043",
@@ -2581,7 +2906,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_0c2a59f1f643ece5c12632d05a234536",
@@ -2592,7 +2924,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_60fdd8b325422fe0c0314e8334d94ef9",
@@ -2603,7 +2952,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_68c5a3482b1e555694908be05433cd9c",
@@ -2614,7 +2980,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_7c5bcadfc4e56afa07d1149eed6ce4ff",
@@ -2625,7 +3008,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_b472281f8c6fdb499063fd6f9eed2d9f",
@@ -2636,7 +3036,24 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "entity_title",
+            "label": "Entity title",
+            "kind": "text"
+           },
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           },
+           {
+            "key": "url",
+            "label": "Url",
+            "kind": "text"
+           }
+          ]
          },
          {
           "id": "pprop_dd33404172d22d4fad8cf36a5ac6e648",
@@ -2647,7 +3064,14 @@
           "proposal_kind": "observation_attention",
           "rationale": "Watch source detected a state transition",
           "target_ref": "watch:cw_circuit_glass_001",
-          "title": "observation_attention: watch:cw_circuit_glass_001"
+          "title": "observation_attention: watch:cw_circuit_glass_001",
+          "editable_fields": [
+           {
+            "key": "event_type",
+            "label": "Event type",
+            "kind": "text"
+           }
+          ]
          }
         ],
         "review_id": "prev_37e9b1d5f0084b2c87b26d66e1d66f74"

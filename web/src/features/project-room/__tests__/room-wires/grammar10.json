@@ -873,7 +873,7 @@
           "source": "proposal",
           "kind": "proposal",
           "title": "Marek owns the PostgreSQL migration",
-          "why": "PROPOSED \u00b7 Standup",
+          "why": "PROPOSED · Standup",
           "since": "2026-09-05T09:35:00",
           "url": null,
           "verb": "confirm",
@@ -896,7 +896,7 @@
           "source": "proposal",
           "kind": "proposal",
           "title": "cut-over on the 12th",
-          "why": "PROPOSED \u00b7 Standup",
+          "why": "PROPOSED · Standup",
           "since": "2026-09-05T09:35:00",
           "url": null,
           "verb": "confirm",
@@ -1086,7 +1086,7 @@
           "source": "proposal",
           "kind": "proposal",
           "title": "cut-over on the 12th",
-          "why": "PROPOSED \u00b7 Standup",
+          "why": "PROPOSED · Standup",
           "since": "2026-09-05T09:35:00",
           "url": null,
           "verb": "confirm",
@@ -1822,7 +1822,7 @@
           "revision": "2026-10-11T14:15:17+00:00",
           "reason": "Confluence rejected the token (401)",
           "repair": {
-            "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+            "token": "CREDENTIAL EXPIRED · CONFLUENCE",
             "verb": "Reconnect",
             "href": "/settings"
           },
@@ -1896,7 +1896,7 @@
           "revision": "2026-10-11T14:15:17+00:00",
           "reason": "Confluence rejected the token (401)",
           "repair": {
-            "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+            "token": "CREDENTIAL EXPIRED · CONFLUENCE",
             "verb": "Reconnect",
             "href": "/settings"
           },
@@ -1972,7 +1972,24 @@
       "fallback_reason": null,
       "fallback_receipt": null,
       "generatorHost": null,
-      "generatorModel": null
+      "generatorModel": null,
+      "editable_claims": [
+        {
+          "span_id": "s_nothing_0",
+          "section": "progress",
+          "text": "Nothing to report.",
+          "values": {
+            "subject": "Nothing to report."
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        }
+      ]
     }
   },
   "PUT": {
@@ -1996,7 +2013,24 @@
       "fallback_reason": null,
       "fallback_receipt": null,
       "generatorHost": null,
-      "generatorModel": null
+      "generatorModel": null,
+      "editable_claims": [
+        {
+          "span_id": "s_owner_0",
+          "section": "progress",
+          "text": "The ledger cutover is on track.",
+          "values": {
+            "subject": "The ledger cutover is on track."
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        }
+      ]
     }
   },
   "UPDATES_AFTER_SENDS": {
@@ -2046,7 +2080,8 @@
           }
         ],
         "generatorHost": null,
-        "generatorModel": null
+        "generatorModel": null,
+        "editable_claims": []
       }
     ],
     "latest_published_update_id": "pupd_9b433950cfde42f699275f28b38d0340"
@@ -2070,11 +2105,11 @@
         "document_json": {
           "label": "REV 1",
           "slug": "payments-ledger-cutover",
-          "title": "Payments ledger cutover \u2014 update r1 (2026-10-11)"
+          "title": "Payments ledger cutover — update r1 (2026-10-11)"
         },
         "size": 96,
         "preview": {
-          "text": "# Payments ledger cutover \u00b7 Update \u00b7 2026-10-11\n\n## Progress\n\nThe ledger cutover is on track.\n"
+          "text": "# Payments ledger cutover · Update · 2026-10-11\n\n## Progress\n\nThe ledger cutover is on track.\n"
         },
         "prepared_by": {
           "kind": "owner",
@@ -2113,11 +2148,11 @@
         "document_json": {
           "label": "REV 1",
           "slug": "payments-ledger-cutover",
-          "title": "Payments ledger cutover \u2014 update r1 (2026-10-11)"
+          "title": "Payments ledger cutover — update r1 (2026-10-11)"
         },
         "size": 96,
         "preview": {
-          "text": "# Payments ledger cutover \u00b7 Update \u00b7 2026-10-11\n\n## Progress\n\nThe ledger cutover is on track.\n"
+          "text": "# Payments ledger cutover · Update · 2026-10-11\n\n## Progress\n\nThe ledger cutover is on track.\n"
         },
         "prepared_by": {
           "kind": "owner",
@@ -2469,7 +2504,7 @@
           "revision": "2026-10-11T15:31:10+00:00",
           "reason": "Confluence rejected the token (401)",
           "repair": {
-            "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+            "token": "CREDENTIAL EXPIRED · CONFLUENCE",
             "verb": "Reconnect",
             "href": "/settings"
           },
@@ -2543,7 +2578,7 @@
           "revision": "2026-10-11T15:31:10+00:00",
           "reason": "Confluence rejected the token (401)",
           "repair": {
-            "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+            "token": "CREDENTIAL EXPIRED · CONFLUENCE",
             "verb": "Reconnect",
             "href": "/settings"
           },
@@ -2659,7 +2694,7 @@
             "reason": "Confluence rejected the token (401)",
             "repair": {
               "href": "/settings",
-              "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+              "token": "CREDENTIAL EXPIRED · CONFLUENCE",
               "verb": "Reconnect"
             },
             "revision": "2026-10-11T15:31:10+00:00",
@@ -2705,7 +2740,7 @@
             "reason": "Confluence rejected the token (401)",
             "repair": {
               "href": "/settings",
-              "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+              "token": "CREDENTIAL EXPIRED · CONFLUENCE",
               "verb": "Reconnect"
             },
             "revision": "2026-10-11T15:31:10+00:00",
@@ -2808,7 +2843,84 @@
       "elapsed_ms": 1770,
       "created_at": "2026-10-11T16:31:11.263927+00:00",
       "updated_at": "2026-10-11T16:31:11.263927+00:00",
-      "kept_at": null
+      "kept_at": null,
+      "editable_claims": [
+        {
+          "span_id": "s_priorities_0",
+          "section": "priorities",
+          "text": "Cut-over runs on the read replica first",
+          "values": {
+            "subject": "Cut-over runs on the read replica first"
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "span_id": "s_priorities_1",
+          "section": "priorities",
+          "text": "Two open pull requests wait on the runbook",
+          "values": {
+            "subject": "Two open pull requests wait on the runbook"
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "span_id": "s_priorities_2",
+          "section": "priorities",
+          "text": "Rehearse the rollback on the replica",
+          "values": {
+            "subject": "Rehearse the rollback on the replica"
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "span_id": "s_questions_0",
+          "section": "questions",
+          "text": "Priya expects the cut-over at 95% by 2026-12-31",
+          "values": {
+            "subject": "Priya expects the cut-over at 95% by 2026-12-31"
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "span_id": "s_questions_1",
+          "section": "questions",
+          "text": "Sprint velocity improved over the trailing average",
+          "values": {
+            "subject": "Sprint velocity improved over the trailing average"
+          },
+          "fields": [
+            {
+              "key": "subject",
+              "label": "Subject",
+              "kind": "text"
+            }
+          ]
+        }
+      ]
     }
   },
   "KEEP": {
@@ -2872,7 +2984,7 @@
             "reason": "Confluence rejected the token (401)",
             "repair": {
               "href": "/settings",
-              "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+              "token": "CREDENTIAL EXPIRED · CONFLUENCE",
               "verb": "Reconnect"
             },
             "revision": "2026-10-11T15:31:10+00:00",
@@ -2918,7 +3030,7 @@
             "reason": "Confluence rejected the token (401)",
             "repair": {
               "href": "/settings",
-              "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+              "token": "CREDENTIAL EXPIRED · CONFLUENCE",
               "verb": "Reconnect"
             },
             "revision": "2026-10-11T15:31:10+00:00",
@@ -3021,7 +3133,8 @@
       "elapsed_ms": 1770,
       "created_at": "2026-10-11T16:31:11.263927+00:00",
       "updated_at": "2026-10-11T16:31:13.051264+00:00",
-      "kept_at": "2026-10-11T16:31:13.051264+00:00"
+      "kept_at": "2026-10-11T16:31:13.051264+00:00",
+      "editable_claims": []
     }
   },
   "BRIEFS_KEPT": {
@@ -3085,7 +3198,7 @@
               "reason": "Confluence rejected the token (401)",
               "repair": {
                 "href": "/settings",
-                "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+                "token": "CREDENTIAL EXPIRED · CONFLUENCE",
                 "verb": "Reconnect"
               },
               "revision": "2026-10-11T15:31:10+00:00",
@@ -3131,7 +3244,7 @@
               "reason": "Confluence rejected the token (401)",
               "repair": {
                 "href": "/settings",
-                "token": "CREDENTIAL EXPIRED \u00b7 CONFLUENCE",
+                "token": "CREDENTIAL EXPIRED · CONFLUENCE",
                 "verb": "Reconnect"
               },
               "revision": "2026-10-11T15:31:10+00:00",
@@ -3234,7 +3347,8 @@
         "elapsed_ms": 1770,
         "created_at": "2026-10-11T16:31:11.263927+00:00",
         "updated_at": "2026-10-11T16:31:13.051264+00:00",
-        "kept_at": "2026-10-11T16:31:13.051264+00:00"
+        "kept_at": "2026-10-11T16:31:13.051264+00:00",
+        "editable_claims": []
       }
     ]
   },
@@ -3382,7 +3496,7 @@
           "source": "proposal",
           "kind": "proposal",
           "title": "Rollback runbook is rehearsed on the read replica first",
-          "why": "PROPOSED \u00b7 Architecture review",
+          "why": "PROPOSED · Architecture review",
           "since": "2026-10-11T16:31:22.598944+00:00",
           "url": null,
           "verb": "confirm",
@@ -3405,7 +3519,7 @@
           "source": "proposal",
           "kind": "proposal",
           "title": "Draft the rollback runbook",
-          "why": "PROPOSED \u00b7 Architecture review",
+          "why": "PROPOSED · Architecture review",
           "since": "2026-10-11T16:31:22.601477+00:00",
           "url": null,
           "verb": "confirm",

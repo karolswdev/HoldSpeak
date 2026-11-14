@@ -26,7 +26,7 @@ import pytest
 from holdspeak.db import Database, reset_database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.project_contracts import generate_pupd_id
-from holdspeak.services.errors import NotFound, ValidationError
+from holdspeak.services.errors import ConflictError, NotFound, ValidationError
 from holdspeak.services.project_delta_service import ProjectDeltaService
 from holdspeak.services.project_evidence_collector import (
     ProjectEvidenceCollector,
@@ -171,6 +171,41 @@ def rig(tmp_path):
     db = Database(tmp_path / "claim-support.db")
     yield db
     reset_database()
+
+
+def test_edit_one_claim_subject_and_choices_preserves_other_claims_and_refuses_stale_words(tmp_path):
+    reset_database()
+    db = Database(tmp_path / "claim-editor.db")
+    try:
+        pid = _seed_project(db)
+        _seed_items(db, pid)
+        service = _make_service(db)
+        draft = service.draft_update(OWNER, pid)
+        editing = next(row for row in draft["editable_claims"] if row["values"].get("state") == "open")
+        assert editing["values"]["subject"] == "Vendor lock-in"
+        assert editing["values"]["kind"] == "risk"
+        assert editing["values"]["severity"] == "critical"
+        fields = {field["key"]: field for field in editing["fields"]}
+        assert fields["subject"]["kind"] == "text"
+        assert fields["state"]["kind"] == "choice"
+        values = {**editing["values"], "subject": "Keep the tested rollback ready", "state": "mitigated"}
+        edit = {"span_id": editing["span_id"], "text": editing["text"], "values": values}
+        with pytest.raises(ValidationError, match="Only the owner can edit a saved claim"):
+            service.save_update(AGENT, draft["id"], claim_edits=[edit])
+        assert db.project_updates.get_update(draft["id"])["body_md"] == draft["body_md"]
+        after = service.save_update(OWNER, draft["id"], claim_edits=[edit], command_id="owner-claim-edit")
+        with pytest.raises(ValidationError, match="Only the owner can edit a saved claim"):
+            service.save_update(AGENT, draft["id"], claim_edits=[edit], command_id="owner-claim-edit")
+        assert after["body_md"] == draft["body_md"].replace(editing["text"], "Risk [critical]: Keep the tested rollback ready -- mitigated", 1)
+        assert any(row["text"] == "Risk [critical]: Keep the tested rollback ready -- mitigated" for row in _claims(after))
+        with pytest.raises(ConflictError, match="The claim changed\\. Read it again\\."):
+            service.save_update(OWNER, draft["id"], claim_edits=[edit])
+        assert db.project_updates.get_update(draft["id"])["body_md"] == after["body_md"]
+        fresh = next(row for row in after["editable_claims"] if row["values"].get("subject") == values["subject"])
+        with pytest.raises(ValidationError, match="Choose a state from the list\\."):
+            service.save_update(OWNER, draft["id"], claim_edits=[{**fresh, "values": {**fresh["values"], "state": "garbage"}}])
+    finally:
+        reset_database()
 
 
 # ── A REAL BUT IRRELEVANT CITATION ───────────────────────────────────

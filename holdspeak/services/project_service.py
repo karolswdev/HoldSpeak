@@ -16,6 +16,8 @@ payload.  Event kind is ``project.updated`` (SS10 has no item event kind).
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
 from dataclasses import asdict
 from .room_binding import room_binding
 
@@ -356,7 +358,7 @@ class ProjectService:
 
         registry = DeliveryRegistry.read_only_snapshot()
         if registry.get(source_id) is None:
-            raise NotFound("delivery source", source_id)
+            raise room_not_found("delivery source", source_id)
 
     def _project_resource_ref_names(self, ref: str, *, conn: Any = None) -> tuple[str, ...]:
         """Expand an old spelling only when it cannot name a second object.
@@ -917,16 +919,16 @@ class ProjectService:
         self._require_project(project_id)
         purpose = str(payload.get("purpose") or "").strip()
         if not purpose:
-            raise ValidationError("ask purpose is required", code="ask_task_purpose_required")
+            raise ValidationError('Enter a purpose for the question.', code="ask_task_purpose_required")
         state = str(payload.get("state") or "saved")
         if state not in {"saved", "failed", "incomplete"}:
             raise ValidationError(
-                "an ask can only be saved in a state it can reach",
+                'The question cannot be saved in this state.',
                 code="ask_task_state_invalid",
             )
         grounding = payload.get("grounding")
         if grounding is not None and not isinstance(grounding, dict):
-            raise ValidationError("grounding must be an object", code="ask_task_grounding_invalid")
+            raise ValidationError('Choose sources for the question.', code="ask_task_grounding_invalid")
         # The target's own words, quoted; never a sentence composed here (B5).
         stopped_reason = str(payload.get("stopped_reason") or payload.get("stoppedReason") or "")
         stopped_code = str(payload.get("stopped_code") or payload.get("stoppedCode") or "")
@@ -973,7 +975,7 @@ class ProjectService:
         """
         if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 50:
             raise ValidationError(
-                "limit must be between 1 and 50", code="ask_task_list_limit_invalid",
+                'Choose between 1 and 50 results.', code="ask_task_list_limit_invalid",
             )
         token = self._decode_ask_cursor(cursor) if cursor else None
         repo = self._db.project_ask_tasks
@@ -1018,7 +1020,7 @@ class ProjectService:
         task = self._require_ask_task(task_id)
         if task.state == "discarded":
             raise ConflictError(
-                "this ask was discarded", code="ask_task_discarded",
+                'This question was discarded.', code="ask_task_discarded",
                 context={"task_id": task.id},
             )
         repo = self._db.project_ask_tasks
@@ -1045,7 +1047,7 @@ class ProjectService:
 
         if not repo.claim_dispatch(task.id, str(host_id or ""), int(lease_epoch or 0)):
             raise ConflictError(
-                "this ask is already being resumed", code="ask_task_resume_in_flight",
+                'This question is already resuming.', code="ask_task_resume_in_flight",
                 context={"task_id": task.id, "reason": "still_running"},
             )
         # Betterment Q1: one identity is one kernel operation.  A run that
@@ -1056,7 +1058,7 @@ class ProjectService:
         if run_state == "running":
             repo.release_dispatch(task.id)
             raise ConflictError(
-                "this ask is still running", code="ask_task_still_running",
+                'This question is still running.', code="ask_task_still_running",
                 context={"task_id": task.id, "reason": "still_running"},
             )
         if run_state == "ended":
@@ -1119,7 +1121,7 @@ class ProjectService:
         code = str(code or "").strip()
         if not self._ASK_STOP_CODE.match(code):
             raise ValidationError(
-                "a stop code is a token, not a sentence",
+                'Choose a valid stop reason.',
                 code="ask_task_stop_code_invalid",
             )
         task = self._require_ask_task(task_id)
@@ -1129,7 +1131,7 @@ class ProjectService:
             return {"task": self._ask_task_dto(task, host_id=host_id), "changed": False}
         if task.state != "saved":
             raise ConflictError(
-                "only a saved ask can be recorded as stopped",
+                'Save the question before you stop it.',
                 code="ask_task_not_stoppable",
                 context={"task_id": task.id, "state": task.state},
             )
@@ -1179,7 +1181,7 @@ class ProjectService:
     def _require_ask_task(self, task_id: str) -> Any:
         task = self._db.project_ask_tasks.get(task_id)
         if task is None:
-            raise NotFound("ask task", task_id)
+            raise room_not_found("ask task", task_id)
         return task
 
     @staticmethod
@@ -1254,7 +1256,7 @@ class ProjectService:
             return value
         except Exception as exc:
             raise ValidationError(
-                "ask cursor is invalid", code="ask_task_cursor_invalid",
+                'Read the questions again because the list changed.', code="ask_task_cursor_invalid",
             ) from exc
 
     # ── writes (graduated to revision law) ───────────────────────────
@@ -1270,7 +1272,7 @@ class ProjectService:
         payload = self.effective_fields(payload, record='project')
         name = str(payload.get("name") or "").strip()
         if not name:
-            raise ValidationError("Project name is required")
+            raise ValidationError('Enter the project name.')
         threshold = self._threshold(payload.get("detection_threshold", 0.4))
 
         # Idempotency check (API-002)
@@ -1378,7 +1380,7 @@ class ProjectService:
         """
         name = str(setup_payload.get("name") or "").strip()
         if not name:
-            raise ValidationError("Project name is required")
+            raise ValidationError('Enter the project name.')
 
         req_hash = _request_hash(setup_payload)
         replay = self._check_idempotency(command_id, req_hash, "create_from_setup")
@@ -1625,7 +1627,7 @@ class ProjectService:
                 (suggestion_id, project_id),
             ).rowcount
             if accepted != 1:
-                raise ConflictError("The suggestion is not pending", code="suggestion_not_pending",
+                raise ConflictError('This suggestion no longer waits for an answer.', code="suggestion_not_pending",
                                     context={"status": 409})
             new_revision = self._get_revision(conn, project_id) + 1
             conn.execute("UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
@@ -1694,7 +1696,7 @@ class ProjectService:
         """
         self._require_project(project_id)
         if not specs:
-            raise ValidationError("At least one source is required")
+            raise ValidationError('Choose at least one source.')
         req_hash = _request_hash({"project_id": project_id, "specs": specs, "action": "add_source_watches"})
         replay = self._check_idempotency(command_id, req_hash, "add_source_watches")
         if replay is not None:
@@ -1717,7 +1719,7 @@ class ProjectService:
                     watched.add(identity)
                     fresh.append(spec)
             if not fresh:
-                raise ConflictError("Already watched", code="already_watched", context={"status": 409})
+                raise ConflictError('This source is already watched.', code="already_watched", context={"status": 409})
             new_revision = self._get_revision(conn, project_id) + 1
             conn.execute("UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
                          (new_revision, now_iso, project_id))
@@ -1767,7 +1769,7 @@ class ProjectService:
         if "name" in patch:
             name = str(patch["name"] or "").strip()
             if not name:
-                raise ValidationError("Project name cannot be empty")
+                raise ValidationError('Enter the project name.')
             fields["name"] = name
         if "description" in patch:
             fields["description"] = str(patch["description"] or "")
@@ -1796,7 +1798,7 @@ class ProjectService:
                         parse_ref(owner_ref_str)
                     except Exception as exc:
                         raise ValidationError(
-                            f"owner_ref is not a valid qualified ref: {exc}",
+                            'Choose a valid owner.',
                             code="invalid_owner_ref",
                         ) from exc
                     owner_ref_val = owner_ref_str
@@ -1805,12 +1807,12 @@ class ProjectService:
             lc = str(patch["lifecycle"] or "").strip().lower()
             if lc == "archived":
                 raise ValidationError(
-                    "lifecycle 'archived' cannot be set via update; use archive_project",
+                    'Use Archive to archive the project.',
                     code="invalid_lifecycle",
                 )
             if lc not in PROJECT_LIFECYCLES:
                 raise ValidationError(
-                    f"lifecycle must be one of {sorted(PROJECT_LIFECYCLES)}, got {lc!r}",
+                    'Choose a project state from the list.',
                     code="invalid_lifecycle",
                 )
             fields["lifecycle"] = lc
@@ -1818,7 +1820,7 @@ class ProjectService:
             posture_val = str(patch["posture"]).strip() if patch["posture"] else None
             if posture_val and len(posture_val) > _POSTURE_MAX:
                 raise ValidationError(
-                    f"posture exceeds {_POSTURE_MAX} characters",
+                    'Enter a posture of 64 characters or fewer.',
                     code="posture_too_long",
                 )
             fields["posture"] = posture_val
@@ -1826,7 +1828,7 @@ class ProjectService:
             reason_val = str(patch["posture_reason"]).strip() if patch["posture_reason"] else None
             if reason_val and len(reason_val) > _POSTURE_REASON_MAX:
                 raise ValidationError(
-                    f"posture_reason exceeds {_POSTURE_REASON_MAX} characters",
+                    'Enter a posture reason of 500 characters or fewer.',
                     code="posture_reason_too_long",
                 )
             fields["posture_reason"] = reason_val
@@ -1842,7 +1844,7 @@ class ProjectService:
                             datetime.fromisoformat(date_str)
                         except (ValueError, TypeError) as exc:
                             raise ValidationError(
-                                f"{date_key} is not valid ISO-8601: {date_str!r}",
+                                'Enter a valid date.',
                                 code=f"invalid_{date_key}",
                             ) from exc
                         date_val = date_str
@@ -1852,7 +1854,7 @@ class ProjectService:
             if cadence is not None:
                 if not isinstance(cadence, dict):
                     raise ValidationError(
-                        "review_cadence_json must be a dict",
+                        'Enter the review schedule fields.',
                         code="invalid_review_cadence",
                     )
                 if "every_days" in cadence:
@@ -1860,12 +1862,12 @@ class ProjectService:
                         every = int(cadence["every_days"])
                     except (TypeError, ValueError) as exc:
                         raise ValidationError(
-                            "review_cadence_json.every_days must be a positive integer",
+                            'Enter at least one day between reviews.',
                             code="invalid_review_cadence",
                         ) from exc
                     if every < 1:
                         raise ValidationError(
-                            "review_cadence_json.every_days must be a positive integer",
+                            'Enter at least one day between reviews.',
                             code="invalid_review_cadence",
                         )
             fields["review_cadence_json"] = cadence
@@ -1873,7 +1875,7 @@ class ProjectService:
             tk = str(patch["template_key"]).strip() if patch["template_key"] else None
             if tk and len(tk) > _SLUG_MAX:
                 raise ValidationError(
-                    f"template_key exceeds {_SLUG_MAX} characters",
+                    'Enter a template name of 64 characters or fewer.',
                     code="template_key_too_long",
                 )
             fields["template_key"] = tk
@@ -1882,7 +1884,7 @@ class ProjectService:
             if mods is not None:
                 if not isinstance(mods, list):
                     raise ValidationError(
-                        "modules_json must be a list of short slugs",
+                        'Choose the project modules from the list.',
                         code="invalid_modules",
                     )
                 cleaned: list[str] = []
@@ -1890,7 +1892,7 @@ class ProjectService:
                     slug = str(m).strip()
                     if len(slug) > _SLUG_MAX:
                         raise ValidationError(
-                            f"modules_json entry exceeds {_SLUG_MAX} characters",
+                            'Enter module names of 64 characters or fewer.',
                             code="invalid_modules",
                         )
                     cleaned.append(slug)
@@ -1906,7 +1908,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2040,7 +2042,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2173,7 +2175,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2298,7 +2300,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2426,7 +2428,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2537,7 +2539,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2668,7 +2670,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2769,14 +2771,13 @@ class ProjectService:
         item_type = str(payload.get("item_type") or "").strip()
         if item_type not in ITEM_TYPES:
             raise ValidationError(
-                f"Unknown item_type: {item_type!r}; "
-                f"must be one of {sorted(ITEM_TYPES)}",
+                'Choose an item kind from the list.',
                 code="validation",
             )
 
         title = str(payload.get("title") or "").strip()
         if not title:
-            raise ValidationError("Item title is required", code="validation")
+            raise ValidationError('Enter the item title.', code="validation")
 
         severity = self._validate_severity(payload.get("severity"))
         lifecycle = self.item_lifecycle(item_type, payload.get("lifecycle"))
@@ -2792,7 +2793,7 @@ class ProjectService:
             try:
                 sort_key = float(sort_key)
             except (TypeError, ValueError) as exc:
-                raise ValidationError("sort_key must be a number", code="validation") from exc
+                raise ValidationError('Enter a number for the sort order.', code="validation") from exc
         summary = payload.get("summary")
 
         # Validate and serialize details_json (DB-004)
@@ -2802,7 +2803,7 @@ class ProjectService:
         provenance = str(payload.get("provenance_kind") or "owner").strip()
         if provenance not in PROVENANCE_KINDS:
             raise ValidationError(
-                f"provenance_kind must be one of {sorted(PROVENANCE_KINDS)}",
+                'Only the owner can name the source of this item.',
                 code="validation",
             )
 
@@ -2825,7 +2826,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -2938,14 +2939,13 @@ class ProjectService:
         item_type = str(payload.get("item_type") or "").strip()
         if item_type not in ITEM_TYPES:
             raise ValidationError(
-                f"Unknown item_type: {item_type!r}; "
-                f"must be one of {sorted(ITEM_TYPES)}",
+                'Choose an item kind from the list.',
                 code="validation",
             )
 
         title = str(payload.get("title") or "").strip()
         if not title:
-            raise ValidationError("Item title is required", code="validation")
+            raise ValidationError('Enter the item title.', code="validation")
 
         severity = self._validate_severity(payload.get("severity"))
         lifecycle = str(payload.get("lifecycle") or "").strip() or ITEM_DEFAULT_LIFECYCLE[item_type]
@@ -2962,7 +2962,7 @@ class ProjectService:
             try:
                 sort_key = float(sort_key)
             except (TypeError, ValueError) as exc:
-                raise ValidationError("sort_key must be a number", code="validation") from exc
+                raise ValidationError('Enter a number for the sort order.', code="validation") from exc
         summary = payload.get("summary")
 
         # Validate and serialize details_json (DB-004)
@@ -2972,7 +2972,7 @@ class ProjectService:
         provenance = str(payload.get("provenance_kind") or "owner").strip()
         if provenance not in PROVENANCE_KINDS:
             raise ValidationError(
-                f"provenance_kind must be one of {sorted(PROVENANCE_KINDS)}",
+                'Only the owner can name the source of this item.',
                 code="validation",
             )
 
@@ -3083,7 +3083,7 @@ class ProjectService:
         self._require_project(project_id)
         existing = self._db.projects.get_project_item(item_id)
         if existing is None or existing["project_id"] != project_id:
-            raise NotFound("project_item", item_id)
+            raise room_not_found("project_item", item_id)
 
         item_type = existing["item_type"]
 
@@ -3092,7 +3092,7 @@ class ProjectService:
         if "title" in patch:
             title = str(patch["title"] or "").strip()
             if not title:
-                raise ValidationError("Item title cannot be empty", code="validation")
+                raise ValidationError('Enter the item title.', code="validation")
             fields["title"] = title
         if "summary" in patch:
             fields["summary"] = patch["summary"]
@@ -3108,7 +3108,7 @@ class ProjectService:
                 try:
                     sk = float(sk)
                 except (TypeError, ValueError) as exc:
-                    raise ValidationError("sort_key must be a number", code="validation") from exc
+                    raise ValidationError('Enter a number for the sort order.', code="validation") from exc
             fields["sort_key"] = sk
         if "details" in patch:
             fields["details_json"] = self._validate_details(item_type, patch["details"] or {})
@@ -3119,14 +3119,13 @@ class ProjectService:
             self._validate_lifecycle(item_type, new_lc)
             if item_type == "milestone" and new_lc == "reached":
                 raise ValidationError(
-                    "Milestones cannot be completed through a field update; "
-                    "use the transition verb (DOM-007)",
+                    'Use the milestone transition to mark it reached.',
                     code="validation",
                 )
             fields["lifecycle"] = new_lc
 
         if not fields:
-            raise ValidationError("No updatable fields supplied", code="validation")
+            raise ValidationError('Change a field before you save.', code="validation")
 
         # Idempotency
         req_hash = _request_hash({"project_id": project_id, "item_id": item_id, **patch})
@@ -3142,7 +3141,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -3249,7 +3248,7 @@ class ProjectService:
         self._require_project(project_id)
         existing = self._db.projects.get_project_item(item_id)
         if existing is None or existing["project_id"] != project_id:
-            raise NotFound("project_item", item_id)
+            raise room_not_found("project_item", item_id)
 
         body = payload or {}
         item_type = existing["item_type"]
@@ -3288,7 +3287,7 @@ class ProjectService:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
-                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    'Read the project again because it changed.',
                     code="stale_revision",
                     context={
                         "expected_revision": expected_revision,
@@ -3388,7 +3387,7 @@ class ProjectService:
             if item_type:
                 if item_type not in ITEM_TYPES:
                     raise ValidationError(
-                        f"Unknown item_type filter: {item_type!r}",
+                        'Choose an item kind from the list.',
                         code="validation",
                     )
                 rows = conn.execute(
@@ -3435,7 +3434,7 @@ class ProjectService:
     def _require_meeting(self, meeting_id: str) -> Any:
         meeting = self._db.meetings.get_meeting(meeting_id)
         if meeting is None:
-            raise NotFound("meeting", meeting_id)
+            raise room_not_found("meeting", meeting_id)
         return meeting
 
     @staticmethod
@@ -3449,9 +3448,9 @@ class ProjectService:
         try:
             threshold = float(value)
         except (TypeError, ValueError) as exc:
-            raise ValidationError("detection_threshold must be between 0 and 1") from exc
+            raise ValidationError('Enter a detection threshold between 0 and 1.') from exc
         if not 0.0 <= threshold <= 1.0:
-            raise ValidationError("detection_threshold must be between 0 and 1")
+            raise ValidationError('Enter a detection threshold between 0 and 1.')
         return threshold
 
     @staticmethod
@@ -3469,7 +3468,7 @@ class ProjectService:
             (project_id,),
         ).fetchone()
         if row is None:
-            raise NotFound("project", project_id)
+            raise room_not_found("project", project_id)
         return int(row["revision"])
 
     def _command_txn(self, command_id: Optional[str]) -> Any:
@@ -3518,7 +3517,7 @@ class ProjectService:
             return {"result_kind": "no_change", "project_id": existing["project_id"]}
         if existing["request_hash"] != req_hash:
             raise ConflictError(
-                "idempotency conflict: same command_id with different request hash",
+                'This command was used for different work.',
                 code="idempotency_conflict",
                 context={"command_id": command_id},
             )

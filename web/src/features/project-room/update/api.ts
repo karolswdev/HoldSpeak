@@ -62,6 +62,13 @@ export async function saveUpdate(
   return decodeUpdate(raw.update);
 }
 
+/** Save one or more bound claim edits through the existing draft operation. */
+export async function saveClaimEdits(updateId: string, edits: import("./model").ClaimEdit[]): Promise<ProjectUpdate> {
+  const raw = await apiFetch<{success:boolean; update:Record<string,unknown>}>(`/api/updates/${encodeURIComponent(updateId)}`,
+    {method:"PUT", json:{claim_edits:edits}});
+  return decodeUpdate(raw.update);
+}
+
 /** PHILO-15 B64: POST /api/updates/{id}/claims/{span}/review — the owner's
  *  Accept / Reject on one claim (draft only). */
 export async function reviewClaim(

@@ -28,7 +28,8 @@
         "patch_json": "{}",
         "materiality": null,
         "producer_kind": null,
-        "lifecycle": "open"
+        "lifecycle": "open",
+        "editable_fields": []
       }
     ]
   },
@@ -307,7 +308,8 @@
           "patch_json": "{}",
           "materiality": null,
           "producer_kind": null,
-          "lifecycle": "open"
+          "lifecycle": "open",
+          "editable_fields": []
         }
       ]
     }

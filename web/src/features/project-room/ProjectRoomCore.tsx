@@ -327,6 +327,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
   else if (view === "prepare")
     content = (
       <PreparePosture
+        projectViews={VIEWS.filter(item => item.id !== "prepare")} onProjectView={changeView}
         onClose={() => setView("now")}
         ctrl={prepare}
         projectName={ctrl.projectName}
@@ -457,7 +458,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
         <PaneViews
           label="Project view"
           value={view}
-          tabs={tab === "updates" && view === "now" ? [VIEWS[0]] : VIEWS}
+          tabs={view === "prepare" ? [VIEWS.find(item => item.id === "prepare")!] : tab === "updates" && view === "now" ? [VIEWS[0]] : VIEWS}
           onChange={changeView}
         >
           {content}

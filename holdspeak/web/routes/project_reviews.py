@@ -148,6 +148,6 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
     mount_router(outer, router)
     mount_router(outer, produced(ctx, [d for d in PROJECT_OPERATIONS if d.name == "project.get_review"],
                                  envelope(log, "Failed to get review", not_found=lambda exc: {
-                                     "code": "not_found", "message": f"Review {exc.id!r} not found"}),
+                                     "code": "not_found", "message": exc.detail}),
                                  module=__name__))
     return outer

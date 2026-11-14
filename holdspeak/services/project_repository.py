@@ -297,7 +297,7 @@ def register(db: Any, repositories: ProjectRepositories, project_id: str, reposi
     with db._connection() as conn:
         row = conn.execute("SELECT id FROM projects WHERE id=?", (project_id,)).fetchone()
     if row is None:
-        raise ServiceError("project_unknown", f"No Project {project_id}.", context={"status": 404})
+        raise ServiceError("project_unknown", "The project is not available.", context={"status": 404})
     prior = repositories.get(project_id)
     record: dict[str, Any] = {"repository": name, "registered_at": _now()}
     if prior and prior.get("repository") == name:

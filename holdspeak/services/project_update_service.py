@@ -49,6 +49,10 @@ content inside the body.  Sort everything canonically.
 """
 from __future__ import annotations
 
+from .room_errors import room_not_found
+
+from .room_claim_editor import claim_editors, edit_claim_body, compose
+
 import hashlib
 import json
 import re as _re
@@ -345,6 +349,30 @@ _HONEST_MINIMAL: dict[str, str] = {
 }
 
 
+def _item_claim(
+    item: dict[str, Any], span: str, section: str,
+    source_version: str, fallback: str, *, due: bool = False,
+) -> Claim:
+    ref = f"item:{item.get('id') or fallback}"
+    fields = (
+        ["title", "lifecycle", "due_at"] if due else
+        ["title", "severity", "lifecycle"] if section == "dependencies" else
+        ["severity", "title", "lifecycle"]
+    )
+    if section != "dependencies":
+        fields.insert(0, "item_type")
+    return Claim(
+        span_id=span,
+        text=compose(
+            item.get("item_type", "item"), None if due else item.get("severity"),
+            item.get("title", "Untitled"), item.get("lifecycle", "unknown"),
+            due=item.get("due_at") if due else None,
+        ),
+        refs=[ref], section=section, kind=KIND_OBSERVATION, support=SUPPORT_SUPPORTED,
+        support_record=_field_mapping_support(source_version, [ref], fields),
+    )
+
+
 # ── Section builders (deterministic) ──────────────────────────────────
 
 def _build_progress(
@@ -359,30 +387,9 @@ def _build_progress(
 
     lines: list[str] = []
     for i, item in enumerate(focus):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        lifecycle = item.get("lifecycle", "unknown")
-        item_type = item.get("item_type", "item")
-        severity = item.get("severity")
-
-        sev_str = f" [{severity}]" if severity else ""
-        text = f"{item_type.capitalize()}{sev_str}: {title} -- {lifecycle}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_{i}"
-        claims.append(Claim(
-            span_id=f"s_progress_{i}",
-            text=text,
-            refs=[ref],
-            section="progress",
-            # A recorded lifecycle read straight off the item row: an
-            # observation, supported by a field mapping (C2).
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref],
-                ["item_type", "severity", "title", "lifecycle"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_progress_{i}", "progress", source_version, f"unknown_{i}")
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     total = items_section.get("total", len(focus))
     cap = len(focus)
@@ -861,28 +868,9 @@ def _build_risks_blockers(
 
     lines: list[str] = []
     for i, item in enumerate(risk_items):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        item_type = item.get("item_type", "item")
-        lifecycle = item.get("lifecycle", "unknown")
-        severity = item.get("severity")
-
-        sev_str = f" [{severity}]" if severity else ""
-        text = f"{item_type.capitalize()}{sev_str}: {title} -- {lifecycle}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_rb_{i}"
-        claims.append(Claim(
-            span_id=f"s_risks_blockers_{i}",
-            text=text,
-            refs=[ref],
-            section="risks_blockers",
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref],
-                ["item_type", "severity", "title", "lifecycle"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_risks_blockers_{i}", "risks_blockers", source_version, f"unknown_rb_{i}")
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     return "\n".join(lines)
 
@@ -903,26 +891,9 @@ def _build_dependencies(
 
     lines: list[str] = []
     for i, item in enumerate(dep_items):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        lifecycle = item.get("lifecycle", "unknown")
-        severity = item.get("severity")
-
-        sev_str = f" [{severity}]" if severity else ""
-        text = f"Dependency{sev_str}: {title} -- {lifecycle}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_dep_{i}"
-        claims.append(Claim(
-            span_id=f"s_dependencies_{i}",
-            text=text,
-            refs=[ref],
-            section="dependencies",
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref], ["title", "severity", "lifecycle"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_dependencies_{i}", "dependencies", source_version, f"unknown_dep_{i}")
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     return "\n".join(lines)
 
@@ -944,28 +915,9 @@ def _build_next_actions(
 
     lines: list[str] = []
     for i, item in enumerate(action_items):
-        item_id = item.get("id", "")
-        title = item.get("title", "Untitled")
-        item_type = item.get("item_type", "item")
-        lifecycle = item.get("lifecycle", "unknown")
-        due_at = item.get("due_at")
-
-        due_str = f", due {due_at}" if due_at else ""
-        text = f"{item_type.capitalize()}: {title} -- {lifecycle}{due_str}"
-        ref = f"item:{item_id}" if item_id else f"item:unknown_na_{i}"
-        claims.append(Claim(
-            span_id=f"s_next_actions_{i}",
-            text=text,
-            refs=[ref],
-            section="next_actions",
-            kind=KIND_OBSERVATION,
-            support=SUPPORT_SUPPORTED,
-            support_record=_field_mapping_support(
-                source_version, [ref],
-                ["item_type", "title", "lifecycle", "due_at"],
-            ),
-        ))
-        lines.append(f"- {text}")
+        claim = _item_claim(item, f"s_next_actions_{i}", "next_actions", source_version, f"unknown_na_{i}", due=True)
+        claims.append(claim)
+        lines.append(f"- {claim.text}")
 
     return "\n".join(lines)
 
@@ -1682,6 +1634,9 @@ class ProjectUpdateService:
             out.get("claims_json") or "",
             generator=generator,
         )
+        claims = json.loads(out["claims_json"] or "[]")
+        body = str(out.get("body_md") or "")
+        out["editable_claims"] = claim_editors(body, claims, _SECTION_HEADINGS) if out.get("lifecycle") == "draft" else []
         return out
 
     # ── Model drafter (HS-162-03) ────────────────────────────────────
@@ -1710,7 +1665,7 @@ class ProjectUpdateService:
         if broker is None:
             raise _ModelDraftFailed(
                 "no_broker", FALLBACK_MODEL_UNAVAILABLE,
-                detail="the hub has no engine service",
+                detail="The update engine is not available.",
             )
 
         # The update-draft job's engine (the door's pick).
@@ -1719,7 +1674,7 @@ class ProjectUpdateService:
         except engine_door.EngineDoorError as exc:
             raise _ModelDraftFailed(
                 f"route_unresolved: {exc.detail}", FALLBACK_ROUTE_UNRESOLVED,
-                detail="no engine is set for updates",
+                detail="Choose an engine for updates.",
             ) from exc
 
         # Build the evidence inventory from deterministic claims.
@@ -1760,12 +1715,12 @@ class ProjectUpdateService:
         except engine_door.EngineDoorError as exc:
             raise _ModelDraftFailed(
                 f"no_output: {exc.detail}", FALLBACK_NO_OUTPUT,
-                detail="it returned no text",
+                detail="The engine returned no text.",
             ) from exc
         except Exception as exc:
             raise _ModelDraftFailed(
                 f"runner_error: {exc}", FALLBACK_MODEL_UNAVAILABLE,
-                detail="the call to the engine failed",
+                detail="The engine did not answer.",
             ) from exc
 
         # HS-173-02: provenance from the engine that answered.
@@ -1782,7 +1737,7 @@ class ProjectUpdateService:
         if raw is None:
             raise _ModelDraftFailed(
                 "no_output", FALLBACK_NO_OUTPUT,
-                detail="it returned no text",
+                detail="The engine returned no text.",
             )
 
         # Parse and constrain to the claim schema.
@@ -1794,8 +1749,8 @@ class ProjectUpdateService:
                 f"unparseable_output: {len(raw)} chars, starts {raw[:120]!r}",
                 FALLBACK_UNPARSEABLE_OUTPUT,
                 detail=(
-                    "it did not return JSON" if structured is None
-                    else "it did not return the expected fields"
+                    "The engine did not return a readable update." if structured is None
+                    else "The engine did not return the update fields."
                 ),
             )
 
@@ -2158,7 +2113,7 @@ class ProjectUpdateService:
     ) -> dict[str, Any]:
         base = self._db.project_updates.get_update(update_id)
         if base is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
         if base.get("lifecycle") != "draft":
             raise ConflictError(
                 "Only a draft can be improved.", code="engine_pass_not_draft",
@@ -2292,7 +2247,7 @@ class ProjectUpdateService:
                 "SELECT * FROM project_update_jobs WHERE id = ?", (str(job_id),),
             ).fetchone()
         if row is None:
-            raise NotFound("update_job", job_id)
+            raise room_not_found("update_job", job_id)
         return dict(row)
 
     def get_engine_pass(self, job_id: str) -> dict[str, Any]:
@@ -2437,7 +2392,7 @@ class ProjectUpdateService:
         """
         row = self._db.project_updates.get_update(update_id)
         if row is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
         return attach_deliveries(self._db, [self._project_axes(row)])[0]
 
     def bind_workbench(self, workbench: Any) -> None:
@@ -2533,7 +2488,7 @@ class ProjectUpdateService:
         claim.
         """
         if self._db.projects.get_project(project_id) is None:
-            raise NotFound("project", project_id)
+            raise room_not_found("project", project_id)
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute(
@@ -2549,7 +2504,7 @@ class ProjectUpdateService:
                 return None
             if row["request_hash"] != req_hash:
                 raise ConflictError(
-                    "idempotency conflict: same command_id with different request hash",
+                    'This command was used for different work.',
                     code="idempotency_conflict",
                 )
             if row["status"] == "completed":
@@ -2558,7 +2513,7 @@ class ProjectUpdateService:
                 return {"result_kind": "no_change", "project_id": project_id}
             if row["status"] == "pending":
                 raise ConflictError(
-                    "this command_id is already drafting; ask again when it ends",
+                    'This draft is still being made.',
                     code="command_in_progress",
                 )
             conn.execute(
@@ -2573,6 +2528,7 @@ class ProjectUpdateService:
         update_id: str,
         *,
         body_md: str | None = None,
+        claim_edits: list[dict[str, Any]] | None = None,
         source_refs: Iterable[str] = (),
         generator: str | None = None,
         engine: str | None = None,
@@ -2591,14 +2547,19 @@ class ProjectUpdateService:
         Raises PublishedUpdateError if the row is published.
         Raises NotFound if the update does not exist.
         """
+        if claim_edits is not None and principal.kind is not PrincipalKind.OWNER:
+            raise ValidationError("Only the owner can edit a saved claim.", code="claim_edit_forbidden")
         normalized_source_refs = list(source_refs or ())
-        req_hash = _request_hash({
+        request = {
             "update_id": update_id,
             "body_md": body_md,
             "source_refs": normalized_source_refs,
             "generator": generator,
             "engine": engine,
-        })
+        }
+        if claim_edits is not None:
+            request["claim_edits"] = claim_edits
+        req_hash = _request_hash(request)
         if command_id is not None:
             existing = self._db.projects.get_project_command(command_id)
             if existing is not None:
@@ -2609,15 +2570,22 @@ class ProjectUpdateService:
                     return {"result_kind": "no_change", "update_id": update_id}
                 if existing["request_hash"] != req_hash:
                     raise ConflictError(
-                        "idempotency conflict: same command_id with different request hash",
+                        'This command was used for different work.',
                         code="idempotency_conflict",
                     )
 
         row = self._db.project_updates.get_update(update_id)
         if row is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
 
         project_id = row["project_id"]
+        if claim_edits is not None:
+            if body_md is not None or not isinstance(claim_edits, list) or any(not isinstance(edit, dict) for edit in claim_edits):
+                raise ValidationError("Edit the claims or the full text in one save.", code="claim_edit_invalid")
+            body_md = edit_claim_body(str(row.get("body_md") or ""),
+                                      json.loads(migrate_claims_json(row.get("claims_json") or "", generator=str(row.get("generator") or "deterministic"))),
+                                      claim_edits, _SECTION_HEADINGS)
+
 
         # A tool-capable project update agent writes plain text through this
         # same producer. Keep its result in a separate row from the owner's
@@ -2715,9 +2683,17 @@ class ProjectUpdateService:
                 next_claims = authored
 
         # PublishedUpdateError is raised inside the repo
-        self._db.project_updates.update_draft(
-            update_id, body_md=body_md, claims_json=next_claims,
-        )
+        if claim_edits is not None:
+            # Validate and save against the same stored revision. Keep a
+            # concurrent full-text save, review or publish intact.
+            with self._db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                saved = conn.execute("SELECT body_md, claims_json FROM project_updates WHERE id=?", (update_id,)).fetchone()
+                if saved is None or saved["body_md"] != row.get("body_md") or saved["claims_json"] != row.get("claims_json"):
+                    raise ConflictError("The claim changed. Read it again.", code="claim_edit_stale")
+                self._db.project_updates.update_draft_in_transaction(conn, update_id, body_md=body_md, claims_json=next_claims)
+        else:
+            self._db.project_updates.update_draft(update_id, body_md=body_md, claims_json=next_claims)
 
         result = self._project_axes(
             self._db.project_updates.get_update(update_id)
@@ -2766,13 +2742,13 @@ class ProjectUpdateService:
                     return {"result_kind": "no_change", "update_id": update_id}
                 if existing["request_hash"] != req_hash:
                     raise ConflictError(
-                        "idempotency conflict: same command_id with different request hash",
+                        'This command was used for different work.',
                         code="idempotency_conflict",
                     )
 
         row = self._db.project_updates.get_update(update_id)
         if row is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
 
         project_id = row["project_id"]
 
@@ -2828,10 +2804,10 @@ class ProjectUpdateService:
             return {"success": True, "delivery": existing}
         row = self._db.project_updates.get_update(update_id)
         if row is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
         if str(row.get("lifecycle") or "") != "published":
             raise ValidationError(
-                f"Update {update_id} is {row.get('lifecycle')}; only a published update can be marked delivered",
+                'Publish the update before you mark it delivered.',
                 code="update_not_published",
             )
         confirmed_at = datetime.fromtimestamp(float(operation.get("created_at") or 0), tz=timezone.utc)
@@ -2862,7 +2838,7 @@ class ProjectUpdateService:
         """The replay answer: the original delivery, found by its operation."""
         existing = self._delivery_for(operation_id)
         if existing is None:
-            raise NotFound("delivery", operation_id)
+            raise room_not_found("delivery", operation_id)
         return {"success": True, "delivery": existing}
 
     # ── P2: the update's source scope lives in project_update_policy (HS-S55);
@@ -3175,7 +3151,7 @@ class ProjectUpdateService:
         """
         row = self._db.project_updates.get_update(update_id)
         if row is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
 
         project_id = row["project_id"]
         ledger = ServiceEventLedger(self._db)
@@ -3194,7 +3170,7 @@ class ProjectUpdateService:
                 (project_id,),
             ).fetchone()
             if proj_row is None:
-                raise NotFound("project", project_id)
+                raise room_not_found("project", project_id)
             current_rev = int(proj_row["revision"])
             new_revision = current_rev + 1
             now_iso = utc_now_iso()
@@ -3297,30 +3273,30 @@ class ProjectUpdateService:
         """
         if principal.kind is not PrincipalKind.OWNER:
             raise ValidationError(
-                "Only the owner can review a claim",
+                'Only the owner can review a claim.',
                 code="claim_review_forbidden",
             )
         if acceptance is None and support is None:
             raise ValidationError(
-                "Nothing to review: pass acceptance or support",
+                'Choose an acceptance or support state.',
                 code="claim_review_empty",
             )
         if acceptance is not None and acceptance not in ACCEPTANCE_STATES:
             raise ValidationError(
-                f"Unknown acceptance state: {acceptance!r}",
+                'Choose an acceptance state from the list.',
                 code="claim_acceptance_unknown",
             )
         if support is not None and support not in (
             SUPPORT_SUPPORTED, SUPPORT_DISPUTED, SUPPORT_SOURCE_LINKED,
         ):
             raise ValidationError(
-                f"A reviewer cannot set support to {support!r}",
+                'Choose a support state from the list.',
                 code="claim_support_unknown",
             )
 
         row = self._db.project_updates.get_update(update_id)
         if row is None:
-            raise NotFound("update", update_id)
+            raise room_not_found("update", update_id)
 
         claims_json = migrate_claims_json(
             row.get("claims_json") or "",
@@ -3339,11 +3315,11 @@ class ProjectUpdateService:
                 target = claim
                 break
         if target is None:
-            raise NotFound("claim", span_id)
+            raise room_not_found("claim", span_id)
 
         if support == SUPPORT_SUPPORTED and not (target.get("refs") or []):
             raise ValidationError(
-                "A reviewer cannot support a claim that cites no source",
+                'Choose a source before you mark the claim supported.',
                 code="claim_support_no_source",
             )
 
