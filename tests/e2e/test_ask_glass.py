@@ -94,6 +94,11 @@ def _seat_failures(win, width):
           if(row.querySelector('.gadget-row-label')?.textContent?.toLowerCase().endsWith('kind') && /^[a-z]/.test(value)) failures.push('The source kind is not sentence case');
         }
       }
+      const prompts=win.querySelector('[role=grid][aria-label="From your desk now"] .object-list-rows');
+      if(prompts?.getBoundingClientRect().height) {
+        const box=edge(prompts), row=prompts.querySelector('[data-object-id]')?.getBoundingClientRect();
+        if(row && (row.top<box.top-.5 || row.bottom>box.bottom+.5)) failures.push('The first suggested question is not a whole row');
+      }
       const sources=win.querySelector('[data-testid=ask-looked-at] .object-list-rows');
       if(sources?.getBoundingClientRect().height) {
         const box=edge(sources), rows=[...sources.querySelectorAll('[data-object-id]')].map(r=>r.getBoundingClientRect());

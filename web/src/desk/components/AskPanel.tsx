@@ -1253,7 +1253,7 @@ export function AskPanel() {
               </> : null}
               {failedRun ? notAnswered(failedRun) : null}
             </section> : null}
-            {!hasConversation ? <ListView label="From your desk now" ordered wholeRows columns={[{ key: "name", word: "From your desk now" }, ...(prompts.some(row => row.source) ? [{ key: "why", word: "Why", priority: 1, track: "140px" }] : [])]}
+            {!hasConversation ? <ListView label="From your desk now" ordered columns={[{ key: "name", word: "From your desk now" }, ...(prompts.some(row => row.source) ? [{ key: "why", word: "Why", priority: 1, track: "140px" }] : [])]}
               rows={prompts.map(row => ({ id: row.key, kind: row.kind, name: row.text, cells: { why: row.source } }))}
               selectedId={promptId} onSelect={setPromptId} defaultVerb="use-question"
               verbs={[{ id: "use-question", label: "Use question", run: row => { const prompt = prompts.find(prompt => prompt.key === row?.id); if (prompt) prefillPrompt(prompt.text); } }]} /> : null}
