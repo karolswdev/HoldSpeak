@@ -10,18 +10,18 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, cle
 from .test_agents_os_grammar_glass import _seed_fleet
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/agents14r3"
+OUT = Path(os.environ.get("LIST_EDGE_OUT", str(ROOT / ".tmp/evidence-shots/agents14r3")))
 TOKEN = "list-row-edges"
 PHASE = os.environ.get("LIST_EDGE_PHASE", "after")
 
 MEASURE = """well => {
-  const box=well.getBoundingClientRect(), top=box.top+well.clientTop, bottom=top+well.clientHeight;
+  const box=well.getBoundingClientRect(), top=box.top+well.clientTop, bottom=box.bottom;
   const heads=[...well.querySelectorAll('.object-list-group-label')].map(el=>el.getBoundingClientRect());
   const edge=Math.max(top,...heads.filter(r=>r.top<=top+1&&r.bottom>top).map(r=>r.bottom));
   const rows=[...well.querySelectorAll('[data-object-id]')].map(el=>({id:el.dataset.objectId,selected:el.getAttribute('aria-selected')==='true',...el.getBoundingClientRect().toJSON()}));
-  const visible=rows.filter(r=>r.bottom>edge+1&&r.top<bottom-1);
+  const visible=rows.filter(r=>r.bottom>edge+.1&&r.top<bottom-.1);
   return {top,edge,bottom,scroll:well.scrollTop,max:well.scrollHeight-well.clientHeight,
-    first:visible[0],last:visible.at(-1),rows, padding:getComputedStyle(well).scrollPaddingTop};
+    first:visible[0],last:visible.at(-1),visible,rows,border:parseFloat(getComputedStyle(well).borderBottomWidth)||0, padding:getComputedStyle(well).scrollPaddingTop};
 }"""
 
 
@@ -188,6 +188,18 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width)
             _measure(page, well, "ask-sources-selected", width, faults, selected=True)
             well.evaluate("el=>{el.scrollTop=137}")
             _measure(page, well, "ask-sources-odd-scroll", width, faults)
+            well.evaluate("el=>{el.scrollTop=el.scrollHeight}")
+            end = _measure(page, well, "ask-sources-end", width, faults, selected=True)
+            whole = [row for row in end["visible"] if row["top"] >= end["edge"]-.1 and row["bottom"] <= end["bottom"]+.1]
+            gap = max(0, end["bottom"]-end["border"]-end["last"]["bottom"])
+            top_gap = max(0, end["first"]["top"]-end["edge"])
+            if len(whole) != 3 or len(end["visible"]) != 3 or gap > .1 or top_gap > .1 or end["last"]["id"] != end["rows"][-1]["id"]:
+                faults.append(("ask-sources-end", "Three whole source rows and no end gap", {"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}))
+            report = os.environ.get("LIST_EDGE_REPORT")
+            if report:
+                folder = Path(report)
+                folder.mkdir(parents=True, exist_ok=True)
+                (folder/f"ask-sources-end-{900 if width==1440 else 393}.json").write_text(json.dumps({"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}, indent=2))
             browser.close()
     finally:
         server.stop()

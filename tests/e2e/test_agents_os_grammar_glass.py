@@ -86,13 +86,12 @@ def _whole_state_words(win) -> set[str]:
 
 
 def _audit_row_edges(page, win, state: str) -> None:
-    """Optional #2332 compatibility reading; no assertion or fit is changed."""
+    """Record the shared fitter's edges; no assertion or fit is changed."""
     target = os.environ.get("AGENTS_ROW_AUDIT")
-    if not target or state not in {"checked", "remove-question", "restart", "queued-menu", "scroll-55", "permission-held"}:
+    if not target or state not in {"checked", "remove-question", "restart", "queued-menu", "scroll-55", "permission-held", "end-stop"}:
         return
     import json
-    # The chosen fitter supplies the one shared row measurement on the
-    # local merge. The ordinary Agents rig has no dependency on that PR.
+    # Use the main fitter's shared measurement; this observer fits nothing.
     from .programs_group_rows_rig import WHOLE_ROWS
     well = win.get_by_test_id("agents-list").locator(".object-list-rows")
     detail = not well.is_visible()
@@ -106,10 +105,17 @@ def _audit_row_edges(page, win, state: str) -> None:
     page.wait_for_timeout(300)
     readings = win.get_by_test_id("agents-list").evaluate(WHOLE_ROWS)
     headings = well.locator(".object-list-group-label").evaluate_all("els=>els.map(el=>({name:el.textContent,...el.getBoundingClientRect().toJSON()}))")
+    boxes = well.locator(".object-list-row[data-object-id]").evaluate_all("els=>els.map(el=>({id:el.dataset.objectId,...el.getBoundingClientRect().toJSON()}))")
+    border = well.evaluate("el=>parseFloat(getComputedStyle(el).borderBottomWidth)||0")
     for reading in readings:
         edge = max([reading["top"]] + [head["bottom"] for head in headings if head["top"] <= reading["top"] + 1 and head["bottom"] > reading["top"]])
         reading["edge"] = edge
         reading["headings"] = headings
+        visible = [row for row in boxes if row["bottom"] > edge + .1 and row["top"] < reading["bottom"] - .1]
+        reading["first"] = visible[0] if visible else None
+        reading["last"] = visible[-1] if visible else None
+        reading["tail_visible"] = bool(visible and visible[-1]["id"] == boxes[-1]["id"])
+        reading["end_gap_px"] = max(0, reading["bottom"] - border - visible[-1]["bottom"]) if visible else None
         for row in reading["partial"]:
             row["hidden_top_px"] = max(0, edge-row["top"])
             row["hidden_bottom_px"] = max(0, row["bottom"]-reading["bottom"])
@@ -148,6 +154,10 @@ def _read_the_fleet(page, win) -> None:
         seen |= _whole_state_words(win)
         assert well.evaluate("el=>el.scrollTop") > previous or expected <= seen, "The list must keep the owner's scroll until every row is read"
     assert expected <= seen, f"Rows not read: {expected-seen}"
+    if os.environ.get("AGENTS_ROW_AUDIT"):
+        well.evaluate("el=>{el.scrollTop=el.scrollHeight}")
+        _settle(page)
+        _audit_row_edges(page, win, "end-stop")
     well.evaluate("el=>{el.scrollTop=0}")
     _settle(page)
 
