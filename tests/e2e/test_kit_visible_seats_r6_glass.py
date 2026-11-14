@@ -60,7 +60,10 @@ def test_visible_seats_and_recovery(tmp_path, monkeypatch, width, face):
                 from .test_kit_polish_wave14_glass import _before
 
                 monkeypatch.setenv(
-                    "KIT14_BASELINE_BUILD", str(ROOT / ".tmp/kit-r6-before-build")
+                    "KIT14_BASELINE_BUILD",
+                    os.environ.get(
+                        "KIT_R6_BASELINE_BUILD", str(ROOT / ".tmp/kit-r6-before-build")
+                    ),
                 )
                 _before(page)
 
@@ -288,7 +291,11 @@ def test_visible_seats_and_recovery(tmp_path, monkeypatch, width, face):
                         service.create_note(
                             owner,
                             note_id=f"r6-{i}",
-                            title=f"web/src/architecture/review_{i:02d}.tsx: " + TITLE,
+                            title=(f"web/src/architecture/review_{i:02d}.tsx: " + TITLE)
+                            if i % 2 == 0
+                            else "saved_architecture_review_"
+                            + "checkpoint_" * 18
+                            + str(i),
                             body_markdown="Keep the saved source.",
                         )
                     )
@@ -342,7 +349,9 @@ def test_visible_seats_and_recovery(tmp_path, monkeypatch, width, face):
                 sources = win.get_by_test_id("ask-looked-at")
                 sources.wait_for()
                 if width == 393:
-                    sources.get_by_role("button", name="Sources 50", exact=True).click()
+                    sources.get_by_role(
+                        "button", name=f"Sources {len(notes)}", exact=True
+                    ).click()
                 sources.locator(".object-list-row").first.click()
                 _settle(page)
                 value = win.evaluate(
