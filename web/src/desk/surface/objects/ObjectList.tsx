@@ -516,10 +516,10 @@ export function ObjectList({
       .map((column) => row.cells?.[column.key])
       .filter((cell): cell is string => typeof cell === "string" && cell.length > 0);
     const nameCell = (<div key="name" role="gridcell" className="object-list-name" data-col="name">
-          {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
+          {selection ? <span className="object-list-selection-name" title={row.name}>
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" data-feedback-redact="true" title={typeof row.detail === "string" ? row.detail : undefined}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} testId={row.nameTestId} />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" data-feedback-redact="true" title={typeof row.detail === "string" ? row.detail : undefined}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
             <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
           </span> : <Button
