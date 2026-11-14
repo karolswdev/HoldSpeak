@@ -2467,7 +2467,8 @@ class TestTheDeskRemembers(_Rig):
                 # The Room's Draft update now creates the draft directly,
                 # rather than entering a list with a second generator verb.
                 room.locator('.surface-object-reader[aria-label=Update]').wait_for()
-                _current_verb(page, room, "Edit", width)
+                # #2345: Edit opens one claim; the whole body is "Edit full text".
+                _current_verb(page, room, "Edit full text", width)
                 # Betterment P1 (#1283): a draft is plain text, edited in place
                 # (a TextArea), no longer the contenteditable DeskEditor.
                 editor = room.get_by_role("textbox", name="Update body", exact=True)
@@ -2521,7 +2522,8 @@ class TestTheDeskRemembers(_Rig):
                 update_row = room.get_by_role("grid", name="Updates", exact=True).locator('[data-object-id]').first
                 update_row.wait_for(timeout=20_000)
                 self._press(page, update_row, width)
-                _current_verb(page, room, "Edit", width)
+                # #2345: Edit opens one claim; the whole body is "Edit full text".
+                _current_verb(page, room, "Edit full text", width)
                 editor = room.get_by_role("textbox", name="Update body", exact=True)
                 editor.wait_for(timeout=20_000)
                 page.wait_for_function(

@@ -130,6 +130,11 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
                     done=form.get_by_role('button',name='Done',exact=True)
                     fields=form.locator('.surface-inspector-fields')
                     before=done.bounding_box()
+                    # A list inside the scrolling field well keeps its rows: the
+                    # well scrolls to them (wholeRows once fitted the list to the
+                    # well's edge and left "Sources to add" with a head and no row).
+                    assert source_list.locator('[data-object-id]').count() >= 1, 'Sources to add shows its rows'
+                    assert source_list.evaluate("el => { const w = el.querySelector('.object-list-rows'); return w && w.getBoundingClientRect().height >= 30; }"), 'Sources to add keeps a row of height'
                     assert fields.evaluate('el => el.scrollHeight > el.clientHeight'), 'Long fields use their own well'
                     fields.evaluate('el => {el.scrollTop=el.scrollHeight}')
                     assert abs(done.bounding_box()['y']-before['y']) < 1, 'Done stays still while the fields scroll'

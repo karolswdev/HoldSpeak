@@ -673,8 +673,9 @@ describe("PHILO-14 A2b Prepare's DEC citation opens its record in the Decisions 
     });
     render(<PrepareHarness />);
     fireEvent.click(screen.getByText("open the kept brief"));
-    await screen.findByRole("combobox", { name: "View" });
-    fireEvent.change(screen.getByRole("combobox", { name: "View" }), {target:{value:"claims"}});
+    // #2345: Prepare has one chooser, the "Project view" menu.
+    fireEvent.click(await screen.findByRole("button", { name: "Project view" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Claims" }));
     const row = await screen.findByRole("row", {name: new RegExp(JSON.parse(KEPT_BRIEF.claims_json)[0].text)});
     fireEvent.click(row);
     fireEvent.click(screen.getByRole("button", {name:"Open"}));
