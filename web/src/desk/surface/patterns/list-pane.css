@@ -63,6 +63,8 @@
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
 /* Intrinsic hosts, such as a source pop-up, must include their list rows. */
 .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: var(--surface-list-min, 160px); }
+/* A window pane has a bounded seat; its unselected list yields below tabs. */
+.surface-preference-pane > .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: 0; }
 /* Plain setup and state panes receive the same inset as an inspector.
    Object inspectors and nested panes already own that seat. */
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview:not(:has(> .surface-pane-inspector, > .surface-inspector-body > .surface-pane-inspector, > .surface-pane-views, > .surface-list-pane, > .surface-step-track)) { padding: var(--space-3); box-sizing: border-box; }
@@ -75,3 +77,7 @@
 
 /* An optional list can arrive or leave without replacing its reading pane. */
 .surface-list-pane:not(:has(> .surface-list-pane-list)) > .surface-list-pane-preview { padding: 0; border: 0; }
+
+/* Collection facts take only their rows; an unselected list keeps the rest. */
+.surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview > .surface-collection-overview) > .surface-list-pane-list { flex: 1 1 0; min-height: 0; }
+.surface-list-pane-preview:has(> .surface-collection-overview) { flex: 0 0 auto; }

@@ -2326,3 +2326,23 @@ uses the shared line fitter; `ObjectList.wholeRows` uses its row fitter, retaini
 all scrollable content. A long `InspectorQuestion bounded` keeps its heading,
 notice and answer row in view while its facts scroll on whole rows. Mast facts
 retain a fitted first part when that part alone is longer than the state seat.
+
+### Live facts and step names
+
+A live pane puts its screen and facts in a whole-line reading well; the question
+keeps its own seat below it. Apps omit facts that repeat the step heading.
+`StepTrack.showNames={false}` keeps step names in accessible labels and the
+overflow menu when a selected pane already shows the name. A live title has
+the full width above its state.
+
+### Collection height and compact identity
+
+An unselected list keeps its full height. Collection totals belong in the status
+strip. An optional collection overview takes only the height of its own rows.
+A bounded window list yields below its tabs; an intrinsic host keeps its row floor.
+Read-only columns use the measured facts described above; the name keeps the rest.
+On a compact selection bar, Find stays beside the verbs and the verbs yield to Actions. A fact with `paths` set can break at `/` before a filename breaks
+inside a word. A supplied compact Back label keeps the frame's chevron.
+
+A sortable selection header reserves the compact Button target plus its bottom
+rule. A plain caption keeps the standard material header height.

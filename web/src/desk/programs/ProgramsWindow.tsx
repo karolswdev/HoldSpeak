@@ -203,7 +203,7 @@ export function ProgramsCore({
       app={app}
       onPaneBack={() => setForm(null)}
       paneOpen={Boolean(form)}
-      layout="deck"
+      layout={app.visible.length ? "deck" : undefined}
       listShare={.48}
       label="Programs"
       ids={{
@@ -220,7 +220,6 @@ export function ProgramsCore({
         select: "Select a program",
       }}
       list={{
-        headerless: true,
         columns: [{ key: "name", word: "Program" }],
         verbs,
         groups: [
@@ -274,7 +273,7 @@ export function ProgramsCore({
               setForm(null);
             }}
           />
-        ) : (
+        ) : program || chosen.loading || chosen.error ? (
           <ProgramDetail
             view={detailTab}
             program={program}
@@ -284,7 +283,7 @@ export function ProgramsCore({
             onApplied={applied}
             onError={setFailed}
           />
-        )
+        ) : null
       }
       status={[
         app.rows.length

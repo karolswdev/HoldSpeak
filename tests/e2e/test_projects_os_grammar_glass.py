@@ -99,7 +99,7 @@ def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monkey
                         rows.first.press("End")
                         expect(rows.last).to_be_focused()
                         expect(rows.last).to_have_attribute("aria-selected", "true")
-                        expect(window.get_by_test_id("projects-next")).to_have_text("No date set")
+                        expect(window.get_by_test_id("projects-next")).to_have_count(0)
                         rows.last.press("ArrowUp")
                         expect(rows.first).to_be_focused()
                         rows.first.press("Home")
@@ -163,7 +163,7 @@ def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monkey
                                 page.unroute(f"**{endpoint}")
                                 page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                         row.press("r")
-                        expect(window.get_by_test_id("projects-next")).not_to_have_text("Not read")
+                        expect(window.get_by_test_id("projects-next")).to_contain_text("Target ")
                         expect(row).to_have_attribute("aria-selected", "true")
                         shoot("recovered")
                     assert errors == [], errors

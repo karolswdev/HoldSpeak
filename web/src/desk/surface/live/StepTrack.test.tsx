@@ -78,3 +78,14 @@ it("reaches a hidden step from More and keeps keyboard selection in the strip", 
   expect(screen.getByRole("tablist").scrollLeft).toBe(0);
   measure.mockRestore();
 });
+
+it("keeps named steps accessible when the selected pane owns their visible words", () => {
+  const onSelect = vi.fn();
+  const {container, rerender} = render(<StepTrack steps={steps} current="b" onSelect={onSelect} label="Steps" showNames={false} />);
+  expect(container.querySelector('.surface-step-name, .surface-step-current-name')).toBeNull();
+  const next = screen.getByRole("tab", {name:"Step 3: Write the recap, Not started"});
+  fireEvent.click(next);
+  expect(onSelect).toHaveBeenCalledWith("c");
+  rerender(<StepTrack steps={steps} current="b" onSelect={onSelect} label="Steps" />);
+  expect(container.querySelector('.surface-step-name')).toHaveTextContent("Store the reason");
+});
