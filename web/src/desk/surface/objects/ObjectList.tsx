@@ -330,6 +330,11 @@ export function ObjectList({
       // A sticky group heading owns the top of its well. Start a row below it,
       // then end at the last complete row that fits the remaining seat.
       let anchor = rows.filter(row => row.anchor <= well.scrollTop + .5).at(-1)?.anchor ?? 0;
+      // A shrinking well may have been clamped to its last row. Fill back
+      // from the tail before following the selection, rather than preserving
+      // that stale scroll position and leaving complete rows of space blank.
+      const tail = rows.at(-1);
+      if (tail) anchor = Math.min(anchor, rows.find(row => row.anchor >= tail.end - budget - .5)?.anchor ?? tail.anchor);
       const picked = rows.find(row => row.node.getAttribute("aria-selected") === "true");
       const followsPick = reveal || Boolean(picked && picked.end > well.scrollTop && picked.start < well.scrollTop + well.clientHeight);
       if (followsPick && picked && (picked.start < anchor + picked.heading - .5 || picked.end > anchor + budget + .5)) {

@@ -165,7 +165,7 @@ export function ListPane({
         }
         const picked = [...rows].find(row => row.getAttribute("aria-selected") === "true");
         const group = picked?.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
-        if ((form || image) && picked && group && well) {
+        if (picked && group && well) {
           const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + ruleHeight;
           minimum = Math.max(minimum, base + picked.getBoundingClientRect().height + group.getBoundingClientRect().height);
         }

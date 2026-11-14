@@ -20,7 +20,7 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
     _ensure_build();OUT.mkdir(parents=True,exist_ok=True)
     server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
     from holdspeak.db import get_database
-    db=get_database();phase=os.environ.get('POLISH_PHASE','after');faults=[]
+    db=get_database();phase=os.environ.get('POLISH_PHASE','after');faults=[];tab_geometry={}
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch();page=browser.new_page(viewport={'width':width,'height':900 if width==1440 else 852},reduced_motion='reduce')
@@ -47,7 +47,11 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             if width==1440:_api(page,'POST','/api/desk/windows/surface-activity/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
             page.reload(wait_until='load');_normal_chair(page);win=page.locator('#surface-activity')
             def shot(state):
-                _settle(page);faults.extend(row_faults(win,('activity',state)));page.screenshot(path=str(OUT/f'activity-{state}-{900 if width==1440 else 393}-{phase}.png'))
+                _settle(page);faults.extend(row_faults(win,('activity',state)))
+                tabs=win.locator('.surface-segmented-tabs').evaluate('''el=>[...el.querySelectorAll(':scope > button')].map(button=>{const range=document.createRange();range.selectNodeContents(button);const ink=range.getBoundingClientRect(),box=button.getBoundingClientRect(),seat=el.getBoundingClientRect();return {word:button.textContent,ink:ink.toJSON(),box:box.toJSON(),whole:ink.left>=box.left-1&&ink.right<=box.right+1&&box.left>=seat.left-1&&box.right<=seat.right+1};})''')
+                tab_geometry[state]=tabs
+                if any(not tab['whole'] for tab in tabs):faults.append(('tab words leave their seat',state,tabs))
+                page.screenshot(path=str(OUT/f'activity-{state}-{900 if width==1440 else 393}-{phase}.png'))
             def press(word):
                 button=win.get_by_role('button',name=word,exact=True)
                 if button.is_visible():button.click()
@@ -107,6 +111,7 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             if width==1440 and os.environ.get('HOLDSPEAK_RECORD_ACTIVITY')=='1':
                 folder=ROOT/'web/src/pages/cores/__tests__/fixtures';folder.mkdir(exist_ok=True)
                 (folder/'activity-grammar.json').write_text(json.dumps(tape,indent=2)+'\n')
+            (ROOT/f'.tmp/programs-group14/r3/activity-tabs-{width}.json').write_text(json.dumps(tab_geometry,indent=2))
             browser.close()
         assert not faults,faults
     finally:server.stop()

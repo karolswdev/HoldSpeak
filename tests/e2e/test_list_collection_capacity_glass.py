@@ -59,6 +59,12 @@ def test_unselected_collections_keep_the_whole_list(tmp_path,monkeypatch,width):
                         for word in ['STATE','SOURCES','LAST UPDATE','OPEN ITEMS','NEXT MEETING']:
                             if word not in facts:faults.append(('project fact missing',word))
                     if state=='selected':
+                        ink=win.evaluate('''el=>[...el.querySelectorAll('.object-list-selection-title[title],.surface-pane-inspector-head strong > [title]')].filter(node=>node.getBoundingClientRect().width).map(node=>{const range=document.createRange();range.selectNodeContents(node.firstChild);const b=node.getBoundingClientRect(),r=range.getBoundingClientRect();return {text:node.textContent,width:b.width,ink:r.width,whole:r.left>=b.left-1&&r.right<=b.right+1};})''')
+                        metrics[app]['names']=ink
+                        tracks=win.evaluate('''el=>[...el.querySelectorAll('.object-list-head [data-col]')].filter(h=>h.getBoundingClientRect().width).map(h=>{const key=h.dataset.col,row=el.querySelector('.object-list-row [data-col="'+key+'"]');return {key,head:h.getBoundingClientRect().toJSON(),cell:row?.getBoundingClientRect().toJSON()};})''')
+                        metrics[app]['tracks']=tracks
+                        if any(abs(track['head']['left']-track['cell']['left'])>1 or abs(track['head']['width']-track['cell']['width'])>1 for track in tracks):faults.append(('column heads and rows disagree',app,tracks))
+                        if any(not name['whole'] for name in ink):faults.append(('name leaves its seat',app,ink))
                         head=win.locator('.surface-pane-inspector-head strong').first.inner_text()
                         if re.search(r'ProgramWindow\.\s*\n\s*tsx',head):faults.append(('extension on another line',head))
                     if app=='recordings' and state=='selected':
@@ -68,7 +74,8 @@ def test_unselected_collections_keep_the_whole_list(tmp_path,monkeypatch,width):
                     _api(page,'POST','/api/desk/windows/surface-projects/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'520px','h':'360px'}},token=TOKEN)
                     _settle(page);page.screenshot(path=str(OUT/f'projects-selected-520-{phase}.png'))
                     faults.extend(row_faults(win,('projects','selected-520'),1))
-                    gap=win.evaluate('''el=>{const grid=el.querySelector('.object-list'),well=grid.querySelector('.object-list-rows'),row=well.querySelector('.object-list-row');return {spare:grid.getBoundingClientRect().bottom-well.getBoundingClientRect().bottom,row:row.getBoundingClientRect().height};}''')
+                    gap=win.evaluate('''el=>{const grid=el.querySelector('.object-list'),well=grid.querySelector('.object-list-rows'),row=well.querySelector('.object-list-row');return {spare:grid.getBoundingClientRect().bottom-well.getBoundingClientRect().bottom,row:row.getBoundingClientRect().height,gridHeight:grid.clientHeight,wellHeight:well.clientHeight,wellTop:well.getBoundingClientRect().top,gridTop:grid.getBoundingClientRect().top,scroll:well.scrollTop,min:getComputedStyle(grid.parentElement).getPropertyValue('--surface-list-min'),children:[...grid.children].map(el=>({cls:el.className,height:el.getBoundingClientRect().height,margin:getComputedStyle(el).margin})),borders:getComputedStyle(well).borderWidth};}''')
+                    metrics['small']=gap
                     if gap['spare']>=gap['row']-1:faults.append(('a whole row of list space was left blank',gap))
             browser.close()
     finally:server.stop()
