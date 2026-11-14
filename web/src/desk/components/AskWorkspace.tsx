@@ -86,6 +86,6 @@ export function AskSources({ rows, children, compact, targetId }: { rows: readon
     columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }, { key: "fact", word: "Detail" }]}
     rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, cells: { fact: row.meta } }))} selectedId={picked} onSelect={id => setSelection({ targetId, id })}
     defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />;
-  return <PreferencePane label="Answer and sources" data-feedback-redact="true"><ListPane label="Answer and sources" listPosition="after" listShare={.4}
+  return <PreferencePane label="Answer and sources" data-feedback-redact="true"><ListPane label="Answer and sources" listPosition="after" minimumRows={3} listShare={compact ? .4 : .45}
     listTestId="ask-looked-at" list={rows.length ? compact ? <Disclosure label="Sources" token={rows.length} ariaLabel={`Sources ${rows.length}`} open={Boolean(sourceOpen)} onOpenChange={open => setReveal({ targetId, open })} bounded>{list}</Disclosure> : list : null}>{children}</ListPane></PreferencePane>;
 }
