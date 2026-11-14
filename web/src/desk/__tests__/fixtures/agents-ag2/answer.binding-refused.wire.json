@@ -1,0 +1,8 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-11-14T00:00:00.782948Z",
+  "wire": {
+    "detail": "The answer was not sent; read the question again.",
+    "status": "wait_binding_required"
+  }
+}

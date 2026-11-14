@@ -15,7 +15,7 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { markLaunchSeen } from "../agentFlights";
 import { WhyThisState } from "../agents/WhyThisState";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
-import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
+import { ArmStrip, KeyPalette, TERMINAL_READ_FAILURE } from "../components/SessionPullout";
 import { useGate } from "../gate";
 import { spriteUrl } from "../sprites";
 import { useSteering } from "../steering";
@@ -612,11 +612,11 @@ export function RawPane() {
           changedAt={paneChangedAt}
           absence={
             <>
-              <PaneNotice>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</PaneNotice>
+              <PaneNotice>{TERMINAL_READ_FAILURE}</PaneNotice>
               {paneDetail ? <span className="lw-pane-detail">{paneDetail}</span> : null}
             </>
           }
-        /> : <ActionNotice tone="warn" keeps="Agent work unchanged" action={{label: "Retry", onClick: () => void useSteering.getState().poll()}}><span>Terminal unavailable</span><span> · {PANE_STATE_LABEL[paneStatus] || paneStatus}{paneDetail ? ` · ${paneDetail}` : ""}</span></ActionNotice>}
+        /> : <ActionNotice tone="warn" action={{label: "Retry", onClick: () => void useSteering.getState().poll()}}><span title={paneDetail || undefined}>{TERMINAL_READ_FAILURE}</span></ActionNotice>}
         {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
         {paneStatus === "live" && paneId ? (
           <FoldGadget title="Keys" className="lw-keys">

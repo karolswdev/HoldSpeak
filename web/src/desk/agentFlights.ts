@@ -12,7 +12,7 @@ import { flightProgramOf, type FlightProgram } from "./programs/flightProgram";
 import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
-import { clearWriteFailure, reportWriteFailure } from "./hooks/useWriteReceipt";
+import { clearWriteFailure } from "./hooks/useWriteReceipt";
 import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
@@ -494,28 +494,27 @@ export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
 }));
 
 /** Betterment AG0: the owner opened this agent, so its done turn is seen
- * (Done · New becomes Quiet). The store says so at once; the hub keeps it. */
+ * (Done · New becomes Quiet). The store changes after the hub acknowledges the mark. */
 export async function markLaunchSeen(launchId: string, turnId: string | null): Promise<void> {
   // `null`: the hub marks the launch's current done turn (the window opened).
   // Betterment AG3: opening the agent also sees the desk's answer.
-  const seenAnswer = (f: AgentFlight) =>
-    turnId === null && f.deskAnswer?.state === "answered" ? { ...f.deskAnswer, isNew: false } : f.deskAnswer;
-  const mark = (flights: AgentFlight[]) =>
-    flights.map((f) =>
-      f.launchId === launchId && (turnId === null || f.turnId === turnId) ? { ...f, isNew: false, deskAnswer: seenAnswer(f) } : f,
-    );
-  useAgentFlights.setState((s) => ({
-    flights: mark(s.flights),
-    sessions: s.sessions.map((row) => (row.flight ? { ...row, flight: mark([row.flight])[0] } : row)),
-  }));
   try {
-    await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/seen`, { method: "POST", json: turnId ? { wait_id: turnId } : {} });
+    const ack = await apiFetch<{seen: string | null; answer_seen: string | null}>(`/api/agent/launches/${encodeURIComponent(launchId)}/seen`, { method: "POST", json: turnId ? { wait_id: turnId } : {} });
+    const mark = (flights: AgentFlight[]) => flights.map((f) => f.launchId !== launchId ? f : {
+      ...f,
+      isNew: ack.seen && f.turnId === ack.seen ? false : f.isNew,
+      deskAnswer: f.deskAnswer?.state === "answered" && ack.answer_seen && f.deskAnswer.waitId === ack.answer_seen
+        ? {...f.deskAnswer, isNew: false} : f.deskAnswer,
+    });
+    useAgentFlights.setState((s) => ({
+      flights: mark(s.flights),
+      sessions: s.sessions.map((row) => (row.flight ? { ...row, flight: mark([row.flight])[0] } : row)),
+    }));
     clearWriteFailure(`agent:${launchId}`);
-  } catch (cause) {
-    // The next read says NEW again; the next open marks it again.
-    // Atlas pass 3 (defect 16): the band says `Could not mark it seen`, not
-    // `MARK SEEN FAILED · HTTP 404` (the reason is its hover title).
-    reportWriteFailure("Mark seen", cause, () => void markLaunchSeen(launchId, turnId), `agent:${launchId}`);
+  } catch {
+    // Keep New until the hub acknowledges it. The next open tries again;
+    // automatic read bookkeeping has no action for the owner to repair.
+    clearWriteFailure(`agent:${launchId}`);
   }
 }
 

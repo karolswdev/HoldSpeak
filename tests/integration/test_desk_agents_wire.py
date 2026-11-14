@@ -1389,3 +1389,29 @@ def test_secure_helper_allow_is_owner_only_idempotent_and_in_needs_you(
         assert fake.calls == 1
     finally:
         agent_credentials.revoke(credential.principal.identity)
+
+
+def test_unbound_answer_refusal_names_the_next_action(hub: str, tmp_path: Path) -> None:
+    """No terminal is touched when the displayed wait has no process proof."""
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+    _ag0_seed(tmp_path / "home")
+    sessions = _get(hub, "/api/coders/sessions?include_ended=false")
+    session = next(row["session"] for row in sessions["sessions"] if row["session"]["session_id"] == "ag0-ghost")
+    status, payload = _http(hub, "POST", "/api/coders/claude:ag0-ghost/steer", TOKEN,
+                            {"kind": "answer", "wait_id": session["wait_id"], "text": "Jordan", "submit": True})
+    payload = payload if isinstance(payload, dict) else json.loads(payload)
+    assert status == 409 and payload["status"] == "wait_binding_required", payload
+    assert payload["detail"] == "The answer was not sent; read the question again."
+    _keep("agents-ag2", "answer.binding-refused", payload, tmp_path, hub)
+
+
+def test_resume_refusal_names_the_next_action(hub: str, tmp_path: Path) -> None:
+    from holdspeak.services.launch_lane import record_restart_stops
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+    _ag0_seed(tmp_path / "home")
+    record_restart_stops(alive=lambda _name: False)
+    status, payload = _http(hub, "POST", "/api/agent/launches/launch_ag0_ghost/resume", TOKEN, {})
+    payload = payload if isinstance(payload, dict) else json.loads(payload)
+    assert status == 409 and payload["code"] == "worktree_gone", payload
+    assert payload["detail"] == "The agent did not resume; use Hand again."
+    _keep("agents-ag6", "resume.refused", payload, tmp_path, hub)

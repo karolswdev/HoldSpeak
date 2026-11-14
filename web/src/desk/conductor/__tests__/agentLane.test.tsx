@@ -304,7 +304,7 @@ describe("the terminal is in the pane", () => {
     fireEvent.click(agentVerb("agents-terminal", "terminal"));
     expect(useSteering.getState().openSession).toHaveBeenCalledWith(KEY);
     const pane = screen.getByTestId("lane-raw-pane");
-    expect(pane.textContent).toContain("Terminal unavailable");
+    expect(pane.textContent).toContain("The terminal could not be read; try again.");
     fireEvent.click(agentVerb("agents-terminal", "terminal"));
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
     fireEvent.click(screen.getByRole("tab",{name:"Activity"}));

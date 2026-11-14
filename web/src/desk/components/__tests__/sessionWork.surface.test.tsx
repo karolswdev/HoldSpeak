@@ -65,8 +65,8 @@ describe("work leads the plain session", () => {
     open();
     fireEvent.click(screen.getByTestId("session-open-terminal"));
     const terminal = screen.getByTestId("session-terminal");
-    expect(terminal.textContent).toContain("Terminal unavailable · no pane on this session");
-    expect(terminal.textContent).toContain("No registered terminal pane");
+    expect(terminal.textContent).toContain("The terminal could not be read; try again.");
+    expect(within(terminal).getByText("The terminal could not be read; try again.")).toHaveAttribute("title", "No registered terminal pane");
     fireEvent.click(within(terminal).getByRole("button", { name: "Retry" }));
     expect(useSteering.getState().poll).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("session-arm-verb")).toBeNull();
@@ -104,7 +104,7 @@ describe("work leads the plain session", () => {
     expect(screen.queryByTestId("session-head")).toBeNull();
     expect(screen.queryByTestId("session-controls")).toBeNull();
     expect(screen.queryByTestId("session-answer-well")).toBeNull();
-    expect(terminal.textContent).toContain("Terminal unavailable · no pane on this session");
+    expect(terminal.textContent).toContain("The terminal could not be read; try again.");
     expect(document.querySelector(".is-session .desk-window-title")!.textContent).toBe(title);
     expect(footer.textContent).toContain("Not sent · Receipt steering:1");
     fireEvent.click(within(terminal).getByRole("button", { name: "Retry" }));

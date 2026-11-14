@@ -516,7 +516,7 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
       fireEvent.click(within(well).getByTestId("conductor-answer"));
     });
     await waitFor(() =>
-      expect(screen.getByTestId("agent-row-refusal").textContent).toContain("This agent's terminal is gone"),
+      expect(screen.getByTestId("agent-row-refusal").textContent).toBe("The answer was not sent; open the agent again."),
     );
     const steer = posted.find(([url]) => url.endsWith("/steer"));
     expect(steer?.[1]).toMatchObject({ text: "1", kind: "answer", wait_id: lane.wire.wait.wait_id });
@@ -1281,7 +1281,7 @@ describe("Resume after a restart (Betterment AG6)", () => {
     expect(statusWords()).toContain("2 stopped by restart");
   });
 
-  it("one press posts the resume; the hub's refusal reads NOT RESUMED with its reason", async () => {
+  it("one press posts the resume; the hub refusal names its next act", async () => {
     serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
     const served = api.fetch.getMockImplementation()!;
     api.fetch.mockImplementation(async (url: string, init?: unknown) => {
@@ -1293,7 +1293,7 @@ describe("Resume after a restart (Betterment AG6)", () => {
     selectRow("launch:launch_ag0_ghost");
     fireEvent.click(screen.getByRole("button", { name: "Resume" }));
     const receipt = await screen.findByTestId("conductor-stop-receipt");
-    expect(receipt.textContent).toBe(`Not resumed · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ").toLowerCase()}`);
+    expect(receipt.textContent).toBe("The agent did not resume; use Hand again.");
     const posts = api.fetch.mock.calls.filter(
       ([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST",
     );
@@ -1401,11 +1401,11 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
     expect(line.textContent).toBe(DECISION);
   });
 
-  it("opening the agent marks the desk's answer seen at once", async () => {
+  it("opening the agent marks the acknowledged desk answer seen", async () => {
     const { markLaunchSeen } = await import("../agentFlights");
     const answered = ag3<{ flights: unknown[] }>("coders-sessions.answered").wire;
     useAgentFlights.setState({ flights: answered.flights.map(fromWireFlight), sessions: [], loaded: true });
-    api.fetch.mockResolvedValue({ launch_id: "launch_ag0_ghost", seen: null, answer_seen: "w" });
+    api.fetch.mockResolvedValue({ launch_id: "launch_ag0_ghost", seen: null, answer_seen: (useAgentFlights.getState().flights.find(f=>f.launchId === "launch_ag0_ghost")!.deskAnswer as {waitId: string}).waitId });
     await markLaunchSeen("launch_ag0_ghost", null);
     const flight = useAgentFlights.getState().flights.find((f) => f.launchId === "launch_ag0_ghost")!;
     expect(flight.deskAnswer).toMatchObject({ state: "answered", text: "1", isNew: false });

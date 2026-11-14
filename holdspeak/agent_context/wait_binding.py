@@ -10,6 +10,8 @@ import json
 import os
 from typing import Any, Mapping
 
+ANSWER_READ_AGAIN = "The answer was not sent; read the question again."
+
 
 def _field(session: Any, name: str, default: Any = None) -> Any:
     return session.get(name, default) if isinstance(session, Mapping) else getattr(session, name, default)
@@ -75,7 +77,7 @@ def check_delivery(key: str, expected: Mapping[str, Any] | None, pane_id: str, *
                    allow_permission: bool = False, typed: bool = False) -> dict[str, Any] | None:
     """Last check at the terminal boundary, including a respawn at the same %N."""
     if not expected:
-        return {"status": "wait_binding_required", "detail": "read the current question before answering"}
+        return {"status": "wait_binding_required", "detail": ANSWER_READ_AGAIN}
     current = current_wait(key)
     if answer_fields(current) != answer_fields(expected):
         return {"status": "wait_not_current", "detail": "the question or its terminal changed"}

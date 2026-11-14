@@ -391,6 +391,7 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
 
 /** W5-WORDS: a Stop's receipt in sentence case (`Stopped by you`). */
 export function stopWords(word: string, text: string): string {
+  if (word === "NOT RESUMED") return text;
   if (word === "STOPPED" && text === "BY YOU") return "Stopped by you";
   return plainReceipt([word, text].filter(Boolean).join(" · "));
 }
@@ -487,7 +488,7 @@ function reportOf(lane: LaneWire | null, row: CoderSessionRow | undefined, lines
 
 /** The selected session: one inspector, with the existing hub actions. */
 export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }: PaneProps) {
-  const { lane, events, error, raw, rebrief } = useLaneOf(member.launchId, opened);
+  const { lane, events, error, raw, rebrief } = useLaneOf(member.launchId, opened && Boolean(member.isNew || (member.deskAnswer?.state === "answered" && member.deskAnswer.isNew)));
   const flights = useAgentFlights((s) => s.flights);
   const flight = flights.find((f) => f.launchId && f.launchId === member.launchId);
   const activity = useMemo(() => (lane ? laneLines(lane, events) : sessionLines(row)), [lane, events, row]);
@@ -657,7 +658,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
         />
       ) : (
         <>
-          {question !== "remove" && lane && !["queued", "idle"].includes(String(member.live)) ? (
+          {lane && !["queued", "idle"].includes(String(member.live)) ? (
             <StepTrack
               label="Agent progress"
               steps={[
@@ -696,7 +697,10 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
                 },
               ]}
               current={step}
-              onSelect={(id) => setView(id === "pr" ? "files" : id === "work" ? "now" : "facts")}
+              onSelect={(id) => {
+                setQuestion(null);
+                setView(id === "pr" ? "files" : id === "work" ? "now" : "facts");
+              }}
             />
           ) : null}
           {pr?.number ? (
@@ -712,7 +716,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
               ]}
             />
           ) : null}
-          {question !== "remove" && (screen || latest) ? (
+          {screen || latest ? (
             <LiveWell
               label={screen ? "Last screen" : "Latest activity"}
               lines={(screen || latest).split("\n").map((text, i) => ({ id: String(i), text }))}
@@ -798,16 +802,16 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
         ) : (
           <SegmentedTabs
             label="Agent view"
-            value={view}
+            value={question === "remove" ? "now" : view}
             onChange={setView}
-            tabs={[
+            tabs={question === "remove" ? [{id: "now", label: "Now"}] : [
               { id: "now", label: "Now" },
               { id: "activity", label: "Activity" },
               ...(hasFiles ? [{ id: "files", label: "Files" }] : []),
               { id: "facts", label: "Facts" },
             ]}
           >
-            {view === "now" ? (
+            {question === "remove" || view === "now" ? (
               now
             ) : view === "activity" ? (
               <div data-testid="agents-ledger" data-feedback-redact="true">
