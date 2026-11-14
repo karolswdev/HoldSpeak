@@ -87,6 +87,9 @@ def _seat_failures(win, width):
       if (held) {
         const box=held.getBoundingClientRect(), composer=win.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect(), mast=win.querySelector('.surface-mast').getBoundingClientRect();
         if(box.top<mast.bottom-1 || box.bottom>composer.top+1) failures.push('The held question leaves its seat');
+        for (const button of held.querySelectorAll('.surface-inspector-actions button')) {const rect=button.getBoundingClientRect();if(rect.top<box.top-.5 || rect.bottom>box.bottom+.5 || rect.bottom>composer.top+.5) failures.push('A held answer leaves its seat');}
+        const fields=held.querySelector('.surface-inspector-fields');
+        if(fields) {const edgeBox=edge(fields);if([...fields.querySelectorAll('.gadget-row')].some(row=>{const r=row.getBoundingClientRect();return r.top<edgeBox.bottom-.5 && r.bottom>edgeBox.bottom+.5;})) failures.push('Held facts end in a partial row');}
         for (const row of held.querySelectorAll('.gadget-row')) {
           const value=row.querySelector('.gadget-row-gadget')?.textContent?.trim()||'';
           if (/^\d{4}-\d{2}-\d{2}$/.test(value)) failures.push('A held fact has an ISO date');
