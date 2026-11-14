@@ -38,7 +38,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
     thread = recorded("phone.thread.json")
     phone_calls = recorded("phone.calls.json")
     phase = os.environ.get("CALLS_SHOT_PHASE", "after")
-    shots = ROOT / ".tmp/evidence-shots/calls14"
+    shots = ROOT / ".tmp/evidence-shots/calls14/r2"
     shots.mkdir(parents=True, exist_ok=True)
     # The real call producer caps list names at 120 characters. Feed it
     # 180-character words, paths and unbroken identifiers, rather than
@@ -165,6 +165,29 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                         visibility:getComputedStyle(node).visibility,color:getComputedStyle(node).color
                     }))""")
                     (ROOT / f".tmp/calls14-{state}-{width}-geometry.json").write_text(json.dumps(metrics, indent=2))
+                if state in ("long-list", "long-results", "long-transcript"):
+                    measurements = window.evaluate("""el => {
+                        const box = node => node ? node.getBoundingClientRect().toJSON() : null;
+                        const row = el.querySelector('[data-call="call-long-0"]');
+                        const transcript = el.querySelector('[data-testid=calls-transcript]');
+                        const number = [...el.querySelectorAll('[data-facts-name="Call facts"] .gadget-row')].find(row => row.textContent.includes('Number'));
+                        return {
+                            row: box(row), tracks: row ? getComputedStyle(row).gridTemplateColumns : null,
+                            cells: row ? [...row.querySelectorAll('[data-col]')].filter(cell => getComputedStyle(cell).display !== 'none').map(cell => ({key: cell.dataset.col, box: box(cell), padding: getComputedStyle(cell).padding})) : [],
+                            name: box(row?.querySelector('.object-list-selection-text')),
+                            title: box(row?.querySelector('.object-list-selection-title')),
+                            transcript: box(transcript), well: box(transcript?.querySelector('.surface-preference-well')),
+                            lastWords: box(transcript?.querySelector('.transcript-list li:last-child p')),
+                            number: box(number)
+                        };
+                    }""")
+                    (ROOT / f".tmp/calls14r2-{state}-{width}-{phase}-measurements.json").write_text(json.dumps(measurements, indent=2))
+                    visible = measurements["cells"]
+                    assert abs(sum(cell["box"]["width"] for cell in visible) - measurements["row"]["width"]) <= 1, "The name track takes all width left by visible facts"
+                    assert abs(measurements["title"]["width"] - measurements["name"]["width"]) <= 1, "The fitted name uses its whole text seat"
+                    if state == "long-transcript":
+                        line_height = window.get_by_test_id("calls-transcript").locator('.transcript-list li:last-child p').evaluate("el=>parseFloat(getComputedStyle(el).lineHeight)")
+                        assert measurements["number"]["top"] - measurements["lastWords"]["bottom"] <= line_height, "Number follows the saved words without an empty reading band"
                 page.screenshot(path=str(shots / f"audit-{state}-{'900' if width == 1440 else '393'}-{phase}.png"))
                 assert window.locator('.cl-plate, .surface-rail, .desk-surface-body .surface-mast, [data-testid="line-egress"], [data-testid="phone-egress"]').count() == 0, state
                 assert window.locator('[data-testid="calls-row"] button').count() == 0
@@ -189,6 +212,9 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if state in ("list", "results", "ended"):
                     expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name="State", exact=True)).to_be_visible()
                     expect(window.get_by_test_id("calls-list").get_by_test_id("calls-outcome").first).to_be_visible()
+                if state == "list":
+                    unanswered = next(call for call in tape["recent"]["calls"] if call["outcome"] == "no_answer")
+                    expect(window.locator(f'[data-call="{unanswered["id"]}"] [data-col="length"]')).to_have_text("")
                 if width == 1440:
                     for column in ("Call", "At", "Length", "State"):
                         expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name=column, exact=True)).to_be_visible()
@@ -465,10 +491,12 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             page.reload(wait_until="load")
             _normal_chair(page)
             expect(window.get_by_test_id("calls-row")).to_have_count(53)
-            expect(window.locator('[data-call="call-long-0"] .object-list-selection-name > img')).to_be_visible()
+            expect(window.locator('[data-testid="calls-row"] .object-list-selection-name > img')).to_have_count(0)
+            expect(window.locator('[data-call="call-long-0"] .surface-lamp')).to_have_count(1)
             shot("long-list")
             window.locator('[data-call="call-long-0"]').click()
             expect(window.get_by_test_id("calls-document")).to_be_visible()
+            expect(window.get_by_test_id("calls-document").locator('.surface-inspector-object img')).to_have_attribute("src", "/_built/desk/sprites/32/call.png")
             shot("long-results")
             verb("Open transcript")
             expect(window.get_by_test_id("calls-transcript")).to_contain_text(long_calls[0].transcript[0].text)
