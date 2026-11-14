@@ -60,7 +60,10 @@
   white-space: pre;
   overflow-wrap: normal;
 }
-.reading-document .reading-code code { padding: 0; background: none; font: inherit; white-space: pre; }
+.reading-document .reading-code code { display: flex; flex-direction: column; align-items: flex-start; padding: 0; background: none; font: inherit; white-space: pre; }
+/* Short lines stay in view while a longer line moves through the same well. */
+.reading-code-line { position: sticky; left: var(--space-3); width: max-content; min-height: 1lh; }
+.reading-document .reading-language { position: sticky; left: var(--space-3); }
 .reading-document .reading-language {
   align-self: flex-start;
   color: var(--text-muted);

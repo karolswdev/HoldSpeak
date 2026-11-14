@@ -150,3 +150,24 @@ it("a reading-first list follows the reader in DOM and shares its existing verb 
   expect(caption.closest('[role="toolbar"]')).toBe(screen.getByRole("toolbar",{name:"Sources actions"}));
   expect(screen.getByRole("button",{name:"Open source"})).toBeDisabled();
 });
+
+it.each([30, 30.75])("the reader treats an embedded %s px row as an unbreakable line without snapping", height => {
+  let scroll = 0;
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function(this: HTMLElement) {
+    if (this.classList.contains("object-list-row")) return new DOMRect(0,(this.textContent === "First claim" ? 0 : height)-scroll,300,height);
+    return new DOMRect(0,0,300,45);
+  });
+  vi.spyOn(document, "createRange").mockImplementation(() => ({selectNodeContents:()=>{},getClientRects:()=>[new DOMRect(0,-scroll,300,16),new DOMRect(0,36-scroll,300,16)]}) as unknown as Range);
+  const {container}=render(<SurfaceWell wholeLines><div className="object-list-row">First claim</div><div className="object-list-row">Second claim</div></SurfaceWell>);
+  const well=container.querySelector<HTMLElement>(".surface-well-body")!;
+  const [first,second]=container.querySelectorAll(".object-list-row");
+  const bottom=45-parseFloat(well.style.clipPath.split(" ")[2]);
+  expect(bottom).toBeGreaterThanOrEqual(first.getBoundingClientRect().bottom);
+  expect(bottom).toBeLessThanOrEqual(second.getBoundingClientRect().top);
+  scroll=17;well.scrollTop=scroll;fireEvent.scroll(well);
+  const top=parseFloat(well.style.clipPath.slice("inset(".length));
+  expect(top).toBeGreaterThanOrEqual(first.getBoundingClientRect().bottom);
+  expect(top).toBeLessThanOrEqual(second.getBoundingClientRect().top);
+  expect(well.scrollTop).toBe(17);
+  expect(well).toHaveTextContent("Second claim");
+});

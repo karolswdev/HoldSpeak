@@ -1,0 +1,4 @@
+// Parked 2026-11-14: Copy and Put back stay in the shared verb row and menus; the selected inspector gives its space to facts.
+function SpeakVerb({verb,selected}:{verb:ListVerb;selected:ObjectListRow|null}) {
+  return <Button dense variant="secondary" disabled={!(verb.enabled?.(selected) ?? Boolean(selected))} onClick={()=>verb.run(selected)}>{verb.label}</Button>;
+}

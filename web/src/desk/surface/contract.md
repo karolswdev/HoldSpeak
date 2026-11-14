@@ -2330,15 +2330,22 @@ seat after padding, glyphs, lamps and meters.
   the name takes the remainder. Editable cells retain their declared minimum.
 
 Ask keeps Recent beside its answer. Sources follows the answer in DOM and on
-screen: `ListPane listPosition="after" listShare={.4}` gives the reading well
-at least 60% of its column. Compact Sources uses `Disclosure bounded`, closed
+screen: `ListPane listPosition="after" minimumRows={3}` measures Sources' row
+floor and gives the remainder to the reader. `listShare` caps this reading-first
+list seat (45% at 900, 40% in compact Ask), so the answer keeps at least 55%.
+Compact Sources uses `Disclosure bounded`, closed
 initially to its heading and count, and yields the remaining room to the reader.
 A headerless `ListView caption` names its collection in the existing verb row,
 without a second heading or a gap before the rows. An absent list removes its
 seat while its reader stays mounted. `ObjectReader.wholeLines` clips partial
 text at both edges, measures code one line at a time and keeps a language
-caption with its first code line. `ObjectList.wholeRows`, on by default, owns
-all list row height and scroll anchors; Ask adds no row-edge policy.
+caption with its first code line. An embedded selection row that fits the well
+is one unbreakable reading line; the reader clips a partial row at either edge
+without moving scroll or fitting that list. Oversized rows keep normal text-line
+reading. `ObjectList.wholeRows`, on by default, still owns list well height and
+scroll anchors. Code lines and their language keep their horizontal seat when
+short; a longer line moves through the same scroll well. Code bytes, indentation
+and empty lines are unchanged.
 A long `InspectorQuestion bounded` keeps its heading,
 notice and answer row in view while its facts scroll on whole rows. Mast facts
 retain a fitted first part when that part alone is longer than the state seat.

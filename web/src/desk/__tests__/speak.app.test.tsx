@@ -6,11 +6,14 @@ import JOURNAL from "../../test/wire/dictation-journal.wire.json";
 import LOOP from "./fixtures/speak-hub/loop.json";
 import DELIVERY from "./fixtures/speak-hub/delivery.json";
 import { ApiError } from "../../lib/api";
+import POLISH from "./fixtures/speak-hub/polish.json";
+import { SYSTEM } from "../systemSprites";
 import CUSTODY from "./fixtures/speak-hub/custody.json";
-import { rereadHourCycle, wireClock } from "../surface/format";
+import { rereadHourCycle, wireClock, wireDayClock } from "../surface/format";
 import { recordedGet } from "../../test/recordedHub";
-const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), copy: vi.fn(), settings: vi.fn() }));
+const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), copy: vi.fn(), settings: vi.fn(), compact: false }));
 vi.mock("../../lib/api", async (original) => ({ ...await original<typeof import("../../lib/api")>(), apiFetch: mocks.apiFetch }));
+vi.mock("../useCompactViewport", () => ({ useCompactViewport: () => mocks.compact }));
 vi.mock("../../runtime/RuntimeBus", () => ({ useRuntimeBus: () => ({ state: "connected", subscribe: () => () => undefined }), useOptionalRuntimeBus: () => null }));
 vi.mock("../../lib/micSession", () => ({ subscribeMicPhase: () => () => undefined, micCaptureSupported: () => true, micCaptureReason: () => null }));
 vi.mock("../../lib/openMic", () => ({ openMicDrop: vi.fn(), openMicListen: vi.fn() }));
@@ -19,6 +22,7 @@ vi.mock("../shell", async (original) => ({ ...await original<typeof import("../s
 import { DictationCore } from "../../pages/cores/DictationCore";
 beforeEach(() => {
   localStorage.clear();
+  mocks.compact = false;
   vi.clearAllMocks();
   mocks.copy.mockResolvedValue(undefined);
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: mocks.copy } });
@@ -197,6 +201,7 @@ it("Retry keeps the selected delivery words and leaves a different typed draft i
 
 const RealDateTimeFormat = Intl.DateTimeFormat;
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   rereadHourCycle();
 });
@@ -205,6 +210,7 @@ it.each(["en-US", "en-GB"])("recent and selected times use the system clock (%s)
     return new RealDateTimeFormat(asked ?? locale, options);
   } as typeof Intl.DateTimeFormat);
   rereadHourCycle();
+  vi.useFakeTimers({now: new Date(JOURNAL.wire.items[0].created_at), toFake: ["Date"]});
   render(<DictationCore />);
   const grid = await screen.findByRole("grid", {name:"Recent dictations"});
   const stored = JOURNAL.wire.items[0];
@@ -213,4 +219,58 @@ it.each(["en-US", "en-GB"])("recent and selected times use the system clock (%s)
   expect(row.querySelector('[data-col="when"]')).toHaveTextContent(clock);
   fireEvent.doubleClick(row);
   expect(screen.getByTestId("speak-inspector")).toHaveTextContent(`Dictation · ${clock}`);
+});
+
+function polishRead() {
+  const read = mocks.apiFetch.getMockImplementation()!;
+  mocks.apiFetch.mockImplementation((path: string) => path.startsWith("/api/dictation/journal") ? Promise.resolve(POLISH.wire) : read(path));
+  vi.useFakeTimers({now: new Date(POLISH.now), toFake: ["Date"]});
+}
+it("dictations keep the Speak object even when their words start with a path", async () => {
+  polishRead();
+  render(<DictationCore />);
+  const grid = await screen.findByRole("grid", {name:"Recent dictations"});
+  const row = within(grid).getByText(POLISH.wire.items[0].final_text).closest("[data-object-id]")!;
+  expect(row.querySelector("img")).toBeNull();
+  fireEvent.doubleClick(row);
+  expect(screen.getByTestId("speak-inspector").querySelector(".surface-inspector-object img")).toHaveAttribute("src", SYSTEM.dockSpeak);
+});
+it("a compact selection gives the facts the capture well's unused space", async () => {
+  polishRead();
+  mocks.compact = true;
+  render(<DictationCore />);
+  const grid = await screen.findByRole("grid", {name:"Recent dictations"});
+  fireEvent.click(within(grid).getByText(POLISH.wire.items[0].final_text).closest("[data-object-id]")!);
+  expect(screen.getByTestId("speak-live")).toHaveAttribute("data-compact", "true");
+  expect(screen.getByTestId("speak-live")).toHaveTextContent("Hold Talk, then speak");
+  expect(screen.queryByTestId("live-level")).toBeNull();
+  const inspector = screen.getByTestId("speak-inspector");
+  for (const label of ["Words", "Length", "Speech now"]) expect(within(inspector).getByText(label, {exact:true})).toBeVisible();
+  const read = mocks.apiFetch.getMockImplementation()!;
+  let finish!: (value: unknown) => void;
+  mocks.apiFetch.mockImplementation((path: string) => path === "/api/dictation/remote" ? new Promise(resolve => {finish = resolve;}) : read(path));
+  fireEvent.click(screen.getByRole("button", {name:"Actions"}));
+  fireEvent.click(screen.getByRole("menuitem", {name:"Type"}));
+  fireEvent.change(screen.getByLabelText("Dictation"), {target:{value:"Keep the rollback plan"}});
+  fireEvent.click(screen.getByRole("button", {name:"Put words back"}));
+  expect(screen.getByTestId("speak-live")).toHaveAttribute("data-compact", "true");
+  finish(DELIVERY.landed);
+  await waitFor(() => expect(screen.getByTestId("speak-phase")).toHaveTextContent("Done"));
+});
+it("At uses minutes for a lone minute, seconds for a shared minute, and dates before today", async () => {
+  polishRead();
+  render(<DictationCore />);
+  const grid = await screen.findByRole("grid", {name:"Recent dictations"});
+  for (const [index, seconds] of [[0, true], [1, true], [2, false], [3, false]] as const) {
+    const stored = POLISH.wire.items[index];
+    const row = within(grid).getByText(stored.final_text).closest("[data-object-id]")!;
+    const expected = index === 3 ? wireDayClock(stored.created_at).split(",")[0] : wireClock(stored.created_at, seconds);
+    expect(row.querySelector('[data-col="when"]')?.textContent).toBe(expected);
+  }
+});
+it("does not declare To when the journal has no known targets", async () => {
+  polishRead();
+  render(<DictationCore />);
+  const grid = await screen.findByRole("grid", {name:"Recent dictations"});
+  expect(within(grid).queryByRole("columnheader", {name:"To"})).toBeNull();
 });
