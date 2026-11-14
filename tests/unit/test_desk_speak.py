@@ -268,7 +268,7 @@ def _record(name: str, payload: dict[str, Any], tmp_path: Path, source: str,
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({
             "_source": f"The hub's own answers, captured by {source} "
-                       "(MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). "
+                       "(isolated HOME). "
                        "HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
             **scrubbed,
         }, indent=1, sort_keys=False, ensure_ascii=False) + "\n")

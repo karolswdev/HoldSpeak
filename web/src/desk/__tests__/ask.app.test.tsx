@@ -1421,7 +1421,7 @@ it("a failed held-call press keeps its target and answer verbs, then Deny reache
   expect(within(question).getByText(HOLD.hold.holds[0].words, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
   for (const fact of HOLD.hold.holds[0].facts) {
     expect(within(question).getByText(fact.label, { exact: true })).toBeInTheDocument();
-    expect(within(question).getByText(faceTimeWords(fact.value), { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+    expect(within(question).getByText(fact.label === "Due" ? faceTimeWords(fact.value) : fact.value, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
   }
   expect(within(question).getByText("Give Mira feedback on the cutover design doc")).toBeInTheDocument();
   expect(within(question).getByRole("button", { name: "Deny" })).toHaveFocus();
@@ -1547,7 +1547,7 @@ it("a described Send shows its recorded document and destination facts before De
   const question = screen.getByTestId("ask-hold");
   for (const fact of held.facts) {
     expect(within(question).getByText(fact.label, { exact: true })).toBeInTheDocument();
-    expect(within(question).getByText(faceTimeWords(fact.value), { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+    expect(within(question).getByText(fact.label === "Due" ? faceTimeWords(fact.value) : fact.value, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
   }
   fireEvent.click(within(question).getByRole("button", { name: "Deny" }));
   await waitFor(() => expect(screen.queryByTestId("ask-hold")).toBeNull());

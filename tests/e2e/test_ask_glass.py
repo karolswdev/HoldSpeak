@@ -377,6 +377,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     from holdspeak.db import get_database
     thread = _stored_long_thread(get_database(), thread)
+    answer_count = sum(message["role"] == "assistant" for message in thread["thread"]["messages"])
     hold["answer"]["output"] = _shaped_answer()
     shots = evidence_dir("ask14r2")
     stage = os.environ.get("ASK_GLASS_STAGE", "after")
@@ -460,16 +461,16 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             row.click()
             shot("recent-selected") if width == 1440 else page.screenshot(path=str(shots / f"checks-recent-selected-{stage}-393.png"))
             row.press("Enter")
-            expect(win.get_by_test_id("ask-turn")).to_have_count(30)
+            expect(win.get_by_test_id("ask-turn")).to_have_count(answer_count)
             shot("thread-open")
-            verb("Answer: 30").click()
+            verb(f"Answer: {answer_count}").click()
             shot("answer-menu")
-            last_answer = page.get_by_role("menuitem", name="30. When should I tell her?", exact=True)
-            if not last_answer.evaluate("el => {const r=el.closest('[role=menu]').getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight;}"):
+            last_answer = page.get_by_role("menuitem", name=f"{answer_count}. When should I tell her?", exact=True)
+            if not last_answer.evaluate("el => {const r=el.closest('[role=menu]').getBoundingClientRect(), w=document.querySelector('[id=ask][data-layer=window]').getBoundingClientRect();return r.top>=w.top && r.bottom<=w.bottom;}"):
                 seat_failures.append(("answer-menu", "The answer menu leaves the viewport"))
             last_answer.focus()
             shot("answer-menu-tail")
-            if not last_answer.evaluate("el => {const r=el.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight;}"):
+            if not last_answer.evaluate("el => {const r=el.getBoundingClientRect(), m=el.closest('[role=menu]').getBoundingClientRect();return r.top>=m.top && r.bottom<=m.bottom && r.top>=0 && r.bottom<=innerHeight;}"):
                 seat_failures.append(("answer-menu-tail", "The last answer cannot scroll into view"))
             last_answer.press("Enter")
             verb("Recent").click()
