@@ -378,7 +378,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
     );
   else if (tab === "updates")
     content = (
-      <UpdatePosture ctrl={update} sourceItems={planRows} projectActions={actions} field={field} sendUpdateId={sendUpdateId} onSendState={setSendOpen}
+      <UpdatePosture projectViews={VIEWS.filter(item => item.id !== "now")} onProjectView={changeView} ctrl={update} sourceItems={planRows} projectActions={actions} field={field} sendUpdateId={sendUpdateId} onSendState={setSendOpen}
         linkFailure={sendFailed ? { retry: () => retryRoomLink(ctrl.projectId) } : undefined} />
     );
   else if (tab === "sources")
@@ -457,7 +457,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
         <PaneViews
           label="Project view"
           value={view}
-          tabs={VIEWS}
+          tabs={tab === "updates" && view === "now" ? [VIEWS[0]] : VIEWS}
           onChange={changeView}
         >
           {content}

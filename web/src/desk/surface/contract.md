@@ -204,7 +204,10 @@ existing material and layout. They add no schema, form state, or save behavior.
 - `GadgetDivider()`: an exported semantic `hr` with the native etched rule.
   Use it between related rows within one sheet.
 - `CheckGadget.variant="state"`: the same real checkbox and square well plus
-  a visible On/Off word in its label. The native input covers the whole label,
+  a `Lamp` and a visible On/Off word in the body face. This is the one switch
+  with a state word: use `CheckGadget variant="state" label="Automatic starts"`
+  rather than composing a checkbox and `StateChip`. Outside a `GadgetRow` its
+  label is visible; within a row the row supplies that visible label. The native input covers the whole label,
   including decorations and word; at a narrow width the target is at least
   44 px high. The word is `aria-hidden` so the native checkbox retains one
   accessible name. Focus, disabled state, keyboard operation, and change
@@ -2093,7 +2096,7 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
-Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
+Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets the wide list's share (0–1): width in a deck, or whole-row height above a short facts pane. Forms and media retain their measured seats; omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
 
 Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
 
@@ -2223,9 +2226,9 @@ answer verbs of a question it shows. App callers still own that declaration.
   yield rows (Calls numbers declares one); normal lists keep four. A short
   `fit="rows"` form does not grow to
   take the space of a list below it. More rows
-  leave a partly visible next row as the scroll cue. A short list ends at
+  scroll inside a well that ends on a complete row. A short list ends at
   its last row. Inspectors scroll within the remaining well. An open form can use more
-  of that well; its list leaves a partial row when it must yield to whole fields.
+  of that well; its list yields complete rows before fields or completion are cut.
 - `VerbRow` measures mounted Buttons and emits container rules from the same
   `fitStrip` algorithm used by selection toolbars. Resizing does not remount
   or move a control. A folded verb returns focus to Actions; a menu act
@@ -2328,18 +2331,16 @@ A headerless `ListView caption` names its collection in the existing verb row,
 without a second heading or a gap before the rows. An absent list removes its
 seat while its reader stays mounted. `ObjectReader.wholeLines` clips partial
 text at both edges, measures code one line at a time and keeps a language
-caption with its first code line. Embedded selection rows are clipped as whole
-rows at both reading edges, so a title never separates from its detail.
-`ObjectList.wholeRows` uses the shared row
-fitter, retaining all scrollable content. Row edges retain fractional pixels
-without rounding into the adjacent row. A long `InspectorQuestion bounded` keeps its heading,
+caption with its first code line. `ObjectList.wholeRows`, on by default, owns
+all list row height and scroll anchors; Ask adds no row-edge policy.
+A long `InspectorQuestion bounded` keeps its heading,
 notice and answer row in view while its facts scroll on whole rows. Mast facts
 retain a fitted first part when that part alone is longer than the state seat.
 
 ### Send and Settings fits (2026-11-13, round 3)
 
-`ListView wholeRows` uses the shared row-edge fitter as well as its list height.
-The reading well keeps its scroll range and paints whole rows at rest.
+`ListView wholeRows` uses ObjectList's one height-and-anchor fitter.
+The well keeps its scroll range and ends on whole rows at rest.
 The engine and speech rosters share ListPane; speech setup stays in its form
 row above the roster, so a form row cannot cap the model list.
 
@@ -2373,3 +2374,26 @@ inside a word. A supplied compact Back label keeps the frame's chevron.
 
 A sortable selection header reserves the compact Button target plus its bottom
 rule. A plain caption keeps the standard material header height.
+
+Selection lists end their bounded wells on complete row edges. At rest the top
+starts on a row boundary below any sticky group heading. Selection and resize
+keep the selected row whole. Group Load more verbs retain their whole seats.
+`CheckGadget variant="state"` keeps its native named checkbox, draws On/Off with
+`Lamp` in the body face, and shows its label when no GadgetRow already names it.
+A path-led inspector heading breaks at path separators; a basename keeps its
+extension. Full names remain available through the existing title and aria name.
+
+### Whole list rows
+
+`ObjectList` / `ListView` has `wholeRows` on by default, including dense lists.
+The well takes every complete row its allocated seat holds. Its remainder is
+below the well on the surface ground, smaller than one row. Group headings
+and borders count once. `ListPane` reserves a seat; it never writes scrollTop.
+Seat and well measurements share `rowLayout`: one requestAnimationFrame reads
+all queued geometry before any writes. Resize and content changes schedule a
+frame; a native scroll defers fitting until scrollend. Focus and selection
+reveal their row without pulling an old selection back after a manual scroll.
+
+An `InspectorBody fit="rows"` list uses that same fitter's measured first-row
+floor, so its well cannot paint through the facts which follow it. A bounded
+window can yield its list floor; an intrinsic pop-up keeps its row floor.

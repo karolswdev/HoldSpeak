@@ -140,7 +140,6 @@ export function PreparePosture({
                       : row.repair?.verb || row.reason || "Not read",
                 },
                 facts: [
-                  ...(row.kind === "jira" && row.label.includes("|") ? [{ label: "Project name", value: "Not available" }] : []),
                   { label: "State", value: row.reason },
                   { label: "Last read", value: row.observedAt },
                   { label: "What it says", value: row.tokens.map(roomReadingText).map(roomWord).join(" · ") },

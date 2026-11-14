@@ -25,6 +25,7 @@ import { ConfirmVerb } from "./Surface";
 import { useRovingRows } from "./roving";
 import { sentenceChildren, stateWords } from "./words";
 import { Token } from "./Token";
+import { Lamp } from "./live/Lamp";
 import "./gadgets.css";
 import { useGroupHeading } from "./groupHeading";
 
@@ -129,6 +130,7 @@ export function CheckGadget({
    *  (HS-169-02 Door toggles). Default is the checkbox square. */
   variant?: "default" | "token" | "state";
 }) {
+  const labelledRow = useContext(GadgetLabelContext);
   if (variant === "token") {
     return (
       <label className={`gadget-check-token ${checked ? "is-on" : "is-off"}`}>
@@ -159,9 +161,12 @@ export function CheckGadget({
           <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
         </svg>
       </span>
-      {variant === "state" ? <span className="gadget-check-state-word" aria-hidden="true">
-        {checked ? "On" : "Off"}
-      </span> : null}
+      {variant === "state" ? <>
+        {!labelledRow ? <span className="gadget-check-label" aria-hidden="true">{label}</span> : null}
+        <span className="gadget-check-state-word" aria-hidden="true">
+          <Lamp state={checked ? "done" : "off"} label={checked ? "On" : "Off"} />{checked ? "On" : "Off"}
+        </span>
+      </> : null}
     </label>
   );
 }

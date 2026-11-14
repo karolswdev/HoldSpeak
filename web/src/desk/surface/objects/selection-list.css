@@ -168,6 +168,11 @@
   .object-list.object-list--selection:has(> .object-list-head .object-list-sort) { --material-list-head-height: 46px; }
 }
 
+/* Whole-row fitting owns the border once; unused room stays on the ground. */
+.object-list[data-whole-rows] { background: transparent; }
+.object-list[data-whole-rows]:not(.object-list--selection) > .object-list-rows { background: var(--wb-paper); }
+.object-list[data-whole-rows] > .object-list-rows { box-sizing: border-box; flex: none; border-bottom: 0; }
+
 .object-list-inner-toolbar:has(.object-list-caption),
 .surface-disclosure[data-bounded] .object-list-inner-toolbar { min-height: 0; padding-block-end: 0; }
 .object-list-caption { flex: none; text-transform: var(--material-label-case); font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); color: var(--hs-ink-2); }

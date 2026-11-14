@@ -39,13 +39,13 @@ export function AskScope({ rows, candidates, onPick, onRemove, onOpenRow, contro
     <Popover align={align} anchor={anchor} open={open} onClose={close} ariaLabel="About">
       <PreferencePane label="About" testId="ask-scope-menu">
         <StringGadget label="Find a meeting, note, person" placeholder="Find a source" value={query} onChange={setQuery} />
-        <PaneGroup label="" grow={false}><ListPane label="About" list={<ListView label="About" ordered wholeRows columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
+        <ListPane label="About" list={<ListView label="About" ordered columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
           rows={choices.map(row => ({ id: row.ref, kind: row.kind, name: row.label, sprite: nameIsFile(row.label) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: rows.some(known => known.ref === row.ref) ? "Chosen" : undefined }))}
           defaultVerb="choose" verbs={[
             { id: "choose", label: "Choose", run: row => { if (row) choose(row.id); } },
             { id: "remove", label: "Remove", enabled: row => Boolean(row && rows.some(known => known.ref === row.id)), run: row => { const known = rows.find(known => known.ref === row?.id); if (known) onRemove(known); } },
             { id: "open", label: "Open", enabled: row => Boolean(row && rows.some(known => known.ref === row.id && onOpenRow?.(known))), run: row => { const known = rows.find(known => known.ref === row?.id); if (known) onOpenRow?.(known)?.(); } },
-          ]} />} /></PaneGroup>
+          ]} />} />
       </PreferencePane>
     </Popover>
   </>;
@@ -82,7 +82,7 @@ export function AskSources({ rows, children, compact, targetId }: { rows: readon
   const sourceOpen = reveal?.targetId === targetId && reveal.open;
   const [selection, setSelection] = useState<{ targetId: string; id: string } | null>(null);
   const picked = selection?.targetId === targetId ? selection.id : null;
-  const list = <ListView label="Sources" ordered wholeRows headerless caption={compact ? undefined : `Sources · ${rows.length}`}
+  const list = <ListView label="Sources" ordered headerless caption={compact ? undefined : `Sources · ${rows.length}`}
     columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }, { key: "fact", word: "Detail" }]}
     rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, cells: { fact: row.meta } }))} selectedId={picked} onSelect={id => setSelection({ targetId, id })}
     defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />;

@@ -343,9 +343,9 @@ it("counts visible automations with new results and labels the start switch", as
   await openList();
   expect(screen.getByTestId("automation-home-status")).toHaveTextContent("1 with new results");
   fireEvent.click(screen.getByRole("row",{name:/Architecture report/}));
-  const toggle=screen.getByRole("checkbox",{name:"Automation on"});
+  const toggle=screen.getByRole("checkbox",{name:"Automatic starts"});
   expect(toggle.closest("label")).toHaveTextContent((toggle as HTMLInputElement).checked ? "On" : "Off");
-  expect(toggle.closest(".surface-inspector-row, .gadget-row")).toHaveTextContent("Starts");
+  expect(toggle.closest(".surface-inspector-row, .gadget-row")).toHaveTextContent("Automatic starts");
   fireEvent.change(screen.getByRole("textbox",{name:"Find an automation"}),{target:{value:"Weekly"}});
   expect(screen.getByTestId("automation-home-status")).toHaveTextContent("1 automation");
   expect(screen.getByTestId("automation-home-status")).not.toHaveTextContent("with new results");

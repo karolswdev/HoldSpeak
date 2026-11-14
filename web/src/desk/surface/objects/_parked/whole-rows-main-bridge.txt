@@ -1,0 +1,22 @@
+Parked: ObjectList wholeRows owns list height and row anchors; reading wells keep useWholeLines.
+useWholeLines(bodyRef, wholeRows, ".object-list-row");
+  useLayoutEffect(() => {
+    const list = listRef.current, well = bodyRef.current;
+    if (!wholeRows || !list || !well) return;
+    let frame = 0;
+    const fit = () => {
+      const chrome = [...list.children].filter(child => child !== well && getComputedStyle(child).position !== "absolute").reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
+      const available = list.clientHeight - chrome;
+      const top = well.getBoundingClientRect().top;
+      const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
+      const end = Math.max(0, ...ends.map(edge => edge + well.scrollTop));
+      well.style.flex = "none";
+      // A short well ends at its last row. The shared row-edge fitter keeps overflow whole.
+      well.style.height = `${Math.max(0, Math.min(available, end + (parseFloat(getComputedStyle(well).borderBottomWidth) || 0)))}px`;
+    };
+    const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    observer?.observe(list); well.addEventListener("scrollend", schedule);
+    fit();
+    return () => {observer?.disconnect(); well.removeEventListener("scrollend", schedule); cancelAnimationFrame(frame);};
+  }, [wholeRows, rows]);

@@ -1,4 +1,3 @@
-import { useWholeLines } from "../wholeLines";
 import { MiddleText } from "../MiddleText";
 import { hasWords, labelCaption } from "../content";
 import { sentenceChildren } from "../words";
@@ -46,6 +45,7 @@ import { Meter, type MeterProps } from "../live/Meter";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetLabelContext, SelectionFieldContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
+import { useWholeRows } from "./wholeRows";
 import { listSprite } from "../../sprites";
 import { stateTone, Toolbar, DotWord, VERB_OVERFLOW_WORD } from "../kit";
 import { useStripFit } from "../stripMenu";
@@ -246,7 +246,7 @@ export interface ObjectListProps {
   verbs?: readonly ListVerb[];
   /** A row menu can use a subset of the same declared verbs. */
   rowVerbs?: readonly ListVerb[];
-  /** Keep a bounded grouped list on whole row edges. */
+  /** End a bounded well on whole rows; on by default for every list. */
   wholeRows?: boolean;
   /** The object window draws the published selection entries in its toolbar. */
   externalToolbar?: boolean;
@@ -290,7 +290,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
-  rowVerbs, wholeRows = false,
+  rowVerbs, wholeRows = true,
   toolbar, externalToolbar,
   defaultVerb,
   ordered = false,
@@ -310,29 +310,8 @@ export function ObjectList({
   const menuOwner = useId();
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  useWholeLines(bodyRef, wholeRows, ".object-list-row");
   useRovingRows(bodyRef, { selector: selection ? ".object-list-row" : ".object-list-open" });
-  useLayoutEffect(() => {
-    const list = listRef.current, well = bodyRef.current;
-    if (!wholeRows || !list || !well) return;
-    let frame = 0;
-    const fit = () => {
-      const chrome = [...list.children].filter(child => child !== well && getComputedStyle(child).position !== "absolute").reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
-      const available = list.clientHeight - chrome;
-      const top = well.getBoundingClientRect().top;
-      const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
-      const end = Math.max(0, ...ends.map(edge => edge + well.scrollTop));
-      well.style.flex = "none";
-      // A short well ends at its last row. The shared row-edge fitter keeps overflow whole.
-      well.style.height = `${Math.max(0, Math.min(available, end + (parseFloat(getComputedStyle(well).borderBottomWidth) || 0)))}px`;
-    };
-    const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
-    observer?.observe(list); well.addEventListener("scrollend", schedule);
-    fit();
-    return () => {observer?.disconnect(); well.removeEventListener("scrollend", schedule); cancelAnimationFrame(frame);};
-  }, [wholeRows, rows]);
-
+  useWholeRows(listRef, bodyRef, wholeRows);
   const [localSelected, setLocalSelected] = useState<string | null>(null);
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;
@@ -656,6 +635,7 @@ export function ObjectList({
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
       className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
       data-list-layout={selection ? layoutId : undefined}
+      data-whole-rows={wholeRows || undefined}
       data-empty={(!rows.length && !groups?.some(group => group.more && typeof group.count === "number" && group.count > 0)) || undefined}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}

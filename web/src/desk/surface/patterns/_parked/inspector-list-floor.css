@@ -1,0 +1,2 @@
+/* Parked: an intrinsic list keeps its first whole row before sibling facts. */
+.surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: 0; }

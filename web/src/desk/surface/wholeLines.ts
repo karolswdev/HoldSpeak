@@ -12,7 +12,6 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
       let box = el.getBoundingClientRect();
       const bottomBorder = rows ? parseFloat(getComputedStyle(el).borderBottomWidth) || 0 : 0;
       const rectangles: DOMRect[] = [];
-      const embeddedRows = rows ? [] : [...el.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height);
       if (rows) rectangles.push(...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
       else {
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -32,15 +31,14 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
           }
         }
       }
-      rectangles.push(...embeddedRows);
       const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
-      let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows || embeddedRows.includes(rect) ? 0 : 1)));
+      let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows ? 0 : 1)));
       if (rows) {
         // Reserve the full seat while its field box ends at a whole row.
         // Clearing the previous fit above lets a changed form grow again.
         const height = Math.max(0, cut - box.top + (cut < box.bottom ? bottomBorder : 0));
-        el.style.maxHeight = `${height}px`;
-        el.style.marginBottom = `${box.height - height}px`;
+        el.style.maxHeight = `${Math.floor(height)}px`;
+        el.style.marginBottom = `${Math.ceil(box.height - height)}px`;
         el.scrollTop = savedScroll;
         box = el.getBoundingClientRect();
         rectangles.splice(0, rectangles.length, ...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
@@ -58,9 +56,7 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         if (top >= box.top && top < cut && line.bottom > cut) cut = top;
       }
       const start = Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom));
-      const topIsRowEdge = Boolean(rows) || embeddedRows.some(rect => rect.bottom === start);
-      const bottomIsRowEdge = Boolean(rows) || embeddedRows.some(rect => rect.top === cut);
-      el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${topIsRowEdge ? start - box.top : Math.ceil(start - box.top)}px`} 0 ${bottomIsRowEdge ? box.bottom - cut : Math.ceil(box.bottom - cut)}px 0)` : "";
+      el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${Math.ceil(start - box.top)}px`} 0 ${Math.ceil(box.bottom - cut)}px 0)` : "";
     };
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;
     observer?.observe(el);

@@ -10,6 +10,7 @@ import {
 import "./list-pane.css";
 import { PaneNoticeContext } from "./PreferencePane";
 import { hasWords } from "../content";
+import { scheduleRowLayout, cancelRowLayout } from "../objects/rowLayout";
 
 export const ListPaneDepth = createContext(0);
 
@@ -35,7 +36,7 @@ export function ListPane({
   hostBack?: boolean;
   backLabel?: string;
   deck?: boolean;
-  /** List share in a wide deck or reading-first split; omitted keeps the standard split. */
+  /** List share: width in a deck, height above facts or below a reading well. */
   listShare?: number;
   /** A reading-first vertical split; listShare caps the list height. */
   listPosition?: "before" | "after";
@@ -96,7 +97,6 @@ export function ListPane({
             if (first) rowsHeight = Math.max(rowsHeight, end - bottom(first) + first.getBoundingClientRect().height);
           }
         }
-        if (!image && rows.length > rowCount) rowsHeight += Math.min(14, rowHeight / 3);
         const ruleHeight = well ? well.clientTop + (parseFloat(getComputedStyle(well).borderBottomWidth) || 0) : 2;
         const contentFloor = Math.max(
           image ? 0 : gridFloor,
@@ -107,7 +107,6 @@ export function ListPane({
             ruleHeight,
         );
         let minimum = chrome + contentFloor;
-        let formBudget = Infinity;
         const pane = seat.parentElement;
         const form = preview?.querySelector<HTMLElement>(".surface-inspector-form[data-completion]");
         const fields = form?.querySelector<HTMLElement>(":scope > .surface-inspector-fields");
@@ -136,7 +135,6 @@ export function ListPane({
           if (fields) previewChrome -= parseFloat(getComputedStyle(fields).marginBottom) || 0;
           const wanted = previewChrome + contentHeight;
           const budget = pane.getBoundingClientRect().height - wanted;
-          if (fields && budget > 0) formBudget = budget;
           if (fields || minimum > budget) {
             const base = chrome + height(".object-list-head") + (height(".object-list-inner-toolbar") || height(".object-list-verbs")) + ruleHeight;
             const end = (row: HTMLElement) => well ? row.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop - well.clientTop : rowHeight;
@@ -144,20 +142,6 @@ export function ListPane({
             const spans = picked && end(picked) > budget - base ? [...rows].filter(row => end(row) <= end(picked)).reverse().map(row => end(picked) - end(row) + row.getBoundingClientRect().height) : [...rows].map(end);
             const floor = spans[0] ?? (rows.length ? rowHeight : 0);
             minimum = base + Math.max(floor, ...spans.filter(span => base + span <= budget));
-            if (rows.length > rowCount && minimum + 14 <= chrome + contentFloor) minimum += 14;
-          }
-        }
-        if (well && rows.length && !image && getComputedStyle(pane!).display !== "grid") {
-          const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + well.clientTop;
-          const room = minimum - base;
-          const boxes = [...rows].map(row=>{const r=row.getBoundingClientRect(),top=well.getBoundingClientRect().top;return {start:r.top-top+well.scrollTop,end:r.bottom-top+well.scrollTop,height:r.height};});
-          if (boxes.at(-1)!.end > room+1) {
-            const edge = boxes.find(row=>row.end > room+1);
-            if (edge && room < edge.start+Math.min(14,edge.height/3)) minimum += edge.start+Math.min(14,edge.height/3)-room;
-            if (minimum > formBudget) {
-              const last = boxes.filter(row=>base+row.start+Math.min(14,row.height/3)<=formBudget).at(-1);
-              if (last) minimum = Math.max(base+Math.min(rowHeight,boxes[0].height),base+last.start+Math.min(14,last.height/3));
-            }
           }
         }
         // A smaller frame can yield rows; the default frame keeps its four-row
@@ -168,39 +152,38 @@ export function ListPane({
           const first=preview.querySelector<HTMLElement>(".gadget-row,.object-list-row")?.getBoundingClientRect().height ?? rowHeight;
           const budget=paneHeight-Math.min(paneHeight/2,heading+first+16);
           if(paneHeight>0 && minimum>budget){
-            const base=well.getBoundingClientRect().top-seat.getBoundingClientRect().top+well.clientTop;
+            const base=well.getBoundingClientRect().top-seat.getBoundingClientRect().top+(parseFloat(getComputedStyle(well).borderBottomWidth)||0);
             const top=well.getBoundingClientRect().top;
             const boxes=[...rows].map(row=>{const box=row.getBoundingClientRect();return {start:box.top-top+well.scrollTop,end:box.bottom-top+well.scrollTop,height:box.height};});
-            // A group heading can stand between rows. Put the edge inside
-            // the next row, rather than fourteen pixels after the last one.
-            const cues=boxes.slice(1).map(row=>row.start+Math.min(14,row.height/3));
-            const fitting=cues.filter(cue=>base+cue<=budget);
+            const fitting=boxes.map(row=>row.end).filter(end=>base+end<=budget);
             minimum=base+Math.max(boxes[0].end,...fitting);
           }
         }
+        // A declared share also reserves whole list rows above a short facts
+        // pane. Forms and media keep their own measured seats.
+        if (listShare != null && pane && preview && well && rows.length && !form && !image && !preview.querySelector("video,.surface-object-reader") && pane.clientWidth > 620 && getComputedStyle(pane).display !== "grid") {
+          const base = chrome + height(".object-list-head") + (height(".object-list-inner-toolbar") || height(".object-list-verbs")) + ruleHeight;
+          const budget = pane.clientHeight * Math.max(.1, Math.min(.9, listShare)) - base;
+          const top = well.getBoundingClientRect().top;
+          const ends = [...rows].map(row => row.getBoundingClientRect().bottom - top + well.scrollTop - well.clientTop);
+          minimum = Math.max(minimum, base + Math.max(0, ...ends.filter(end => end <= budget)));
+        }
         const picked = [...rows].find(row => row.getAttribute("aria-selected") === "true");
         const group = picked?.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
-        if (form && picked && group && well) {
-          const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + well.clientTop;
+        if (picked && group && well) {
+          const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + ruleHeight;
           minimum = Math.max(minimum, base + picked.getBoundingClientRect().height + group.getBoundingClientRect().height);
         }
-        pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
-        seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
+        const value = Math.ceil(minimum) + "px";
+        return () => {
+          if (pane?.style.getPropertyValue("--surface-list-min") !== value) pane?.style.setProperty("--surface-list-min", value);
+          if (seat.style.getPropertyValue("--surface-list-min") !== value) seat.style.setProperty("--surface-list-min", value);
+        };
       }
-      const row = seat?.querySelector<HTMLElement>(
-        '[data-object-id][aria-selected="true"]',
-      );
-      const well = row?.closest<HTMLElement>(".object-list-rows");
-      if (!row || !well) return;
-      const r = row.getBoundingClientRect(),
-        w = well.getBoundingClientRect();
-      const group = row.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
-      const top = w.top + (group?.getBoundingClientRect().height ?? 0);
-      if (r.bottom > w.bottom) well.scrollTop += r.bottom - w.bottom;
-      else if (r.top < top) well.scrollTop -= top - r.top;
     };
-    const observer = new ResizeObserver(update);
-    const mutations = new MutationObserver(update);
+    const schedule = () => scheduleRowLayout(update);
+    const observer = new ResizeObserver(schedule);
+    const mutations = new MutationObserver(schedule);
     observer.observe(ref.current);
     if (ref.current.parentElement) observer.observe(ref.current.parentElement);
     mutations.observe(ref.current.parentElement ?? ref.current, {
@@ -209,12 +192,13 @@ export function ListPane({
       attributes: true,
       attributeFilter: ["aria-selected"],
     });
-    update();
+    schedule();
     return () => {
+      cancelRowLayout(update);
       observer.disconnect();
       mutations.disconnect();
     };
-  }, [minimumRows, hasList, listPosition]);
+  }, [minimumRows, listShare, hasList, listPosition]);
   const listSeat = hasList ? <div
         ref={ref}
         onClickCapture={(event) => {
