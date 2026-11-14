@@ -29,6 +29,7 @@
 /* Long envelope values scroll in the form; the message keeps its reading well. */
 [data-send="preview"] > .surface-pane-group > .surface-inspector-form { flex: 0 1 auto; min-height: 0; max-height: 40%; overflow: hidden; }
 [data-send="preview"] > .surface-pane-group > .surface-inspector-form > .surface-inspector-fields { min-height: 0; overflow-y: auto; }
+[data-send="preview"] > .surface-pane-group > .surface-inspector-form .gadget-row { align-items: start; }
 .send-preview-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 .desk-next [data-send="preview"] .reading-document.surface-material { width: 100%; max-width: 100%; }
 [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: nowrap; }

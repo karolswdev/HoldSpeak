@@ -127,6 +127,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 # Every state starts at its choices; only the payload itself
                 # needs scrolling. Completion remains outside both wells.
                 win.locator(".surface-inspector-fields, .surface-well-body").evaluate_all("els => els.forEach(el => { el.scrollTop = 0; el.scrollLeft = 0; })")
+                page.evaluate("() => document.fonts.ready.then(() => undefined)")
                 _settle(page)
                 expected = {"preparing":"New", "ready":"New", "failed":"Failed", "unknown":"Result unknown", "sending":"Sending…", "sent":"Sent at", "refused":"Refused", "first-sending":"Sending…", "prepared":"Prepared", "discard-question":"Prepared", "discarded":"Discarded", "no-destination":"New"}
                 expect(win.get_by_test_id("send-status")).to_contain_text(expected[state])
@@ -164,7 +165,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 if phase == "after":
                     facts = send_face_facts(win, six_lines=width == 1440 and state in {"ready", "prepared"})
                     (shots / f"send-{state}-{width}-facts.json").write_text(json.dumps(facts, indent=2))
-                (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow}))"""),indent=2))
+                (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions,.surface-well-body,.send-preview-body,.reading-heading")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow,clip:getComputedStyle(e).clipPath,visibility:getComputedStyle(e).visibility,opacity:getComputedStyle(e).opacity,color:getComputedStyle(e).color,scrollTop:e.scrollTop,font:getComputedStyle(e).font,fontReady:document.fonts.status,html:e.matches(".reading-heading") ? e.outerHTML : undefined}))"""),indent=2))
                 polish = shots.parent / "send-engines14r2"
                 polish.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(polish / f"send-{state}-{900 if width == 1440 else 393}-{phase}.png"))
@@ -201,6 +202,8 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                     expect(body).not_to_contain_text("2026-11-12")
                     reading = body.locator("..").evaluate("el => ({height:el.clientHeight,line:parseFloat(getComputedStyle(el).lineHeight)})")
                     assert reading["height"] >= 6 * reading["line"] - 1, reading
+                    if channel == "email":
+                        expect(well.get_by_test_id("send-preview").get_by_text("Subject", exact=True)).to_be_in_viewport(ratio=1)
                 if phase == "after" and channel == "file":
                     fit = well.get_by_role("combobox", name="Destination", exact=True).evaluate("""el => {
                         const s=getComputedStyle(el), c=document.createElement('canvas'),ctx=c.getContext('2d'); ctx.font=`${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
