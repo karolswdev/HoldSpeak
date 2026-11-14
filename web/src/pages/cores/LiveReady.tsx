@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { StringGadget, DotWord, InspectorForm, PreferenceWell, PaneActions, PaneNotice } from "../../desk/surface";
+import { StringGadget, DotWord, InspectorForm, PreferenceWell, PaneActions, PaneNotice, ActionNotice } from "../../desk/surface";
 import { SpeechSetup, type SpeechSetupState } from "../../desk/firstrun/SpeechSetup";
 import { LevelBars, type MicCheck } from "./LiveLevel";
 type Tone = "ok" | "warn" | "fail" | "info" | "idle";
@@ -69,7 +69,17 @@ export function LiveReady({
           {
             label: "Microphone",
             control: (
-              <PaneActions data-testid="live-ready-mic" aria-busy={checkingMic}>
+              mic?.state === "not_allowed" && !checkingMic ? (
+                <div data-testid="live-ready-mic">
+                  {microphone}
+                  <ActionNotice tone="danger" action={mic.settings_url ? {
+                    label: "Allow Microphone…",
+                    onClick: () => window.open(String(mic.settings_url), "_self", "noopener"),
+                  } : undefined}>
+                    <span data-testid="live-ready-mic-state" data-tone="fail">Microphone not allowed</span>
+                  </ActionNotice>
+                </div>
+              ) : <PaneActions data-testid="live-ready-mic" aria-busy={checkingMic}>
                 {microphone}
                 {checkingMic ? (
                   <DotWord tone="info">Checking</DotWord>
@@ -78,19 +88,8 @@ export function LiveReady({
                     {face.state.word}
                   </DotWord>
                 ) : null}
-                {mic?.state === "not_allowed" ? <span>macOS asks for Microphone access</span> : null}
                 {face.level !== null ? <LevelBars level={face.level} label="Microphone level" /> : null}
-                {face.verb === "allow" && mic?.settings_url ? (
-                  <Button
-                    dense
-                    variant="secondary"
-                    data-testid="live-mic-allow"
-                    title="Open Microphone in System Settings"
-                    onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}
-                  >
-                    Allow Microphone…
-                  </Button>
-                ) : face.verb === "check" ? (
+                {face.verb === "check" ? (
                   <Button
                     dense
                     variant="secondary"

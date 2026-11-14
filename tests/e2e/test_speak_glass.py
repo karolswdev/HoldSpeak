@@ -6,6 +6,8 @@ remain covered by tests/unit/test_desk_speak.py.
 """
 from __future__ import annotations
 
+import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -34,6 +36,7 @@ SHOTS = evidence_dir("speak-glass")
 SHOTS.mkdir(parents=True, exist_ok=True)
 
 TOKEN = "speak-glass"
+SHOT_PHASE = os.environ.get("SPEAK_SHOT_PHASE", "after")
 
 def _quiet_machine(monkeypatch: Any) -> None:
     """The rig admits only its explicit fake audio and effect callbacks."""
@@ -96,6 +99,9 @@ def _boot(
     return server, server.start()
 
 def _init_desk(page: Any, url: str, *, token: str = TOKEN) -> None:
+    if os.environ.get("KIT14_BASELINE_BUILD"):
+        from .test_kit_polish_wave14_glass import _before
+        _before(page)
     page.goto(f"{url}/?token={token}", wait_until="load")
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
     _normal_chair(page)
@@ -118,7 +124,7 @@ def _stage_speak(page: Any) -> None:
 
 def _shot(page: Any, name: str, width: int) -> Path:
     _settle(page)
-    path = SHOTS / f"{name}-{width}.png"
+    path = SHOTS / f"{name}-{SHOT_PHASE}-{width}.png"
     target = page.locator(".desk-surface-window").first
     if target.count() > 0:
         target.screenshot(path=str(path))
@@ -136,9 +142,8 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
     monkeypatch.setattr(LocalAISetupService, "status", _voice_command_ready_speech)
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch)
-    words = "Review the platform migration with each team and record the owner of every rollback step before Friday."
-    # Distinct writes in one second: the face must retain the recorded time
-    # precision, rather than turn retries into identical rows.
+    words = "web/src/pages/cores/dictation/SpeakFace.tsx: keep the selected words and their destination in view while a late journal read finishes during the platform migration review with the architecture team before Friday."
+    # Distinct writes in one second must remain distinct without fractional clocks.
     from datetime import datetime, timedelta, timezone
     stamp=datetime.now(timezone.utc).replace(microsecond=0)
     def journal_time():
@@ -146,9 +151,18 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
         stamp+=timedelta(milliseconds=100)
         return stamp.isoformat()
     monkeypatch.setattr("holdspeak.db.journal.utc_now_iso",journal_time)
+    for index in range(49):
+        text = (
+            f"architecture_review_{index:02d}_" + "retain_the_selected_words_and_their_destination_" * 4
+            if index % 2 else
+            f"web/src/pages/cores/dictation/SpeakFace.tsx: review {index:02d} " + "keep the rollback plan in view " * 5
+        )
+        server.dictation_journal.repository.record(source="dictation", transcript=text, final_text=text)
     stored = server.dictation_journal.repository.record(source="dictation", transcript=words, final_text=words, target_profile="terminal")
-    out = evidence_dir("speak13/r2")
+    out = evidence_dir("speak14")
     out.mkdir(parents=True, exist_ok=True)
+    measures = out.parent.parent / "speak14"
+    measures.mkdir(parents=True, exist_ok=True)
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -162,11 +176,19 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             win = page.locator("#surface-dictation")
             def shot(name):
                 _settle(page)
-                page.screenshot(path=str(out / f"{name}-{width}.png"))
+                page.screenshot(path=str(out / f"{name}-{SHOT_PHASE}-{width}.png"))
                 assert win.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
                 assert win.locator(".surface-mast-title").count() == 1
                 assert win.locator(".surface-mast-title").inner_text() == "Speak"
                 expect(win.get_by_test_id("speak-live")).to_be_visible()
+                fonts = {key: locator.evaluate("el => getComputedStyle(el).fontFamily") for key, locator in {
+                    "mast": win.get_by_test_id("speak-phase"),
+                    "well": win.get_by_test_id("speak-types-into"),
+                }.items()}
+                (measures / f"fonts-{SHOT_PHASE}-{width}.json").write_text(json.dumps(fonts))
+                for font in fonts.values():
+                    assert "Inter" in font and "mono" not in font.lower(), (name, fonts)
+                assert not re.search(r"UTTERANCE|Did not work|\b\d+ ms\b|huggingface\.co", win.inner_text())
                 ink=win.get_by_test_id("speak-live").bounding_box()
                 reading=win.get_by_role("log",name="Dictated words").bounding_box()
                 assert reading["y"]+min(30,reading["height"]) <= ink["y"]+ink["height"]+1, (name,ink,reading)
@@ -185,7 +207,8 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
                         assert box["y"] + box["height"] <= seat["y"] + seat["height"] + 1, (name,el.get_attribute("aria-label"),box,seat)
             def verb(name):
                 direct = win.get_by_role("button",name=name,exact=True)
-                if direct.count() and direct.first.is_visible(): return direct.first
+                if direct.count() and direct.first.is_visible():
+                    return direct.first
                 win.get_by_role("button",name="Actions",exact=True).click()
                 return page.get_by_role("menuitem",name=name,exact=True)
             row = win.get_by_role("grid",name="Recent dictations").locator("[data-object-id]").first
@@ -206,9 +229,18 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
                 expect(row).to_be_visible()
                 expect(win.get_by_role("button",name="Talk",exact=True)).to_be_visible()
             if width == 393:
+                well = inspector.locator(".surface-preference-well")
+                well.hover()
+                page.mouse.wheel(0, 1000)
+                _settle(page)
                 speech_row=inspector.locator(".gadget-row").filter(has=page.get_by_text("Speech now",exact=True)).bounding_box()
-                reading_seat=inspector.locator(".surface-preference-well").bounding_box()
+                reading_seat=well.bounding_box()
+                assert speech_row["y"] >= reading_seat["y"]
                 assert speech_row["y"]+speech_row["height"] <= reading_seat["y"]+reading_seat["height"]+1
+                shot("inspector-scrolled")
+                well.hover()
+                page.mouse.wheel(0, -1000)
+                _settle(page)
             assert inspector.get_by_text(words,exact=True).evaluate("el=>el.scrollWidth<=el.clientWidth+1")
             shot("inspector")
             verb("Copy").click()
@@ -233,6 +265,9 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             press_verb(win, 'Put words back')
             expect(win.get_by_role("button",name="Retry",exact=True)).to_be_visible()
             expect(editor).to_have_value("Keep the rollback plan")
+            notice = win.locator(".surface-action-notice").filter(has=page.get_by_role("button", name="Retry", exact=True))
+            assert notice.count() == 1
+            assert notice.bounding_box()["y"] >= win.get_by_test_id("speak-live").bounding_box()["y"] + win.get_by_test_id("speak-live").bounding_box()["height"]
             shot("delivery-failed")
             win.get_by_role("button",name="Retry",exact=True).click()
             expect(win.get_by_test_id("speak-phase")).to_contain_text("Failed")
@@ -245,16 +280,25 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             page.reload(wait_until="load")
             _normal_chair(page)
             expect(win.get_by_role("button",name="Try again",exact=True)).to_be_visible()
+            expect(win.get_by_test_id("speak-footer")).not_to_contain_text("Recent dictations not read")
+            expect(win.get_by_text("Recent dictations not read", exact=False)).to_have_count(1)
             shot("recent-read-failed")
             page.unroute("**/api/dictation/journal?*")
             win.get_by_role("button",name="Try again",exact=True).click()
-            expect(win.get_by_role("grid",name="Recent dictations").get_by_role("row",name=re.compile(re.escape(words)))).to_be_visible()
+            expect(win.get_by_role("grid",name="Recent dictations").locator(f'[data-object-id="{stored.id}"]')).to_have_accessible_name(re.compile(re.escape(words)))
             repeated=win.get_by_role("grid",name="Recent dictations").get_by_role("row").filter(has_text="Keep the rollback plan")
             expect(repeated.first).to_be_visible()
             times=repeated.locator('[data-col="when"]').all_text_contents()
             assert len(set(times)) == len(times), times
+            assert all(re.search(r" · #\d+$", clock) and not re.search(r"\.\d+", clock) for clock in times), times
             assert "Unknown" not in win.get_by_role("grid",name="Recent dictations").inner_text()
             shot("recent-read-recovered")
+            path_row = win.locator(f'[data-object-id="{stored.id}"]')
+            path_row.click()
+            path_row.press("Enter")
+            shot("path-identity")
+            expect(path_row.locator("img")).to_have_attribute("src", re.compile(r"/20/artifact\.png$"))
+            expect(win.get_by_test_id("speak-inspector").locator(".surface-pane-inspector-head img")).to_have_attribute("src", re.compile(r"/32/artifact\.png$"))
             browser.close()
     finally:
         server.stop()
@@ -275,7 +319,7 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
         return "Keep the rollback plan"
     typed = []
     server,url = _boot(tmp_path,monkeypatch,on_transcribe=transcribe,on_remote_dictation=lambda text,**kw:typed.append(text))
-    out=evidence_dir("speak13/r2")
+    out=evidence_dir("speak14")
     out.mkdir(parents=True,exist_ok=True)
     try:
         with sync_playwright() as pw:
@@ -290,23 +334,25 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
             stop=win.get_by_role("button",name="Stop",exact=True)
             expect(stop).to_be_visible()
             expect(win.get_by_test_id("speak-live")).to_contain_text("Listening")
-            page.screenshot(path=str(out/f"listening-start-{width}.png"))
+            page.screenshot(path=str(out/f"listening-start-{SHOT_PHASE}-{width}.png"))
             page.wait_for_function('() => Boolean(document.querySelector(\'#surface-dictation [data-testid="live-level"] [data-lit]\'))',timeout=15000)
             elapsed=win.locator('.surface-mast-figures [data-tone="stop"] .surface-elapsed')
             expect(elapsed).to_be_visible()
             expect(elapsed).not_to_have_text("0:00",timeout=5000)
-            page.screenshot(path=str(out/f"listening-{width}.png"))
+            expect(win.get_by_test_id("speak-live").locator(".surface-elapsed")).not_to_have_text("0:00")
+            expect(win.get_by_role("log", name="Dictated words")).to_have_text("")
+            page.screenshot(path=str(out/f"listening-{SHOT_PHASE}-{width}.png"))
             page.wait_for_timeout(700)
             stop.click()
             expect(win.get_by_test_id("speak-phase")).to_contain_text("Thinking")
-            page.screenshot(path=str(out/f"thinking-{width}.png"))
+            page.screenshot(path=str(out/f"thinking-{SHOT_PHASE}-{width}.png"))
             release.set()
             expect(win.get_by_role("log",name="Dictated words")).to_contain_text("Keep the rollback plan",timeout=20000)
             expect(win.get_by_test_id("speak-phase")).to_contain_text("Done")
             expect(win.get_by_test_id("speak-setup-facts")).to_contain_text("Sent")
             assert typed == ["Keep the rollback plan"]
             _settle(page)
-            page.screenshot(path=str(out/f"released-{width}.png"))
+            page.screenshot(path=str(out/f"released-{SHOT_PHASE}-{width}.png"))
             assert win.get_by_role("log",name="Dictated words").get_attribute("data-feedback-redact")=="true"
             browser.close()
     finally:
@@ -320,7 +366,7 @@ def test_speak_speech_setup_stays_in_window(tmp_path,monkeypatch,width):
     from playwright.sync_api import sync_playwright,expect
     _ensure_build()
     server,url=_boot(tmp_path,monkeypatch)
-    out=evidence_dir("speak13/r2")
+    out=evidence_dir("speak14")
     out.mkdir(parents=True,exist_ok=True)
     try:
         with sync_playwright() as pw:
@@ -332,12 +378,13 @@ def test_speak_speech_setup_stays_in_window(tmp_path,monkeypatch,width):
                 _api(page,"POST","/api/desk/windows/surface-dictation/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
             expect(page.get_by_test_id("speak-speech-setup-key")).to_be_visible()
             _settle(page)
-            page.screenshot(path=str(out/f"speech-missing-{width}.png"))
+            page.screenshot(path=str(out/f"speech-missing-{SHOT_PHASE}-{width}.png"))
             page.get_by_test_id("speak-speech-setup-key").click()
             expect(page.get_by_test_id("speak-speech-setup-place")).to_be_visible()
             _settle(page)
-            page.screenshot(path=str(out/f"speech-setup-{width}.png"))
+            page.screenshot(path=str(out/f"speech-setup-{SHOT_PHASE}-{width}.png"))
             expect(page.get_by_role("dialog")).to_have_count(0)
+            assert "huggingface.co" not in page.locator("#surface-dictation").inner_text()
             browser.close()
     finally:
         server.stop()
@@ -461,11 +508,11 @@ def _custody_stage_speak(page: Any) -> None:
 
 def _custody_shot(page: Any, name: str, width: int) -> Path:
     _settle(page)
-    path = CUSTODY_SHOTS / f"{name}-{width}.png"
+    path = CUSTODY_SHOTS / f"{name}-{SHOT_PHASE}-{width}.png"
     page.screenshot(path=str(path), full_page=False)
-    lane = evidence_dir("speak13/r2")
+    lane = evidence_dir("speak14")
     lane.mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(lane / f"hold-key-{name}-{900 if width == 1440 else width}.png"))
+    page.screenshot(path=str(lane / f"hold-key-{name}-{SHOT_PHASE}-{900 if width == 1440 else width}.png"))
     assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
     return path
 
@@ -482,7 +529,7 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
         _custody_stage_speak(page)
         block = page.get_by_test_id("speak-hotkey")
         expect(block).to_be_visible()
-        wire = _api(page,"GET","/api/dictation/readiness",token=CUSTODY_TOKEN)["hotkey"]
+        _api(page,"GET","/api/dictation/readiness",token=CUSTODY_TOKEN)
         expected = {"all-denied":"Microphone refused", "one-denied":"Input Monitoring refused", "not-asked":"Microphone not asked", "listener-failed":"Hold key listener did not start"}[name]
         expect(block).to_contain_text(expected)
         expect(block.get_by_role("button",name="Fix hold key",exact=True)).to_be_visible()

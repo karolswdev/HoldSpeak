@@ -57,7 +57,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
     clear_hub_windows_http(base, TOKEN)
     _hub_open(base, "surface-live", None, window=width == 900)
     ctx, page, errors, requests = _page(pw_browser, width, base)
-    out = evidence_dir("live13/r3")
+    out = evidence_dir("live14")
     actions = _wire("live.actions")
     state = copy.deepcopy(actions["state"])
     ready: dict[str, Any] = {"meeting_active": False}
@@ -121,8 +121,30 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
                     except Exception:
                         pass  # A prior page reload closed this socket.
                 expect(win.get_by_test_id("live-statusbar").get_by_role("meter", name="Meeting level", exact=True)).to_have_attribute("aria-valuenow", str(frame["data"]["level"]))
+            strip = win.get_by_test_id("live-statusbar")
+            if name in {"moment-failed", "details-failed", "stop-failed", "summary-failed"}:
+                assert "Failed" not in strip.inner_text() and "failed" not in strip.inner_text(), strip.inner_text()
+                expect(strip.get_by_test_id("live-capture-state")).to_contain_text("Stopped" if name == "summary-failed" else "Recording")
+            if name == "microphone-refused":
+                row = win.get_by_test_id("live-ready-mic")
+                notice = row.get_by_role("status")
+                expect(notice).to_have_count(1)
+                expect(notice.get_by_role("button", name="Allow Microphone…", exact=True)).to_be_visible()
+                expect(notice).to_contain_text("Microphone not allowed")
+                # Its reason, action and device own separate, uncut seats.
+                parts = [row.get_by_role("combobox"), notice.locator(".surface-action-notice-body"), notice.get_by_role("button")]
+                boxes = [part.bounding_box() for part in parts]
+                seat = row.bounding_box()
+                assert seat and all(box and box["x"] >= seat["x"] - 1 and box["x"] + box["width"] <= seat["x"] + seat["width"] + 1 for box in boxes), boxes
+                for i, a in enumerate(boxes):
+                    for b in boxes[i + 1:]:
+                        assert min(a["x"] + a["width"], b["x"] + b["width"]) - max(a["x"], b["x"]) <= 1 or min(a["y"] + a["height"], b["y"] + b["height"]) - max(a["y"], b["y"]) <= 1, boxes
+            if name in {"moment-failed", "details-failed"}:
+                expect(win.get_by_role("status").filter(has_text="The hub is busy")).to_be_visible()
+            if name == "recording":
+                assert strip.get_by_test_id("live-level").bounding_box()["width"] >= 48
             capture_state(page, win, "live", name, width)
-            page.screenshot(path=str(out / f"{name}-{width}.png"))
+            page.screenshot(path=str(out / f"{name}-after-{width}.png"))
 
         def reload() -> None:
             page.reload(wait_until="load")
@@ -308,6 +330,23 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         expect(win.get_by_role("button", name="Try again", exact=True)).to_be_visible()
         expect(win.get_by_role("tab", name="Step 1: Recorded, Done", exact=True)).to_be_visible()
         shot("summary-failed")
+        # Stress the same recorded producer shape with the owner's long names
+        # and roster size. No new response fields or invented capabilities.
+        dense = copy.deepcopy(state)
+        long_name = "holdspeak/services/meeting_capture_service.py: Review the capture checkpoint and retained transcript before the Payments ledger cutover; confirm the recovery result with the owner tomorrow."
+        dense["title"] = long_name
+        dense["segments"] = [{**state["segments"][i % len(state["segments"])], "id": f"segment-{i}", "start_time": i * 7, "text": long_name if i % 2 == 0 else "meeting_capture_checkpoint_" + "unbrokenidentifier" * 10} for i in range(50)]
+        dense["intel"]["action_items"] = [{**state["intel"]["action_items"][0], "id": f"task-{i}", "task": long_name if i % 2 == 0 else "meeting_capture_checkpoint_" + "unbrokenidentifier" * 10} for i in range(50)]
+        current["state"] = dense
+        reload()
+        expect(win.get_by_test_id("live-transcript-line")).to_have_count(len(dense["segments"]))
+        shot("long-recording")
+        _press(page, win, "View: Caught so far")
+        expect(win.get_by_test_id("live-caught").locator(".object-list-row[data-object-id]")).to_have_count(len(dense["intel"]["action_items"]))
+        shot("long-caught")
+        rows = win.get_by_test_id("live-caught").locator(".object-list-rows")
+        rows.evaluate("el => el.scrollTop = el.scrollHeight")
+        shot("long-caught-end")
         assert not [error for error in errors if error.startswith("pageerror:")], errors
     finally:
         ctx.close()
