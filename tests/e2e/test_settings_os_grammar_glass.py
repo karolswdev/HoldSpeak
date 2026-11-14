@@ -203,7 +203,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             if state == "engines-add":
                                 if width == 1440:
                                     choices=section.get_by_role("tablist",name="Kind of engine",exact=True)
-                                    for choice in choices.get_by_role("tab").all(): expect(choice).to_be_in_viewport(ratio=1)
+                                    for choice in choices.get_by_role("tab").all():
+                                        expect(choice).to_be_in_viewport(ratio=1)
                                 else:
                                     expect(section.get_by_role("combobox", name="Kind of engine", exact=True)).to_be_in_viewport(ratio=1)
                                     expect(section.get_by_role("combobox", name="Kind of engine", exact=True).get_by_role("option", name="Another HoldSpeak", exact=True)).to_have_count(1)
@@ -380,7 +381,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             list_verb("Model library")
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
-                                choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',tab.lower())
+                                if tab != "Engines":
+                                    choose_toolbar(library,'Model library category' if library.locator('[aria-label="Model library category"]').count() else 'Library',tab.lower())
                                 _settle(page)
                                 shot(f"engines-library-{tab.lower()}")
                                 page.screenshot(path=str(lane_shots / f"10-engines-library-{tab.lower()}-{900 if width == 1440 else 393}.png"))

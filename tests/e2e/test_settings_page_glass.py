@@ -292,8 +292,10 @@ def test_engines_pane_chain_editor_library_and_old_link(
             page.screenshot(path=str(shots / f"library-{width}.png"))
             library.get_by_role("button", name="Add an engine", exact=True).click()
             kind=library.get_by_role("combobox",name="Kind of engine",exact=True)
-            if kind.count(): choose_toolbar(library,"Kind of engine","lan")
-            else: library.locator('[role="tab"][data-tab="lan"]').click()
+            if kind.count():
+                choose_toolbar(library,"Kind of engine","lan")
+            else:
+                library.locator('[role="tab"][data-tab="lan"]').click()
             expect(library.get_by_role("textbox", name="Server address", exact=True)).to_be_visible()
             assert errors == [], errors
             browser.close()
