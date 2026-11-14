@@ -1,15 +1,15 @@
 /* D: one Mast, seated in the frame or composed in an object surface. */
 .surface-mast { min-width: 0; container: mast / inline-size; }
 .surface-mast-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.surface-mast-object, .surface-mast-glyph { width: 34px; height: 34px; flex: none; border-radius: 8px; background: var(--hs-raised); box-shadow: var(--material-object-shadow); display: grid; place-items: center; }
-.surface-mast-object > img { width: 28px; height: 28px; object-fit: contain; }
+.surface-mast-object, .surface-mast-glyph { width: 26px; height: 26px; flex: none; border-radius: 8px; background: var(--hs-raised); box-shadow: var(--material-object-shadow); display: grid; place-items: center; }
+.surface-mast-object > img { width: 22px; height: 22px; object-fit: contain; }
 .surface-mast-words { min-width: 0; flex: 0 1 auto; }
-.surface-mast-title { margin: 0; font: var(--material-title-weight) var(--material-title-size) / 1.1 var(--font-sans); letter-spacing: -.03em; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.surface-mast-facts { margin: 3px 0 0; font: var(--material-label-weight) var(--material-label-size) / 1.2 var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: none; color: var(--hs-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.surface-mast-stripes { flex: 1 1 20px; align-self: stretch; min-width: 20px; margin: 22px 6px; background: var(--material-mast-stripes); }
+.surface-mast-title { margin: 0; font: var(--material-title-weight) var(--material-title-size) / 1.25 var(--font-sans); letter-spacing: -.03em; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.surface-mast-facts { margin: 1px 0 0; font: var(--material-label-weight) var(--material-label-size) / 1.2 var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: none; color: var(--hs-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.surface-mast-stripes { flex: 1 1 20px; align-self: stretch; min-width: 20px; margin: 14px 6px; background: var(--material-mast-stripes); }
 .surface-mast-verbs { display: flex; gap: 8px; align-items: center; }
 .surface-mast-figures { display: flex; flex: none; gap: 6px; margin: 0; }
-.surface-mast-figures > div { display: flex; flex-direction: row-reverse; align-items: baseline; gap: 6px; padding: 5px 10px; border-radius: 6px; background: color-mix(in srgb, var(--hs-ink) 30%, transparent); }
+.surface-mast-figures > div { display: flex; flex-direction: row-reverse; align-items: baseline; gap: 6px; padding: 3px 8px; border-radius: 6px; background: color-mix(in srgb, var(--hs-ink) 30%, transparent); }
 .surface-mast-figures > [data-tone="ask"] { background: var(--hs-brass-deep); box-shadow: var(--material-top-light), var(--material-object-shadow); }
 .surface-mast-figures > [data-tone="stop"] { background: var(--hs-coral); color: var(--hs-raised); box-shadow: var(--material-top-light), var(--material-object-shadow); }
 .surface-mast-figures dt { font: var(--material-label-weight) var(--material-label-size) / 1.2 var(--font-sans); text-transform: none; }
@@ -24,10 +24,10 @@
   .surface-mast-title { font-size: var(--material-title-compact-size); }
   .surface-mast-stripes { display: none; }
   .surface-mast-figures { margin-left: auto; }
-  .surface-mast-figures > div { padding: 5px 6px; }
+  .surface-mast-figures > div { padding: 3px 6px; }
   .surface-mast-figures dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .surface-mast-facts { font-size: var(--material-label-size); letter-spacing: var(--material-label-tracking); text-transform: none; }
-  .surface-mast-object { width: 30px; height: 30px; }
+  .surface-mast-object { width: 26px; height: 26px; }
   .surface-mast-row { gap: 8px; }
   .surface-mast:not(.surface-mast--framed) .surface-mast-verbs { flex-basis: 100%; flex-wrap: wrap; }
 }

@@ -487,10 +487,10 @@
   --lamp-info: var(--accent-cool); /* PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open) */
   --lamp-ask: #b8800f; /* IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08) */
   --desk-ghost-shadow: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45)); /* PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop) */
-  --material-mast-height: 58px; /* D material, owner choice 2026-11-12 */
+  --material-mast-height: 40px; /* owner 2026-11-14: "way too dramatically high… waste too much application space" (was 58px) */
   --material-mast-compact-height: 44px; /* Compact Mast keeps the pre-Mast content height and 44 px gadget targets */
-  --material-title-size: 21px; /* D material, owner choice 2026-11-12 */
-  --material-title-compact-size: 17px; /* D material, owner choice 2026-11-12 */
+  --material-title-size: 16px; /* owner 2026-11-14: the Mast is 40px (was 21px) */
+  --material-title-compact-size: 15px; /* owner 2026-11-14: the Mast is lower (was 17px) */
   --material-title-weight: 800; /* D material, owner choice 2026-11-12 */
   --material-name-size: 18px; /* D material, owner choice 2026-11-12 */
   --material-name-weight: 800; /* D material, owner choice 2026-11-12 */
@@ -499,7 +499,7 @@
   --material-label-tracking: .08em; /* D material, owner choice 2026-11-12 */
   --material-label-weight: 700; /* D material, owner choice 2026-11-12 */
   --material-figure-size: 30px; /* D material, owner choice 2026-11-12 */
-  --material-mast-figure-size: 20px; /* D material, owner choice 2026-11-12 */
+  --material-mast-figure-size: 15px; /* owner 2026-11-14: the Mast is 40px (was 20px) */
   --material-row-height: 36px; /* D material, owner choice 2026-11-12 */
   --material-cobalt-deep: #1f3f80; /* D material, owner choice 2026-11-12 */
   --material-mast-ink: #ffffff; /* D material, owner choice 2026-11-12 */
