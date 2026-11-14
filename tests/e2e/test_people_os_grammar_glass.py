@@ -210,7 +210,7 @@ def _bounded(window: Any) -> None:
       const b=well.getBoundingClientRect(),rows=[...well.querySelectorAll('.object-list-row')],visible=rows.filter(row=>{const r=row.getBoundingClientRect();return r.top<b.bottom-1&&r.bottom>b.top+1});
       const more=rows.some(row=>row.getBoundingClientRect().bottom>b.bottom+1);
       const cue=visible.at(-1)?.getBoundingClientRect();
-      return more && (!cue || cue.bottom<=b.bottom+1 || well.scrollHeight<=well.clientHeight) ? [{text:well.textContent,box:b.toJSON(),scroll:well.scrollTop,height:well.clientHeight,full:well.scrollHeight,rows:rows.map(row=>({text:row.textContent,box:row.getBoundingClientRect().toJSON()})),minimum:well.closest(".surface-list-pane")?.style.cssText}] : [];
+      return more && (!cue || cue.bottom>b.bottom+1 || well.scrollHeight<=well.clientHeight) ? [{text:well.textContent,box:b.toJSON(),scroll:well.scrollTop,height:well.clientHeight,full:well.scrollHeight,rows:rows.map(row=>({text:row.textContent,box:row.getBoundingClientRect().toJSON()})),minimum:well.closest(".surface-list-pane")?.style.cssText}] : [];
     })""")
     assert not lost, lost
 
@@ -575,7 +575,10 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
 
             def measure(well, selector):
                 return well.evaluate("""(well, selector) => {
-                  const box = well.getBoundingClientRect();
+                  const edge = well.getBoundingClientRect();
+                  // A group heading that sticks at the top covers the rows under it: the seen well starts below it.
+                  const stuck = [...well.querySelectorAll('.object-list-group-label')].map(l => l.getBoundingClientRect()).filter(l => Math.abs(l.top-edge.top) <= 1).map(l => l.bottom);
+                  const box = {top: Math.max(edge.top, ...stuck), bottom: edge.bottom};
                   return [...well.querySelectorAll(selector)].map(row => {
                     const r = row.getBoundingClientRect();
                     return {text:row.textContent,top:r.top,bottom:r.bottom,wellTop:box.top,wellBottom:box.bottom,scrollTop:well.scrollTop,scrollHeight:well.scrollHeight,height:well.clientHeight,
@@ -629,11 +632,10 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             for state in ("add-sparse", "add", "result-list"):
                 rows = observations[state]
                 visible = [row for row in rows if row["top"] < row["wellBottom"] - 1 and row["bottom"] > row["wellTop"] + 1]
-                if not rows or rows[0]["scrollHeight"] <= rows[0]["height"] + 1:
-                    assert not any(row["cut"] for row in visible), (state, rows)
-                else:
-                    # A partly visible edge row cues the retained scroll range.
-                    assert visible and (visible[0]["cut"] or visible[-1]["cut"]), (state, rows)
+                # Whole rows (#2332): no row is cut at either edge, with or without a scroll range.
+                assert not any(row["cut"] for row in visible), (state, rows)
+                if rows and rows[0]["scrollHeight"] > rows[0]["height"] + 1:
+                    assert visible, (state, rows)
             browser.close()
     finally:
         server.stop()

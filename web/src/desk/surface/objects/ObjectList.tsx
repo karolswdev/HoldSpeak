@@ -393,27 +393,30 @@ export function ObjectList({
     const measure = () => {
       const next: Record<string, number> = {};
       const facts = new Set(["state"]), controls = new Set<string>();
-      const intrinsic = (node: HTMLElement) => {
+      // One layout for every probe: all clones go in, all widths are read,
+      // all clones go out. A probe per row with its own read forced a layout
+      // per cell; with 50 rows of long names the page stopped answering.
+      const probes: Array<{key: string; copy: HTMLElement}> = [];
+      const probe = (key: string, node: HTMLElement) => {
         const copy = node.cloneNode(true) as HTMLElement;
         copy.style.cssText = "position:absolute;visibility:hidden;display:flex;width:max-content;max-width:none";
+        copy.setAttribute("data-width-probe", "");
         // Keep the real row/header inheritance, padding and control styles.
         node.parentElement!.append(copy);
-        const width = Math.ceil(copy.getBoundingClientRect().width);
-        copy.remove();
-        return width;
+        probes.push({key, copy});
       };
-      listRef.current?.querySelectorAll<HTMLElement>(".object-list-th[data-col]").forEach(header => {
-        next[header.dataset.col!] = intrinsic(header);
-      });
+      listRef.current?.querySelectorAll<HTMLElement>(".object-list-th[data-col]:not([data-width-probe])").forEach(header => probe(header.dataset.col!, header));
       // Pills are facts, not optional clipped text. Reserve their whole intrinsic width.
-      listRef.current?.querySelectorAll<HTMLElement>(".object-list-row [data-col]").forEach(cell=>{
+      // Every row counts, in view or not: a fact column that follows the rows
+      // in view changes its width during a scroll and cuts the pills below.
+      listRef.current?.querySelectorAll<HTMLElement>(".object-list-row [data-col]:not([data-width-probe])").forEach(cell=>{
         if (cell.querySelector("button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) controls.add(cell.dataset.col!);
         if (controls.has(cell.dataset.col!) || cell.querySelector(".kit-dotword, .object-list-dot-word")) facts.add(cell.dataset.col!);
         if (cell.dataset.col === "name" || !cell.textContent?.trim()) return;
-        // Every row counts, in view or not: a fact column that follows the rows
-        // in view changes its width during a scroll and cuts the pills below.
-        next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, intrinsic(cell));
+        probe(cell.dataset.col!, cell);
       });
+      for (const {key, copy} of probes) next[key] = Math.max(next[key] ?? 0, Math.ceil(copy.getBoundingClientRect().width));
+      for (const {copy} of probes) copy.remove();
       setRequiredColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
       setControlColumns(old=>old.join("|")===[...controls].join("|")?old:[...controls]);
       // A hidden pane has no geometry. Wait for its allocation before fitting.

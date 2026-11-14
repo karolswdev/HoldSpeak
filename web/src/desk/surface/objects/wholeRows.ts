@@ -1,6 +1,20 @@
 import { useLayoutEffect, type RefObject } from "react";
 import { cancelRowLayout, scheduleRowLayout } from "./rowLayout";
 
+/** A scroll has ended: `scrollend` where the browser has it, else 120 ms
+ * with no scroll event (Safari before 26 has no `scrollend`; without this the
+ * fitter stayed off after the first scroll there). Returns the cleanup. */
+export function onScrollEnd(target: HTMLElement, ended: () => void, native = typeof window !== "undefined" && "onscrollend" in window): () => void {
+  if (native) {
+    target.addEventListener("scrollend", ended);
+    return () => target.removeEventListener("scrollend", ended);
+  }
+  let timer = 0;
+  const quiet = () => { window.clearTimeout(timer); timer = window.setTimeout(ended, 120); };
+  target.addEventListener("scroll", quiet, { passive: true });
+  return () => { window.clearTimeout(timer); target.removeEventListener("scroll", quiet); };
+}
+
 /** One row boundary policy for every ObjectList. The unfilled remainder is
  * outside the well. Wheel/touch scrolling stays native until scrollend. */
 export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef: RefObject<HTMLDivElement | null>, enabled: boolean) {
@@ -86,7 +100,13 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
     };
     const scrolled = () => { moving = true; cancelRowLayout(read); };
     const ended = () => { moving = false; schedule(); };
-    const gesture = () => { followResize = false; follow = null; cancelRowLayout(read); };
+    const gesture = (event: Event) => {
+      // A press ON a row is not a scroll gesture: the second press of a
+      // double-click opens the row's inspector, the list shrinks, and the
+      // selected row must still be followed into view (Settings › Keys).
+      if (event.type === "pointerdown" && (event.target as Element | null)?.closest?.(".object-list-row")) return;
+      followResize = false; follow = null; cancelRowLayout(read);
+    };
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resized);
     observer?.observe(list);
     for (const child of list.children) if (child !== well) observer?.observe(child);
@@ -96,6 +116,8 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
       const relevant = changes.filter(change => {
         if (change.type === "characterData") return Boolean(change.target.parentElement?.closest(".object-list-row"));
         if (change.type !== "childList") return true;
+        const moved = [...change.addedNodes, ...change.removedNodes];
+        if (moved.length && moved.every(node => node instanceof Element && node.hasAttribute("data-width-probe"))) return false;
         if (change.target instanceof Element && change.target.closest(".object-list-row")) return true;
         return [...change.addedNodes, ...change.removedNodes].some(node => node instanceof Element && (
           node.matches(".object-list-row,.object-list-group,.object-list-head,.object-list-inner-toolbar") || node.querySelector(".object-list-row")
@@ -108,7 +130,7 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
     });
     mutations.observe(list, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["aria-selected", "data-detail"] });
     well.addEventListener("scroll", scrolled, { passive: true });
-    well.addEventListener("scrollend", ended);
+    const offScrollEnd = onScrollEnd(well, ended);
     well.addEventListener("wheel", gesture, { passive: true });
     well.addEventListener("pointerdown", gesture, { passive: true });
     well.addEventListener("focusin", focus);
@@ -119,7 +141,7 @@ export function useWholeRows(listRef: RefObject<HTMLDivElement | null>, wellRef:
     return () => {
       active = false; cancelRowLayout(read); observer?.disconnect(); mutations.disconnect();
       document.fonts?.removeEventListener("loadingdone", resized);
-      well.removeEventListener("scroll", scrolled); well.removeEventListener("scrollend", ended);
+      well.removeEventListener("scroll", scrolled); offScrollEnd();
       well.removeEventListener("wheel", gesture); well.removeEventListener("pointerdown", gesture); well.removeEventListener("focusin", focus);
       well.style.height = "";
       list.style.removeProperty("--object-list-row-floor");
