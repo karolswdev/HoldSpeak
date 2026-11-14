@@ -124,7 +124,9 @@ KEPT_DISCLOSURE = (
     "pages/cores/connections/Destinations.tsx",
     "desk/hand/HandConfirm.tsx",
     "desk/components/HandSheet.tsx",
-    "features/runson/EngineLibrary.tsx",
+    # EngineLibrary names each service beside Check in plain words; its
+    # rendered disclosure and no-chip property use the producer catalog in
+    # features/runson/__tests__/engines.app.test.tsx.
     "pages/cores/connections/ConnectionsPane.tsx",
     "features/project-room/door/DoorCore.tsx",
     # Generic Nudge composes the SendWell above. The PR-comment act names

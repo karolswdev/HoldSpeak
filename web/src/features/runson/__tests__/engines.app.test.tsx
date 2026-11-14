@@ -304,3 +304,44 @@ it("gives the speech roster its list well and returns with Back", async () => {
   fireEvent.click(within(roster.closest<HTMLElement>(".surface-list-pane")!).getByRole("button", {name:"Back"}));
   expect(screen.getByRole("grid", {name:"Engines on this desk"})).toBeVisible();
 });
+
+
+async function openAddKind(kind: string) {
+  chainHub(); render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
+  fireEvent.click(document.querySelector(`[role="tab"][data-tab="${kind}"]`)!);
+  return screen.getByTestId("settings-engines-library");
+}
+
+it.each(chainRecorded.gets["/api/concierge/detect"].services)("names the prompt destination once at the $name check without a host chip", async (service) => {
+  const library = await openAddKind("service");
+  fireEvent.change(within(library).getByRole("combobox", {name:"Service"}), {target:{value:service.id}});
+  expect(within(library).getByText(`Prompts go to ${service.name}`, {exact:true})).toBeVisible();
+  expect(library.querySelector(".gadget-chip-egress")).toBeNull();
+  expect(library).not.toHaveTextContent(service.host);
+  expect(within(library).getByRole("button", {name:"Check"})).toBeEnabled();
+});
+
+it("uses proper provider names in the agent roster and selected engine details", async () => {
+  const library = await openAddKind("agent");
+  const agents = within(library).getByRole("grid", {name:"Agent engines"});
+  expect(within(agents).getByText("Anthropic", {exact:true})).toBeVisible();
+  expect(within(agents).getByText("OpenAI", {exact:true})).toBeVisible();
+  fireEvent.click(within(library).getByRole("button", {name:"Done"}));
+  fireEvent.click(within(library).getByText("Codex", {exact:true}));
+  fireEvent.click(within(library).getByRole("button", {name:"Inspect"}));
+  const destination = within(library).getByText("Prompts go to", {exact:true}).closest(".gadget-row")!;
+  expect(destination).toHaveTextContent("OpenAI");
+  expect(destination).not.toHaveTextContent("OPENAI");
+});
+
+it("puts Find on LAN in the address field row", async () => {
+  const library = await openAddKind("lan");
+  const address = within(library).getByRole("textbox", {name:"Server address"});
+  const find = within(library).getByRole("button", {name:"Find on LAN"});
+  expect(find.closest(".gadget-row")).not.toBeNull();
+  expect(find.closest(".gadget-row")).toBe(address.closest(".gadget-row"));
+  expect(find.closest(".gadget-row")!.querySelector(".gadget-row-label")).toHaveTextContent("Server address");
+});
