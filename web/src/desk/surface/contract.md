@@ -2309,6 +2309,12 @@ seat after padding, glyphs, lamps and meters.
   the default remains the two-line name fitter. Meeting outcomes use wrap.
 - `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
   inspectors use the shared file object for them, rather than human initials.
-- `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
-  header and list verb row. Its remaining viewport seat scrolls to the last
-  entry; it does not lift the menu back over those controls.
+- Every `WorkMenu` uses the owner window's measured free seat. Its opener's
+  row, visible selected rows, tabs, list chrome and the status strip stay clear. A panel opens
+  below, flips above when needed, and scrolls inside the window if neither
+  side holds its full height. A short menu ends at a measured entry boundary;
+  entries scroll at their full height. There is no per-app placement opt-in.
+- The Mast Back gadget always keeps its chevron; its whole navigation word
+  yields first when the measured gadget cannot hold both.
+- A selection list measures read-only columns from its header and visible facts;
+  the name takes the remainder. Editable cells retain their declared minimum.

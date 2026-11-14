@@ -298,7 +298,7 @@ function MeetingObjectMenu({ windowId, entries, anchor, onBack }: { windowId: st
   return <Toolbar label="Meeting actions" data-testid="meeting-toolbar">
     {onBack && !compact ? <Button dense data-testid="meeting-pane-back" onClick={onBack}>Back</Button> : null}
     <Button dense ref={anchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>
-    {open && anchor.current ? <WorkMenu label="Meeting actions" clearChrome x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom} entries={entries} autoFocus opener={anchor.current} onClose={() => setOpen(false)} returnFocus={() => anchor.current?.focus()} /> : null}
+    {open && anchor.current ? <WorkMenu label="Meeting actions" x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom} entries={entries} autoFocus opener={anchor.current} onClose={() => setOpen(false)} returnFocus={() => anchor.current?.focus()} /> : null}
   </Toolbar>;
 }
 

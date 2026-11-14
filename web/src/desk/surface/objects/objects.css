@@ -667,27 +667,6 @@
 .object-list-sortline {
   display: none;
 }
-.desk-next .surface-popover:has(> .object-list-sortmenu) {
-  padding: 4px;
-  font-family: var(--font-sans);
-}
-.object-list-sortmenu {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 160px;
-}
-.desk-next .object-list-sortmenu .btn {
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  font: 500 13px / 1 var(--font-sans);
-  text-align: left;
-}
-.desk-next .object-list-sortmenu .btn[aria-pressed="true"] {
-  background: var(--wb-blue);
-  color: var(--wb-sel);
-}
 @container surface (max-width: 520px) {
   /* Narrow: the rows fold to two lines, so the column header (cells that no
      longer sit over anything) is hidden; the sort lives in the Sort verb.
