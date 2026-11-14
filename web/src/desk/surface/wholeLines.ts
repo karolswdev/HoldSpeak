@@ -39,8 +39,8 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         // Reserve the full seat while its field box ends at a whole row.
         // Clearing the previous fit above lets a changed form grow again.
         const height = Math.max(0, cut - box.top + (cut < box.bottom ? bottomBorder : 0));
-        el.style.maxHeight = `${Math.floor(height)}px`;
-        el.style.marginBottom = `${Math.ceil(box.height - height)}px`;
+        el.style.maxHeight = `${height}px`;
+        el.style.marginBottom = `${box.height - height}px`;
         el.scrollTop = savedScroll;
         box = el.getBoundingClientRect();
         rectangles.splice(0, rectangles.length, ...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
