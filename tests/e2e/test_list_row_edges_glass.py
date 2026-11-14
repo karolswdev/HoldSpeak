@@ -188,7 +188,13 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width,
                 editor = win.get_by_role("textbox", name="Ask about your work", exact=True)
                 editor.fill("Read the recovery points")
                 editor.press("Enter")
-                well = win.get_by_test_id("ask-looked-at").locator(".object-list-rows")
+                source_seat = win.get_by_test_id("ask-looked-at")
+                if width == 393:
+                    show = source_seat.get_by_role("button", name="Sources 50", exact=True)
+                    expect(show).to_have_attribute("aria-expanded", "false")
+                    show.click()
+                    expect(show).to_have_attribute("aria-expanded", "true")
+                well = source_seat.locator(".object-list-rows")
                 expect(well.locator('[data-object-id]')).to_have_count(len(notes))
                 well.locator('[data-object-id]').last.click()
                 _measure(page, well, "ask-sources-selected", width, faults, selected=True)
@@ -199,8 +205,8 @@ def test_shared_list_row_edges_and_cross_app_shots(tmp_path, monkeypatch, width,
                 whole = [row for row in end["visible"] if row["top"] >= end["edge"]-.1 and row["bottom"] <= end["bottom"]+.1]
                 gap = max(0, end["bottom"]-end["border"]-end["last"]["bottom"])
                 top_gap = max(0, end["first"]["top"]-end["edge"])
-                if len(whole) != 3 or len(end["visible"]) != 3 or gap > .1 or top_gap > .1 or end["last"]["id"] != end["rows"][-1]["id"]:
-                    faults.append(("ask-sources-end", "Three whole source rows and no end gap", {"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}))
+                if not whole or len(whole) != len(end["visible"]) or (width == 1440 and len(whole) < 3) or gap > .1 or top_gap > .1 or end["last"]["id"] != end["rows"][-1]["id"]:
+                    faults.append(("ask-sources-end", "Whole source rows, at least three at 900, and no end gap", {"whole":len(whole),"gap_px":gap,"top_gap_px":top_gap,**end}))
                 report = os.environ.get("LIST_EDGE_REPORT")
                 if report:
                     folder = Path(report)

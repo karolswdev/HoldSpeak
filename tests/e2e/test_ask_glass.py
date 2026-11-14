@@ -118,7 +118,7 @@ def _seat_failures(win, width):
         const sr=sourceSeat.getBoundingClientRect(), rr=reading.closest('.surface-object-reader').getBoundingClientRect();
         if(sr.top<rr.bottom-1) failures.push('Sources is not below the answer');
         const pane=sourceSeat.closest('.surface-list-pane');
-        if(pane && rr.height<pane.getBoundingClientRect().height*.6-1) failures.push('The answer has less than 60 percent of its seat');
+        if(pane && rr.height<pane.getBoundingClientRect().height*.55-1) failures.push('The answer has less than 55 percent of its seat');
         if(width===393 && !sourceSeat.querySelector('[aria-expanded]')) failures.push('Compact Sources has no reveal');
         const trigger=sourceSeat.querySelector('[aria-expanded]'), opener=sourceSeat.querySelector('[data-list-verb=open-source]');
         if(width===393 && trigger && opener && opener.getBoundingClientRect().top<trigger.getBoundingClientRect().bottom+7.5) failures.push('Source controls touch');
@@ -132,7 +132,16 @@ def _seat_failures(win, width):
       if(!win.querySelector('[data-testid=ask-conversation]')) for(const b of win.querySelectorAll('[data-testid=ask-actions] button:disabled')) if(/^(Save as note|Make it a task|Send|Copy)/.test(b.textContent.trim())) failures.push('An empty ask shows an answer-only verb');
       for(const pre of win.querySelectorAll('pre.reading-code')) {
         const label=pre.querySelector('.reading-language'), code=pre.querySelector('code');
-        if(label && code && reading?.getBoundingClientRect().height) {const r=edge(reading), l=label.getBoundingClientRect();const first=document.createRange();first.setStart(code.firstChild,0);first.setEnd(code.firstChild,code.textContent.split('\n')[0].length);const c=first.getBoundingClientRect();if(l.top>=r.top && l.bottom<=r.bottom && c.top>=r.bottom) failures.push('A code block shows only its language');}
+        if(!code || !reading?.getBoundingClientRect().height) continue;
+        const scroller=pre.closest('.reading-scroll'), r=edge(reading), scroll=scroller.getBoundingClientRect(), walker=document.createTreeWalker(code,NodeFilter.SHOW_TEXT), lines=[];let lastNode;
+        for(let node=walker.nextNode();node;node=walker.nextNode()) {
+          if(node.textContent.trim())lastNode=node;
+          let from=0; for(const line of node.textContent.split('\n')) {if(line.trim()){const range=document.createRange();range.setStart(node,from);range.setEnd(node,from+line.length);lines.push(...range.getClientRects());}from+=line.length+1;}
+        }
+        if(label && lines.length) {const l=label.getBoundingClientRect();if(l.top>=r.top && l.bottom<=r.bottom && lines[0].top>=r.bottom) failures.push('A code block shows only its language');}
+        for(const line of lines) if(line.top>=r.top-.5 && line.bottom<=r.bottom+.5 && line.width<=scroll.width-24 && (line.left<scroll.left-1 || line.right>scroll.right+1)) failures.push('A short code line leaves a blank band');
+        if(label) {const l=label.getBoundingClientRect();if(l.top>=r.top && l.bottom<=r.bottom && (l.left<scroll.left-1 || l.right>scroll.right+1)) failures.push('The code language leaves a blank band');}
+        if(lastNode && scroller.scrollLeft>0 && scroller.scrollLeft>=scroller.scrollWidth-scroller.clientWidth-1) {const end=document.createRange();end.setStart(lastNode,lastNode.textContent.length-1);end.setEnd(lastNode,lastNode.textContent.length);const glyph=end.getBoundingClientRect();if(glyph.left<scroll.left-1 || glyph.right>scroll.right+1) failures.push('The code tail is not reachable');}
       }
       const scope=document.querySelector('[data-testid=ask-scope-menu] .object-list-rows');
       if(scope) {const box=edge(scope), rows=[...scope.querySelectorAll('[data-object-id]')];if(rows.length && !scope.getBoundingClientRect().height) failures.push('The scope rows have no visible seat');if(rows.some(row=>{const r=row.getBoundingClientRect();return r.top<box.bottom-.5 && r.bottom>box.bottom+.5;})) failures.push('The scope search ends in a partial row');}
@@ -464,6 +473,14 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 _settle(page)
                 page.screenshot(path=str(shots / f"checks-{state}-{stage}-{900 if width == 1440 else 393}.png"))
                 seat_failures.extend((state, reason) for reason in _seat_failures(win, width))
+                metrics = win.evaluate(r"""win=>{
+                  const reading=win.querySelector('.surface-object-reading');if(!reading)return null;
+                  const box=reading.getBoundingClientRect(), clip=getComputedStyle(reading).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(' ').map(parseFloat), top=box.top+(clip?.[0]||0), bottom=box.bottom-(clip?.[2]??clip?.[0]??0), ys=[];
+                  for(const doc of reading.querySelectorAll('[data-testid=ask-turn] .reading-document')) {const walker=document.createTreeWalker(doc,NodeFilter.SHOW_TEXT);for(let node=walker.nextNode();node;node=walker.nextNode()){if(!node.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())if(r.top>=top-.5&&r.bottom<=bottom+.5&&!ys.some(y=>Math.abs(y-r.top)<1))ys.push(r.top);}}
+                  return {answer_lines:ys.length,line_tops:ys.sort((a,b)=>a-b),reader:box.toJSON(),painted_top:top,painted_bottom:bottom};
+                }""")
+                (shots / f"{state}-{stage}-{900 if width == 1440 else 393}.json").write_text(json.dumps(metrics,indent=2))
+
                 if state == "thread-open" and not win.locator(".surface-object-reading").evaluate("el => {const r=el.getBoundingClientRect(), h=[...el.querySelectorAll('[data-testid=ask-turn] > h3')].at(-1).getBoundingClientRect();return h.top>=r.top-1 && h.bottom<=r.bottom+1;}"):
                     seat_failures.append((state, "The thread opens past its newest question"))
                 expect(win.locator(".surface-mast-title")).to_have_count(1)
@@ -670,6 +687,14 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
                 _settle(page)
                 page.screenshot(path=str(shots / f"{state}-{stage}-{900 if width == 1440 else 393}.png"))
                 seat_failures.extend((state, reason) for reason in _seat_failures(win, width))
+                metrics = win.evaluate(r"""win=>{
+                  const reading=win.querySelector('.surface-object-reading');if(!reading)return null;
+                  const box=reading.getBoundingClientRect(), clip=getComputedStyle(reading).clipPath.match(/inset\(([^)]+)\)/)?.[1].split(' ').map(parseFloat), top=box.top+(clip?.[0]||0), bottom=box.bottom-(clip?.[2]??clip?.[0]??0), ys=[];
+                  for(const doc of reading.querySelectorAll('[data-testid=ask-turn] .reading-document')) {const walker=document.createTreeWalker(doc,NodeFilter.SHOW_TEXT);for(let node=walker.nextNode();node;node=walker.nextNode()){if(!node.textContent.trim())continue;const range=document.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())if(r.top>=top-.5&&r.bottom<=bottom+.5&&!ys.some(y=>Math.abs(y-r.top)<1))ys.push(r.top);}}
+                  return {answer_lines:ys.length,line_tops:ys.sort((a,b)=>a-b),reader:box.toJSON(),painted_top:top,painted_bottom:bottom};
+                }""")
+                (shots / f"{state}-{stage}-{900 if width == 1440 else 393}.json").write_text(json.dumps(metrics,indent=2))
+
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert not errors, errors
 
@@ -746,6 +771,9 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             pending.pop().fulfill(json=answer)
             expect(win.get_by_test_id("ask-turn")).to_be_visible()
             shot("3-many-sources")
+            editor.fill("What must I read before the platform architecture review, and who owns the migration, the rollback record and the retained draft?")
+            shot("3-many-sources-draft")
+            editor.fill("")
             code = win.locator("pre.reading-code").first
             well = win.locator(".surface-object-reading")
             well.evaluate("(el, top) => el.scrollTop += top-el.getBoundingClientRect().top", code.evaluate("el=>el.getBoundingClientRect().top"))

@@ -12,11 +12,15 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
       let box = el.getBoundingClientRect();
       const bottomBorder = rows ? parseFloat(getComputedStyle(el).borderBottomWidth) || 0 : 0;
       const rectangles: DOMRect[] = [];
+      // A row embedded in prose is one reading line, not another scroll seat.
+      // Oversized rows keep their text lines so their content stays reachable.
+      const embedded = rows ? [] : [...el.querySelectorAll<HTMLElement>(".object-list-row")].filter(row => row.getBoundingClientRect().height <= box.height);
+      const blocks = embedded.map(row => row.getBoundingClientRect());
       if (rows) rectangles.push(...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
       else {
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-          if (!node.textContent?.trim()) continue;
+          if (!node.textContent?.trim() || embedded.some(row => row.contains(node))) continue;
           const range = document.createRange();
           if (typeof range.getClientRects !== "function") continue;
           if (node.parentElement?.closest("pre") && node.textContent.includes("\n")) {
@@ -31,8 +35,9 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
           }
         }
       }
+      rectangles.push(...blocks);
       const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom - bottomBorder + .5);
-      let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows ? 0 : 1)));
+      let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows || blocks.includes(rect) ? 0 : 1)));
       if (rows) {
         // Reserve the full seat while its field box ends at a whole row.
         // Clearing the previous fit above lets a changed form grow again.
@@ -51,12 +56,16 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         if (!code?.textContent) continue;
         const first = document.createRange();
         if (typeof first.getBoundingClientRect !== "function") continue;
-        first.setStart(code, 0); first.setEnd(code, code.textContent.split("\n")[0].length);
+        if (code.nodeType === Node.TEXT_NODE) {
+          first.setStart(code, 0); first.setEnd(code, code.textContent.split("\n")[0].length);
+        } else first.selectNodeContents(code);
         const line = first.getBoundingClientRect();
         if (top >= box.top && top < cut && line.bottom > cut) cut = top;
       }
       const start = Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom));
-      el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${Math.ceil(start - box.top)}px`} 0 ${Math.ceil(box.bottom - cut)}px 0)` : "";
+      const top = blocks.some(rect => rect.bottom === start) ? start - box.top : Math.ceil(start - box.top);
+      const bottom = blocks.some(rect => rect.top === cut) ? box.bottom - cut : Math.ceil(box.bottom - cut);
+      el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${top === 0 ? "0" : `${top}px`} 0 ${bottom}px 0)` : "";
     };
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;
     observer?.observe(el);

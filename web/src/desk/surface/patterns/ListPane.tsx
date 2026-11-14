@@ -56,7 +56,7 @@ export function ListPane({
   const hasList = hasWords(list);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (listPosition === "after" || typeof ResizeObserver === "undefined" || !ref.current) return;
+    if (typeof ResizeObserver === "undefined" || !ref.current) return;
     const update = () => {
       const seat = ref.current;
       const grid = [
@@ -230,7 +230,7 @@ export function ListPane({
     <div
       className="surface-list-pane"
       data-layout={hasPreview && listPosition === "after" ? "stack" : deck && hasList ? "deck" : undefined}
-      style={listShare == null ? undefined : {"--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
+      style={listShare == null ? undefined : {"--surface-list-limit": `${Math.max(.1,Math.min(.9,listShare))*100}%`, "--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
       data-detail-open={(hasPreview && open) || undefined}
     >
       {listPosition === "after" ? previewSeat : listSeat}

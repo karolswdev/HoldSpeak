@@ -80,3 +80,11 @@ describe("shared reading document", () => {
     expect(container.textContent).toBe("May I open Held task action:held-17?");
   });
 });
+
+it("preserves code bytes, indentation and empty lines in the shared scroll well", () => {
+  const body="git status --short\n\ncheckpoint="+"x".repeat(180)+"\n    keep the recovery point";
+  const {container}=render(<ReadingDocument>{"```sh\n"+body+"\n```"}</ReadingDocument>);
+  const code=container.querySelector("pre code")!;
+  expect(code.textContent).toBe(body);
+  expect(code.closest(".reading-scroll")).toHaveAttribute("tabindex", "0");
+});

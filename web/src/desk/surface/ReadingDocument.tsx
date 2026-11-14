@@ -1,6 +1,6 @@
 /** Shared Markdown reading species. Lezer owns the grammar; React owns the DOM.
  * HTML stays text and images stay alt text. No content is fetched on render. */
-import { createElement, useMemo, useRef, type ReactNode } from "react";
+import { Fragment, createElement, useMemo, useRef, type ReactNode } from "react";
 import { parser as commonmark, Emoji, GFM, Subscript, Superscript, type DelimiterType } from "@lezer/markdown";
 import type { SyntaxNode } from "@lezer/common";
 import { Button } from "../../components/signal/Signal";
@@ -174,7 +174,7 @@ function renderNode(node: SyntaxNode, context: Context): ReactNode {
       const body = code.length ? source.slice(code[0].from, code.at(-1)!.to) : "";
       const info = node.getChild("CodeInfo");
       const lang = info ? source.slice(info.from, info.to) : "";
-      return <ReadingOverflow key={key} label="Code"><pre className="reading-code aw-pre">{lang && <span className="reading-language aw-lang">{lang}</span>}<code>{body}</code></pre></ReadingOverflow>;
+      return <ReadingOverflow key={key} label="Code"><pre className="reading-code aw-pre">{lang && <span className="reading-language aw-lang">{lang}</span>}<code>{body.split("\n").map((line, index, lines) => <Fragment key={index}><span className="reading-code-line">{line}</span>{index < lines.length - 1 ? "\n" : null}</Fragment>)}</code></pre></ReadingOverflow>;
     }
     case "Table": return <ReadingOverflow key={key} label="Table"><table className="reading-table"><thead>{children.filter((child) => child.name === "TableHeader").map((row) => renderNode(row, context))}</thead><tbody>{children.filter((child) => child.name === "TableRow").map((row) => renderNode(row, context))}</tbody></table></ReadingOverflow>;
     case "TableHeader":
