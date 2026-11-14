@@ -1999,7 +1999,11 @@
    "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
    "updated_at": "2026-10-12T18:03:53+00:00",
-   "editable_claims": []
+   "editable_claims": [],
+   "binding": {
+    "id": "pupd_66b6d4bd58484107a1b4ce542b0a6714",
+    "revision": "d9d087936457b02131429625011dc5c1a11dea85b721a522d606fa8f020e57c2"
+   }
   }
  },
  "updates": {
@@ -2258,7 +2262,11 @@
        }
       ]
      }
-    ]
+    ],
+    "binding": {
+     "id": "pupd_130a35e7ebc34a69b21c1a3985821986",
+     "revision": "875f7307bb95f466ad6cb680624305280070b6c672ca505c5e20356b6a52a374"
+    }
    },
    {
     "body_md": "## Progress\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk [high]: Vendor contract lapses -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Vendor contract lapses -- open, due 2026-01-15\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
@@ -2281,7 +2289,11 @@
     "review_id": "prev_2c2744a0d829487a85f8c270f0efc66c",
     "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"prev_2c2744a0d829487a85f8c270f0efc66c\",\"week_source_refs\":[]}",
     "updated_at": "2026-10-12T18:03:53+00:00",
-    "editable_claims": []
+    "editable_claims": [],
+    "binding": {
+     "id": "pupd_66b6d4bd58484107a1b4ce542b0a6714",
+     "revision": "d9d087936457b02131429625011dc5c1a11dea85b721a522d606fa8f020e57c2"
+    }
    }
   ]
  },

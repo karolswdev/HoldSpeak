@@ -191,19 +191,19 @@ def test_edit_one_claim_subject_and_choices_preserves_other_claims_and_refuses_s
         values = {**editing["values"], "subject": "Keep the tested rollback ready", "state": "mitigated"}
         edit = {"span_id": editing["span_id"], "text": editing["text"], "values": values}
         with pytest.raises(ValidationError, match="Only the owner can edit a saved claim"):
-            service.save_update(AGENT, draft["id"], claim_edits=[edit])
+            service.save_update(AGENT, draft["id"], claim_edits=[edit], binding=draft["binding"])
         assert db.project_updates.get_update(draft["id"])["body_md"] == draft["body_md"]
-        after = service.save_update(OWNER, draft["id"], claim_edits=[edit], command_id="owner-claim-edit")
+        after = service.save_update(OWNER, draft["id"], claim_edits=[edit], binding=draft["binding"], command_id="owner-claim-edit")
         with pytest.raises(ValidationError, match="Only the owner can edit a saved claim"):
-            service.save_update(AGENT, draft["id"], claim_edits=[edit], command_id="owner-claim-edit")
+            service.save_update(AGENT, draft["id"], claim_edits=[edit], binding=draft["binding"], command_id="owner-claim-edit")
         assert after["body_md"] == draft["body_md"].replace(editing["text"], "Risk [critical]: Keep the tested rollback ready -- mitigated", 1)
         assert any(row["text"] == "Risk [critical]: Keep the tested rollback ready -- mitigated" for row in _claims(after))
-        with pytest.raises(ConflictError, match="The claim changed\\. Read it again\\."):
-            service.save_update(OWNER, draft["id"], claim_edits=[edit])
+        with pytest.raises(ConflictError, match="Nothing changed\\. Read again\\."):
+            service.save_update(OWNER, draft["id"], claim_edits=[edit], binding=draft["binding"])
         assert db.project_updates.get_update(draft["id"])["body_md"] == after["body_md"]
         fresh = next(row for row in after["editable_claims"] if row["values"].get("subject") == values["subject"])
         with pytest.raises(ValidationError, match="Choose a state from the list\\."):
-            service.save_update(OWNER, draft["id"], claim_edits=[{**fresh, "values": {**fresh["values"], "state": "garbage"}}])
+            service.save_update(OWNER, draft["id"], claim_edits=[{**fresh, "values": {**fresh["values"], "state": "garbage"}}], binding=after["binding"])
     finally:
         reset_database()
 

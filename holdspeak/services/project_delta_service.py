@@ -30,7 +30,7 @@ from __future__ import annotations
 from .room_errors import room_not_found
 
 from .room_binding import room_binding, check_room_binding
-from .room_edit_fields import review_edit_fields, validate_edit_fields
+from .room_edit_fields import review_edit_fields, merge_review_edits, read_review_patch
 
 import hashlib
 import json
@@ -922,18 +922,15 @@ class ProjectDeltaService:
                     code="capability",
                 )
 
-            effective_patch = patch if (verb == "edit_accept" and patch) else None
+            effective_patch = (patch if patch is not None else {}) if verb == "edit_accept" else None
             patch_json_str = proposal.get("patch_json", "{}")
-            if effective_patch is not None:
-                # edit_accept: merge edited fields into existing patch
-                try:
-                    base_patch = json.loads(patch_json_str) if isinstance(
-                        patch_json_str, str) else patch_json_str
-                except (json.JSONDecodeError, TypeError):
-                    base_patch = {}
-                base_patch.update(effective_patch)
-                validate_edit_fields(review_edit_fields(base_patch, proposal_kind), effective_patch)
-                patch_json_str = _deterministic_json(base_patch)
+            item_patch = _parse_facts(proposal)
+            if verb == "edit_accept":
+                edited = merge_review_edits(item_patch, proposal_kind, effective_patch)
+                # Producer-only details are trusted handler input, never editable
+                # fields or new durable patch data supplied by the caller.
+                item_patch = {**item_patch, **edited}
+                patch_json_str = _deterministic_json(edited)
 
             # HS-161-07 S-2 fix: decide + create_item in ONE transaction
             # (the 159 M-1 conn-threading pattern).  A fault between
@@ -944,11 +941,6 @@ class ProjectDeltaService:
             # validation errors abort before any DB write.
             item_payload: Optional[dict[str, Any]] = None
             if handler_action == "create_item" and self._project_service:
-                try:
-                    item_patch = json.loads(patch_json_str) if isinstance(
-                        patch_json_str, str) else patch_json_str
-                except (json.JSONDecodeError, TypeError):
-                    item_patch = {}
 
                 item_type = item_patch.get("item_type", "risk")
                 item_payload = {
@@ -1999,7 +1991,7 @@ class ProjectDeltaService:
                     "target_ref": p.get("target_ref", ""),
                     "title": p.get("title", ""),
                     "rationale": p.get("rationale", ""),
-                    "patch_json": p.get("patch_json", "{}"),
+                    "patch_json": _deterministic_json(read_review_patch(_parse_facts(p), p.get("proposal_kind", ""))),
                     "editable_fields": review_edit_fields(_parse_facts(p), p.get("proposal_kind", "")),
                     "materiality": p.get("materiality", "0"),
                     "producer_kind": p.get("producer_kind", ""),

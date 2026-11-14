@@ -103,6 +103,9 @@ def prepare_project_update_call(
     from ..db import get_database
 
     args = dict(arguments or {})
+    from ..principals import PrincipalKind
+    if name == "project.update_draft" and "claim_edits" in args and principal.kind is not PrincipalKind.OWNER:
+        return args, set(), "Only the owner can edit a saved claim."
     _service, excluded = update_source_service(principal, project_id)
     folded_excluded = {str(ref).casefold() for ref in excluded}
     if name == "meeting.get":

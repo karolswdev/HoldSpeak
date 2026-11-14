@@ -43,7 +43,11 @@
         }
        ]
       }
-     ]
+     ],
+     "binding": {
+      "id": "pupd_e1204a122167443aa0ade6216f8dd53e",
+      "revision": "c00083fc16e490be32b9960122469d9f2d33d62031435e8a18357ca1f1579eff"
+     }
     }
    ]
   }
@@ -2989,7 +2993,11 @@
        }
       ]
      }
-    ]
+    ],
+    "binding": {
+     "id": "pupd_e1204a122167443aa0ade6216f8dd53e",
+     "revision": "c00083fc16e490be32b9960122469d9f2d33d62031435e8a18357ca1f1579eff"
+    }
    }
   },
   "method": "POST",

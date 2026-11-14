@@ -9,7 +9,7 @@ from holdspeak.services.project_definitions import ITEM_LIFECYCLES, SEVERITY_RAN
 
 @pytest.mark.parametrize("kind,state", [(kind, state) for kind, states in ITEM_LIFECYCLES.items() for state in states])
 @pytest.mark.parametrize("severity", [None, *SEVERITY_RANK])
-@pytest.mark.parametrize("subject", ["Read [the plan]", "[", "]", "A: B -- open", "First\nSecond\n", "[x]: --\nRisk [critical]: nested -- closed"])
+@pytest.mark.parametrize("subject", ["Read [the plan]", "[", "]", "A: B -- open", "First\nSecond\n", "[x]: --\nRisk [critical]: nested -- closed", *[f"X{char}- Risk [critical]: injected" for char in ("\x0b", "\x0c", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029", "\x00", "\t", "\x7f", "\u200b")]])
 def test_declared_item_sentences_round_trip(kind, severity, subject, state):
     fields = dict(kind=kind, severity=severity, subject=subject, state=state)
     assert sentence.parse(sentence.compose(**fields)) == fields

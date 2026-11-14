@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 from .errors import ConflictError, ValidationError
 from .project_definitions import ITEM_LIFECYCLES, SEVERITY_RANK
@@ -43,24 +44,42 @@ def claim_editor(claim: dict[str, Any]) -> dict[str, Any]:
     return {"span_id": claim["span_id"], "section": str(claim.get("section") or ""), "text": text, "values": values, "fields": fields}
 
 
-def _claim_range(body: str, section: str, headings: dict[str, str]) -> tuple[int, int] | None:
-    marker = f"## {headings.get(section, '')}\n"
-    start = body.find(marker)
-    if start < 0:
-        return None if any(f"## {heading}\n" in body for heading in headings.values()) else (0, len(body))
-    start += len(marker)
-    end = body.find("\n## ", start)
-    return start, end if end >= 0 else len(body)
+def _claim_occurrences(body: str, claim: dict[str, Any], headings: dict[str, str]) -> list[tuple[int, int]]:
+    """Locate complete current claim payloads, never a substring in newer words."""
+    from .project_update_service import UNVERIFIED_MARKER
+
+    sections = {f"## {title}": key for key, title in headings.items()}
+    section = None
+    offset = 0
+    found = []
+    wanted = str(claim.get("text") or "")
+    decoded = parse(wanted)
+    for line in body.splitlines(keepends=True):
+        text = line.rstrip("\r\n")
+        if text in sections:
+            section = sections[text]
+        else:
+            start = offset
+            for prefix in ("- ", "* ", "+ ", "> "):
+                if text != wanted and text.startswith(prefix):
+                    start += len(prefix)
+                    text = text[len(prefix):]
+                    break
+            marker = UNVERIFIED_MARKER + " "
+            if text != wanted and text.startswith(marker):
+                start += len(marker)
+                text = text[len(marker):]
+            if text != wanted and text.startswith("**") and text.endswith("**"):
+                start += 2
+                text = text[2:-2]
+            if wanted and text == wanted and parse(text) == decoded and (section is None or section == claim.get("section")):
+                found.append((start, start + len(text)))
+        offset += len(line)
+    return found
 
 
 def claim_editors(body: str, claims: list[dict[str, Any]], headings: dict[str, str]) -> list[dict[str, Any]]:
-    out = []
-    for claim in claims:
-        bounds = _claim_range(body, str(claim.get("section") or ""), headings)
-        text = str(claim.get("text") or "")
-        if bounds and text and body[bounds[0]:bounds[1]].count(text) == 1:
-            out.append(claim_editor(claim))
-    return out
+    return [claim_editor(claim) for claim in claims if len(_claim_occurrences(body, claim, headings)) == 1]
 
 
 def edit_claim_body(body: str, claims: list[dict[str, Any]], edits: list[dict[str, Any]], headings: dict[str, str]) -> str:
@@ -68,8 +87,8 @@ def edit_claim_body(body: str, claims: list[dict[str, Any]], edits: list[dict[st
     for edit in edits:
         claim = by_id.get(edit.get("span_id"))
         old = str(claim.get("text") or "") if claim else ""
-        if not claim or old != edit.get("text") or old not in body:
-            raise ConflictError("The claim changed. Read it again.", code="claim_edit_stale")
+        if not claim or old != edit.get("text"):
+            raise ConflictError("This item changed or its saved version is missing. Nothing changed. Read again.", code="answer_stale")
         schema = claim_editor(claim)
         values = edit.get("values")
         if not isinstance(values, dict) or set(values) != set(schema["values"]):
@@ -80,21 +99,17 @@ def edit_claim_body(body: str, claims: list[dict[str, Any]], edits: list[dict[st
         if isinstance(values.get("kind"), str) and values["kind"] in ITEM_LIFECYCLES:
             fields = [choice("state", ITEM_LIFECYCLES[values["kind"]]) if field["key"] == "state" else field for field in fields]
         validate_edit_fields(fields, values)
-        subject = str(values["subject"] or "").strip()
-        if "\n" in subject or "\r" in subject:
+        subject = values["subject"]
+        if len(subject.splitlines()) != 1 or any(unicodedata.category(char) in ("Cc", "Cf", "Cs", "Zl", "Zp") for char in subject):
             raise ValidationError("Enter one claim subject on one line.", code="claim_subject_invalid")
+        subject = subject.strip()
         if not subject:
             raise ValidationError("Enter the claim subject.", code="claim_subject_required")
         saved = parse(old)
         new = compose(values["kind"], values.get("severity"), subject, values["state"], due=saved.get("due")) if saved else subject
-        # The same source fact can occur in Progress and Risks. Bind its
-        # occurrence to the claim's section, not the first matching sentence.
-        bounds = _claim_range(body, str(claim.get("section") or ""), headings)
-        if bounds is None:
-            raise ConflictError("The claim changed. Read it again.", code="claim_edit_stale")
-        start, end = bounds
-        section = body[start:end]
-        if section.count(old) != 1:
-            raise ConflictError("The claim changed. Read it again.", code="claim_edit_stale")
-        body = body[:start] + section.replace(old, new, 1) + body[end:]
+        occurrences = _claim_occurrences(body, claim, headings)
+        if len(occurrences) != 1:
+            raise ConflictError("This item changed or its saved version is missing. Nothing changed. Read again.", code="answer_stale")
+        start, end = occurrences[0]
+        body = body[:start] + new + body[end:]
     return body

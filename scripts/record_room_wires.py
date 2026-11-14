@@ -1204,9 +1204,9 @@ def edit14(hub: Any, _mp: pytest.MonkeyPatch) -> dict[str, Any]:
     claim=next(row for row in update["editable_claims"] if row["values"].get("state") == "open")
     values={**claim["values"],"subject":"Read the saved rollback plan","state":"mitigated"}
     edit={"span_id":claim["span_id"],"text":claim["text"],"values":values}
-    saved=hub.ok("PUT",f"/api/updates/{update['id']}",{"claim_edits":[edit]})
+    saved=hub.ok("PUT",f"/api/updates/{update['id']}",{"claim_edits":[edit],"binding":update["binding"]})
     assert "Risk [critical]: Read the saved rollback plan -- mitigated" in saved["update"]["body_md"]
-    stale=_call(hub,"PUT",f"/api/updates/{update['id']}",{"claim_edits":[edit]})
+    stale=_call(hub,"PUT",f"/api/updates/{update['id']}",{"claim_edits":[edit],"binding":update["binding"]})
     assert stale["status"] == 409, stale
     assert hub.ok("GET",f"/api/updates/{update['id']}")["update"]["body_md"] == saved["update"]["body_md"]
     hub.db.project_observations.insert_proposal(proposal_id="room-edit-item",project_id=pid,review_window_key="room-edit-review",proposal_kind="risk_attention",title="Read the cutover",target_ref=f"project:{pid}",patch_json=json.dumps({"item_type":"risk","title":"Read the cutover","lifecycle":"open"}))
@@ -1224,18 +1224,27 @@ def refresh_edit_fields() -> None:
     """Replay the read projection over recorded stored rows, without live effects."""
     from holdspeak.services.project_update_service import ProjectUpdateService
     from holdspeak.services.project_delta_service import _parse_facts
-    from holdspeak.services.room_edit_fields import review_edit_fields
+    from holdspeak.services.room_edit_fields import review_edit_fields, read_review_patch
 
     def project(value: Any) -> bool:
         changed = False
         if isinstance(value, dict):
             if {"claims_json", "body_md", "id"} <= value.keys():
-                editing = ProjectUpdateService._project_axes(value)["editable_claims"]
+                projected = ProjectUpdateService._project_axes(value)
+                if value.get("binding") != projected["binding"]:
+                    value["binding"] = projected["binding"]
+                    changed = True
+                editing = projected["editable_claims"]
                 if value.get("editable_claims") != editing:
                     value["editable_claims"] = editing
                     changed = True
             if {"patch_json", "proposal_kind"} <= value.keys():
-                fields = review_edit_fields(_parse_facts(value), value["proposal_kind"])
+                saved = _parse_facts(value)
+                fields = review_edit_fields(saved, value["proposal_kind"])
+                patch = json.dumps(read_review_patch(saved, value["proposal_kind"]), sort_keys=True, separators=(",", ":"))
+                if value["patch_json"] != patch:
+                    value["patch_json"] = patch
+                    changed = True
                 if value.get("editable_fields") != fields:
                     value["editable_fields"] = fields
                     changed = True

@@ -338,7 +338,11 @@
         "deliveries": [],
         "generatorHost": null,
         "generatorModel": null,
-        "editable_claims": []
+        "editable_claims": [],
+        "binding": {
+          "id": "pupd_966aea858048455a861825a75249d3e2",
+          "revision": "4961588151af1408db64b8cbb99be87f4ceb4e6f19470d98d174db612b423bdc"
+        }
       },
       {
         "id": "pupd_85a4f6c086b74282994c1ca5ad7dbb2e",
@@ -361,7 +365,11 @@
         "deliveries": [],
         "generatorHost": null,
         "generatorModel": null,
-        "editable_claims": []
+        "editable_claims": [],
+        "binding": {
+          "id": "pupd_85a4f6c086b74282994c1ca5ad7dbb2e",
+          "revision": "4902a0947bf7c019001635eab3e85f60e6b51fbc3d3293402d1b1a986f02c5ef"
+        }
       }
     ],
     "latest_published_update_id": "pupd_966aea858048455a861825a75249d3e2"

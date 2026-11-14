@@ -103,7 +103,11 @@
        }
       ]
      }
-    ]
+    ],
+    "binding": {
+     "id": "pupd_96d5da630dea4e68b3616998f6de92ad",
+     "revision": "d7ed9683fe9659c962539eb8708e8dcd085e51462168dc204d6df214f763246b"
+    }
    }
   },
   "method": "POST",
@@ -259,7 +263,11 @@
         }
        ]
       }
-     ]
+     ],
+     "binding": {
+      "id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+      "revision": "99715a89ad51649c7e5ee40989b2645b2f0f1065655e480faab65479e8cf36e6"
+     }
     }
    },
    "method": "PUT",
@@ -353,7 +361,11 @@
         }
        ]
       }
-     ]
+     ],
+     "binding": {
+      "id": "pupd_f41e81e4e39a45168df9a1943931ed62",
+      "revision": "af8fa45655ce4e37c28ef6bd8336f4922449ffc119e8a302f95f59ba712bddbb"
+     }
     }
    },
    "method": "POST",
@@ -487,7 +499,11 @@
         }
        ]
       }
-     ]
+     ],
+     "binding": {
+      "id": "pupd_8296fa2748c1438ab6bd42da45783f5e",
+      "revision": "ef04586afc227ae66b9fae655fa12303bf488a196579923e51af7ac11843cb48"
+     }
     }
    },
    "method": "POST",
@@ -629,7 +645,11 @@
         }
        ]
       }
-     ]
+     ],
+     "binding": {
+      "id": "pupd_d197176731f548628b3b56dfe4e1d381",
+      "revision": "4d1204e6c88a058a40e9091e52ac8d7c85075a2d1a8e1735994d07fd5f21f327"
+     }
     }
    },
    "method": "POST",
@@ -3791,7 +3811,11 @@
        }
       ]
      }
-    ]
+    ],
+    "binding": {
+     "id": "pupd_368d194023434979a3c3221152614f5e",
+     "revision": "75e4914decc98805adc758b71e89613ffb1fdedfe52b0792cb1f80f8bf456abb"
+    }
    }
   },
   "method": "POST",
@@ -3910,7 +3934,11 @@
        }
       ]
      }
-    ]
+    ],
+    "binding": {
+     "id": "pupd_5a6fe102a4f64f798f54fad1fd8ad74c",
+     "revision": "cb9e2f97151b57ed5cff1bf144dc036dd59d3e27814859884590af19c6a3e07c"
+    }
    }
   },
   "method": "POST",

@@ -52,6 +52,7 @@ from __future__ import annotations
 from .room_errors import room_not_found
 
 from .room_claim_editor import claim_editors, edit_claim_body, compose
+from .room_binding import room_binding, check_room_binding
 
 import hashlib
 import json
@@ -1605,6 +1606,21 @@ class ProjectUpdateService:
         # None (MCP, tests): the title rule alone.
         self._people_names = people_names
 
+    @staticmethod
+    def update_binding(row: dict[str, Any]) -> dict[str, str]:
+        # Bind saved content, not the second-resolution update timestamp or a
+        # span id that can recur in another update. Legacy claims normalize as
+        # they do in the read projection.
+        content = {key: row.get(key) for key in (
+            "id", "project_id", "project_revision", "review_id", "body_md",
+            "lifecycle", "draft_revision", "source_manifest_json", "generator",
+            "generator_host", "generator_model",
+        )}
+        content["claims_json"] = migrate_claims_json(
+            row.get("claims_json") or "", generator=str(row.get("generator") or "deterministic"),
+        )
+        return room_binding(content)
+
     # ── C2 read projection (HS-200-06) ───────────────────────────────
 
     @staticmethod
@@ -1622,6 +1638,7 @@ class ProjectUpdateService:
         if not row:
             return row
         out = dict(row)
+        out["binding"] = ProjectUpdateService.update_binding(row)
         generator = str(out.get("generator") or "deterministic")
         reason: str | None = None
         if generator.startswith(FALLBACK_GENERATOR_PREFIX):
@@ -2529,6 +2546,7 @@ class ProjectUpdateService:
         *,
         body_md: str | None = None,
         claim_edits: list[dict[str, Any]] | None = None,
+        binding: Any = None,
         source_refs: Iterable[str] = (),
         generator: str | None = None,
         engine: str | None = None,
@@ -2549,6 +2567,11 @@ class ProjectUpdateService:
         """
         if claim_edits is not None and principal.kind is not PrincipalKind.OWNER:
             raise ValidationError("Only the owner can edit a saved claim.", code="claim_edit_forbidden")
+        if claim_edits is not None:
+            held = self._db.project_updates.get_update(update_id)
+            if held is None:
+                raise room_not_found("update", update_id)
+            check_room_binding(binding, self.update_binding(held))
         normalized_source_refs = list(source_refs or ())
         request = {
             "update_id": update_id,
@@ -2559,6 +2582,7 @@ class ProjectUpdateService:
         }
         if claim_edits is not None:
             request["claim_edits"] = claim_edits
+            request["binding"] = binding
         req_hash = _request_hash(request)
         if command_id is not None:
             existing = self._db.projects.get_project_command(command_id)
@@ -2582,6 +2606,7 @@ class ProjectUpdateService:
         if claim_edits is not None:
             if body_md is not None or not isinstance(claim_edits, list) or any(not isinstance(edit, dict) for edit in claim_edits):
                 raise ValidationError("Edit the claims or the full text in one save.", code="claim_edit_invalid")
+            check_room_binding(binding, self.update_binding(row))
             body_md = edit_claim_body(str(row.get("body_md") or ""),
                                       json.loads(migrate_claims_json(row.get("claims_json") or "", generator=str(row.get("generator") or "deterministic"))),
                                       claim_edits, _SECTION_HEADINGS)
@@ -2688,9 +2713,8 @@ class ProjectUpdateService:
             # concurrent full-text save, review or publish intact.
             with self._db._connection() as conn:
                 conn.execute("BEGIN IMMEDIATE")
-                saved = conn.execute("SELECT body_md, claims_json FROM project_updates WHERE id=?", (update_id,)).fetchone()
-                if saved is None or saved["body_md"] != row.get("body_md") or saved["claims_json"] != row.get("claims_json"):
-                    raise ConflictError("The claim changed. Read it again.", code="claim_edit_stale")
+                saved = conn.execute("SELECT * FROM project_updates WHERE id=?", (update_id,)).fetchone()
+                check_room_binding(binding, self.update_binding(dict(saved)) if saved is not None else {})
                 self._db.project_updates.update_draft_in_transaction(conn, update_id, body_md=body_md, claims_json=next_claims)
         else:
             self._db.project_updates.update_draft(update_id, body_md=body_md, claims_json=next_claims)

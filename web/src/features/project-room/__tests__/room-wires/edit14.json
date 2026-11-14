@@ -1,28 +1,28 @@
 {
  "accepted": {
   "changed_refs": [
-   "project:proj-cb0717d69357"
+   "project:proj-a7c29087aac4"
   ],
-  "decided_at": "2026-11-14T14:12:12+00:00",
+  "decided_at": "2026-11-14T16:09:01+00:00",
   "decided_by_ref": "principal:owner-session",
   "lifecycle": "accepted",
-  "operation_id": "op_bd75acdfebf549958823b4adaafc97ab",
-  "project_id": "proj-cb0717d69357",
+  "operation_id": "op_765e8cda7f8a4a8f83dd7364be663252",
+  "project_id": "proj-a7c29087aac4",
   "project_revision": 0,
   "proposal_id": "room-edit-proposal",
   "receipt": {
    "actor_identity": "owner-session",
    "actor_kind": "owner",
    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-   "created_at": 1794665532.634197,
+   "created_at": 1794672541.4448562,
    "delegator_identity": "",
    "delegator_kind": "",
-   "operation_id": "op_bd75acdfebf549958823b4adaafc97ab",
+   "operation_id": "op_765e8cda7f8a4a8f83dd7364be663252",
    "outcome": "succeeded",
-   "receipt_id": "rcpt_7cb5d968ed1f4d1c9033fa11b7d840d5",
-   "result_ref": "project:proj-cb0717d69357",
+   "receipt_id": "rcpt_d9e45871ac2848b9ad18135dbeec8dd1",
+   "result_ref": "project:proj-a7c29087aac4",
    "state": "succeeded",
-   "target_ref": "project:proj-cb0717d69357"
+   "target_ref": "project:proj-a7c29087aac4"
   },
   "result_kind": "proposal_decided",
   "verb": "edit_accept"
@@ -40,18 +40,18 @@
  "item_review": {
   "binding": {
    "id": "room-edit-review",
-   "revision": "490615f265dd3033702dae01ecac5e7eb507fe4ac0cb88467e622b02e881e8f3"
+   "revision": "fd3e24d093df335495b70135ec1f2438f6116e53a352ba68e2c92b8ec736d6c5"
   },
   "from_sequence": null,
   "materiality_version": "v1",
   "opened_at": "2026-11-14T12:00:00+00:00",
-  "project_id": "proj-cb0717d69357",
+  "project_id": "proj-a7c29087aac4",
   "project_revision_opened": null,
   "proposals": [
    {
     "binding": {
      "id": "room-edit-proposal",
-     "revision": "c18737881836eda318af35ceaa51546e0547de11104fb679ba69d476e02aae37"
+     "revision": "87bbc03cc3758c1163139ac1bb69aa512a368a46008616a88444449da2e08622"
     },
     "editable_fields": [
      {
@@ -76,19 +76,19 @@
     "producer_kind": null,
     "proposal_kind": "review_flag",
     "rationale": null,
-    "target_ref": "project:proj-cb0717d69357",
+    "target_ref": "project:proj-a7c29087aac4",
     "title": "web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team"
    },
    {
     "binding": {
      "id": "room-edit-item",
-     "revision": "b04b095ccac9e5deb94792c55818454d6eaeb1c9a00610a53cf2f28cf9164d86"
+     "revision": "dcb5b3b2fa75a8136ac5f2b7140b368e15c6578a7bedbb7f11a16a543e01cb24"
     },
     "editable_fields": [
      {
       "key": "item_type",
-      "kind": "choice",
       "label": "Item type",
+      "kind": "choice",
       "values": [
        "milestone",
        "risk",
@@ -98,14 +98,9 @@
       ]
      },
      {
-      "key": "title",
-      "kind": "text",
-      "label": "Title"
-     },
-     {
       "key": "lifecycle",
-      "kind": "choice",
       "label": "Lifecycle",
+      "kind": "choice",
       "values": [
        "open",
        "mitigated",
@@ -113,12 +108,6 @@
        "closed"
       ],
       "values_by_item_type": {
-       "dependency": [
-        "healthy",
-        "at_risk",
-        "broken",
-        "resolved"
-       ],
        "milestone": [
         "planned",
         "reached",
@@ -131,6 +120,12 @@
         "accepted",
         "closed"
        ],
+       "dependency": [
+        "healthy",
+        "at_risk",
+        "broken",
+        "resolved"
+       ],
        "signal": [
         "active",
         "retired"
@@ -141,16 +136,21 @@
         "done"
        ]
       }
+     },
+     {
+      "key": "title",
+      "label": "Title",
+      "kind": "text"
      }
     ],
     "id": "room-edit-item",
     "lifecycle": "open",
     "materiality": null,
-    "patch_json": "{\"item_type\": \"risk\", \"title\": \"Read the cutover\", \"lifecycle\": \"open\"}",
+    "patch_json": "{\"item_type\":\"risk\",\"lifecycle\":\"open\",\"title\":\"Read the cutover\"}",
     "producer_kind": null,
     "proposal_kind": "risk_attention",
     "rationale": null,
-    "target_ref": "project:proj-cb0717d69357",
+    "target_ref": "project:proj-a7c29087aac4",
     "title": "Read the cutover"
    }
   ],
@@ -162,18 +162,18 @@
  "item_review_saved": {
   "binding": {
    "id": "room-edit-review",
-   "revision": "24e25f6a9937cc0c473d8468e4740010151d66b4083e08a6c17ad0c132c2fa04"
+   "revision": "fa155e0bfb73546d0f3484a3e248ccb28d713bd52982a28b5d32b6328d25ebff"
   },
   "from_sequence": null,
   "materiality_version": "v1",
   "opened_at": "2026-11-14T12:00:00+00:00",
-  "project_id": "proj-cb0717d69357",
+  "project_id": "proj-a7c29087aac4",
   "project_revision_opened": null,
   "proposals": [
    {
     "binding": {
      "id": "room-edit-proposal",
-     "revision": "c18737881836eda318af35ceaa51546e0547de11104fb679ba69d476e02aae37"
+     "revision": "87bbc03cc3758c1163139ac1bb69aa512a368a46008616a88444449da2e08622"
     },
     "editable_fields": [
      {
@@ -198,13 +198,13 @@
     "producer_kind": null,
     "proposal_kind": "review_flag",
     "rationale": null,
-    "target_ref": "project:proj-cb0717d69357",
+    "target_ref": "project:proj-a7c29087aac4",
     "title": "web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team"
    },
    {
     "binding": {
      "id": "room-edit-item",
-     "revision": "e1cd625bc626895142e18d313ff2f99a0cc4f859cfce953e30c90e330e1ce9bf"
+     "revision": "6913869ff342cf3db8de7b5d0df4721d3a50682ff2083f242c9185e14e652faf"
     },
     "editable_fields": [
      {
@@ -272,7 +272,7 @@
     "producer_kind": null,
     "proposal_kind": "risk_attention",
     "rationale": null,
-    "target_ref": "project:proj-cb0717d69357",
+    "target_ref": "project:proj-a7c29087aac4",
     "title": "Read the cutover"
    }
   ],
@@ -283,38 +283,38 @@
  },
  "item_saved": {
   "changed_refs": [
-   "project:proj-cb0717d69357"
+   "project:proj-a7c29087aac4"
   ],
-  "decided_at": "2026-11-14T14:12:12+00:00",
+  "decided_at": "2026-11-14T16:09:01+00:00",
   "decided_by_ref": "principal:owner-session",
-  "item_id": "pitem_0d8f56cb57534e7a8e9e8a910f97ba84",
+  "item_id": "pitem_87f8c15abe6b4d1a8e45041bb274d635",
   "item_result": {
    "changed_refs": [
-    "project:proj-cb0717d69357"
+    "project:proj-a7c29087aac4"
    ],
-   "item_id": "pitem_0d8f56cb57534e7a8e9e8a910f97ba84",
-   "project_id": "proj-cb0717d69357",
+   "item_id": "pitem_87f8c15abe6b4d1a8e45041bb274d635",
+   "project_id": "proj-a7c29087aac4",
    "project_revision": 3,
    "result_kind": "updated"
   },
   "lifecycle": "accepted",
-  "operation_id": "op_9c21e4b6e73e4c678adc3f4325570718",
-  "project_id": "proj-cb0717d69357",
+  "operation_id": "op_84fb6f7201b442e2a55b89d26fc85979",
+  "project_id": "proj-a7c29087aac4",
   "project_revision": 0,
   "proposal_id": "room-edit-item",
   "receipt": {
    "actor_identity": "owner-session",
    "actor_kind": "owner",
    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-   "created_at": 1794665532.678716,
+   "created_at": 1794672541.5209742,
    "delegator_identity": "",
    "delegator_kind": "",
-   "operation_id": "op_9c21e4b6e73e4c678adc3f4325570718",
+   "operation_id": "op_84fb6f7201b442e2a55b89d26fc85979",
    "outcome": "succeeded",
-   "receipt_id": "rcpt_f0beaa3273b84dc7b67b64bdb5b40bdc",
-   "result_ref": "project:proj-cb0717d69357",
+   "receipt_id": "rcpt_21175ccba5234f6e84448df1a3dd1ae6",
+   "result_ref": "project:proj-a7c29087aac4",
    "state": "succeeded",
-   "target_ref": "project:proj-cb0717d69357"
+   "target_ref": "project:proj-a7c29087aac4"
   },
   "result_kind": "proposal_decided",
   "verb": "edit_accept"
@@ -328,52 +328,52 @@
    }
   },
   "method": "GET",
-  "path": "/api/projects/proj-cb0717d69357/reviews/missing-review",
+  "path": "/api/projects/proj-a7c29087aac4/reviews/missing-review",
   "request": null,
   "status": 404
  },
- "pid": "proj-cb0717d69357",
+ "pid": "proj-a7c29087aac4",
  "recordedBy": "scripts/record_room_wires.py",
  "review": {
   "binding": {
    "id": "room-edit-review",
-   "revision": "a1b8586d8cdffb35546359592302031d777f2a5eebd143cdb60027f37c6a8570"
+   "revision": "8cdcb7751e24760b2176488bdceedb00f5a73d940e7cdc2ecbfdb2e2c6c088f7"
   },
   "from_sequence": null,
   "materiality_version": "v1",
   "opened_at": "2026-11-14T12:00:00+00:00",
-  "project_id": "proj-cb0717d69357",
+  "project_id": "proj-a7c29087aac4",
   "project_revision_opened": null,
   "proposals": [
    {
     "binding": {
      "id": "room-edit-proposal",
-     "revision": "f2ea5ba18266d4bd82291f9ee68237ffbda4f51e5f7b2892c7f38058fcb5f69e"
+     "revision": "8ce6919656eb1e7ab8d56c65d819fbe8dae10de0ceb2037034632292374edb7e"
     },
     "editable_fields": [
      {
-      "key": "text",
-      "kind": "text",
-      "label": "Text"
-     },
-     {
       "key": "state",
-      "kind": "choice",
       "label": "State",
+      "kind": "choice",
       "values": [
        "open",
        "closed"
       ]
+     },
+     {
+      "key": "text",
+      "label": "Text",
+      "kind": "text"
      }
     ],
     "id": "room-edit-proposal",
     "lifecycle": "open",
     "materiality": null,
-    "patch_json": "{\"text\": \"web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team\", \"state\": \"open\"}",
+    "patch_json": "{\"state\":\"open\",\"text\":\"web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team\"}",
     "producer_kind": null,
     "proposal_kind": "review_flag",
     "rationale": null,
-    "target_ref": "project:proj-cb0717d69357",
+    "target_ref": "project:proj-a7c29087aac4",
     "title": "web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team"
    }
   ],
@@ -388,29 +388,29 @@
    "body": {
     "code": "field_choice_invalid",
     "message": "Choose a state from the list.",
-    "operation_id": "op_511aaf358d95475299ba3d44610332dd",
+    "operation_id": "op_db4d98f685be4aebbec1bb88f8152952",
     "receipt": {
      "actor_identity": "owner-session",
      "actor_kind": "owner",
      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-     "created_at": 1794665532.631286,
+     "created_at": 1794672541.440695,
      "delegator_identity": "",
      "delegator_kind": "",
-     "operation_id": "op_511aaf358d95475299ba3d44610332dd",
+     "operation_id": "op_db4d98f685be4aebbec1bb88f8152952",
      "outcome": "field_choice_invalid",
-     "receipt_id": "rcpt_33027927edfe478cacf65499a72eff34",
+     "receipt_id": "rcpt_af171bf6c1f249e59f4912c0b672b8dd",
      "result_ref": "",
      "state": "refused",
-     "target_ref": "project:proj-cb0717d69357"
+     "target_ref": "project:proj-a7c29087aac4"
     }
    }
   },
   "method": "POST",
-  "path": "/api/projects/proj-cb0717d69357/reviews/room-edit-review/proposals/room-edit-proposal/decide",
+  "path": "/api/projects/proj-a7c29087aac4/reviews/room-edit-review/proposals/room-edit-proposal/decide",
   "request": {
    "binding": {
     "id": "room-edit-proposal",
-    "revision": "f2ea5ba18266d4bd82291f9ee68237ffbda4f51e5f7b2892c7f38058fcb5f69e"
+    "revision": "8ce6919656eb1e7ab8d56c65d819fbe8dae10de0ceb2037034632292374edb7e"
    },
    "patch": {
     "state": "garbage"
@@ -422,18 +422,18 @@
  "review_saved": {
   "binding": {
    "id": "room-edit-review",
-   "revision": "1a58041025e9e1bff05ac6b433a78ddedc27bff2785ef31a9862a06b317651ad"
+   "revision": "1f44c3ddac3100bd6d6991667991b39bf99dcb51dd5186aa54cfb308bb352448"
   },
   "from_sequence": null,
   "materiality_version": "v1",
   "opened_at": "2026-11-14T12:00:00+00:00",
-  "project_id": "proj-cb0717d69357",
+  "project_id": "proj-a7c29087aac4",
   "project_revision_opened": null,
   "proposals": [
    {
     "binding": {
      "id": "room-edit-proposal",
-     "revision": "c18737881836eda318af35ceaa51546e0547de11104fb679ba69d476e02aae37"
+     "revision": "87bbc03cc3758c1163139ac1bb69aa512a368a46008616a88444449da2e08622"
     },
     "editable_fields": [
      {
@@ -458,7 +458,7 @@
     "producer_kind": null,
     "proposal_kind": "review_flag",
     "rationale": null,
-    "target_ref": "project:proj-cb0717d69357",
+    "target_ref": "project:proj-a7c29087aac4",
     "title": "web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team"
    }
   ],
@@ -470,9 +470,13 @@
  "saved": {
   "success": true,
   "update": {
+   "binding": {
+    "id": "pupd_7324c1914712492c8bfbf29c0dcd6ee9",
+    "revision": "44c918c5e6de32c0d83d9f2a955779d9c6f3f658b9ebf32cd8b10f87ac8f7065"
+   },
    "body_md": "## Progress\n\n- Risk [critical]: Read the saved rollback plan -- mitigated\n\n## Decisions\n\n- web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team (review_flag) -- accepted\n\n## Risks & Blockers\n\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 project item\n",
-   "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"accepted\",\"kind\":\"decision\",\"refs\":[\"decision:room-edit-proposal\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"title\",\"proposal_kind\",\"lifecycle\"],\"method\":\"field_mapping\",\"reviewer_ref\":\"principal:owner-session\",\"source_refs\":[\"decision:room-edit-proposal\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team (review_flag) -- accepted\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-cb0717d69357\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-cb0717d69357\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"Read: 1 project item\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_owner_0\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-11-14T14:12:12+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"Risk [critical]: Read the saved rollback plan -- mitigated\"}]",
-   "created_at": "2026-11-14T14:12:12+00:00",
+   "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"accepted\",\"kind\":\"decision\",\"refs\":[\"decision:room-edit-proposal\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"title\",\"proposal_kind\",\"lifecycle\"],\"method\":\"field_mapping\",\"reviewer_ref\":\"principal:owner-session\",\"source_refs\":[\"decision:room-edit-proposal\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team (review_flag) -- accepted\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-a7c29087aac4\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-a7c29087aac4\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"Read: 1 project item\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_owner_0\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-11-14T16:09:01+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"Risk [critical]: Read the saved rollback plan -- mitigated\"}]",
+   "created_at": "2026-11-14T16:09:01+00:00",
    "draft_revision": 1,
    "editable_claims": [
     {
@@ -675,14 +679,14 @@
    "generatorModel": null,
    "generator_host": null,
    "generator_model": null,
-   "id": "pupd_334d79498be04d58b01eb4b88b07c62f",
+   "id": "pupd_7324c1914712492c8bfbf29c0dcd6ee9",
    "lifecycle": "draft",
-   "project_id": "proj-cb0717d69357",
+   "project_id": "proj-a7c29087aac4",
    "project_revision": 2,
    "published_at": null,
    "review_id": "room-edit-review",
    "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"room-edit-review\",\"week_source_refs\":[]}",
-   "updated_at": "2026-11-14T14:12:12+00:00"
+   "updated_at": "2026-11-14T16:09:01+00:00"
   }
  },
  "schema": "room-recorded@1",
@@ -690,16 +694,20 @@
   "answer": {
    "__status": 409,
    "body": {
-    "code": "claim_edit_stale",
+    "code": "answer_stale",
     "detail": null,
-    "message": "The claim changed. Read it again.",
+    "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
     "reason": null,
     "success": false
    }
   },
   "method": "PUT",
-  "path": "/api/updates/pupd_334d79498be04d58b01eb4b88b07c62f",
+  "path": "/api/updates/pupd_7324c1914712492c8bfbf29c0dcd6ee9",
   "request": {
+   "binding": {
+    "id": "pupd_7324c1914712492c8bfbf29c0dcd6ee9",
+    "revision": "b3a360d0bd7d79268539ecde7f30975b0e81f626d78a569fc6d890e3bee2f2d0"
+   },
    "claim_edits": [
     {
      "span_id": "s_progress_0",
@@ -716,9 +724,13 @@
   "status": 409
  },
  "update": {
+  "binding": {
+   "id": "pupd_7324c1914712492c8bfbf29c0dcd6ee9",
+   "revision": "b3a360d0bd7d79268539ecde7f30975b0e81f626d78a569fc6d890e3bee2f2d0"
+  },
   "body_md": "## Progress\n\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\n\n## Decisions\n\n- web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team (review_flag) -- accepted\n\n## Risks & Blockers\n\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\n- Read: 1 project item\n",
-  "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"accepted\",\"kind\":\"decision\",\"refs\":[\"decision:room-edit-proposal\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"title\",\"proposal_kind\",\"lifecycle\"],\"method\":\"field_mapping\",\"reviewer_ref\":\"principal:owner-session\",\"source_refs\":[\"decision:room-edit-proposal\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team (review_flag) -- accepted\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_2cbe1ad5f7f145919864f5c412960102\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-cb0717d69357\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-cb0717d69357\"],\"source_version\":\"project:proj-cb0717d69357@r2\"},\"text\":\"Read: 1 project item\"}]",
-  "created_at": "2026-11-14T14:12:12+00:00",
+  "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"accepted\",\"kind\":\"decision\",\"refs\":[\"decision:room-edit-proposal\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"title\",\"proposal_kind\",\"lifecycle\"],\"method\":\"field_mapping\",\"reviewer_ref\":\"principal:owner-session\",\"source_refs\":[\"decision:room-edit-proposal\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team (review_flag) -- accepted\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_15f73d06d0404624ac32b4b8e6542fef\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-a7c29087aac4\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-a7c29087aac4\"],\"source_version\":\"project:proj-a7c29087aac4@r2\"},\"text\":\"Read: 1 project item\"}]",
+  "created_at": "2026-11-14T16:09:01+00:00",
   "draft_revision": 1,
   "editable_claims": [
    {
@@ -921,13 +933,13 @@
   "generatorModel": null,
   "generator_host": null,
   "generator_model": null,
-  "id": "pupd_334d79498be04d58b01eb4b88b07c62f",
+  "id": "pupd_7324c1914712492c8bfbf29c0dcd6ee9",
   "lifecycle": "draft",
-  "project_id": "proj-cb0717d69357",
+  "project_id": "proj-a7c29087aac4",
   "project_revision": 2,
   "published_at": null,
   "review_id": "room-edit-review",
   "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"review_id\":\"room-edit-review\",\"week_source_refs\":[]}",
-  "updated_at": "2026-11-14T14:12:12+00:00"
+  "updated_at": "2026-11-14T16:09:01+00:00"
  }
 }

@@ -84,7 +84,7 @@ export function UpdatePosture({
   const engine = useEngine("project.update_draft");
   const claim = seat === "claims" ? current?.claims.find((row) => row.spanId === picked) : undefined;
   const editing = seat === "edit" ? current?.editableClaims?.find(row => row.span_id === picked) : undefined;
-  const keyOfClaim = (row: import("./model").EditableClaim) => `room/update-claim/${JSON.stringify([current?.id,row.span_id,row.text])}`;
+  const keyOfClaim = (row: import("./model").EditableClaim) => `room/update-claim/${JSON.stringify([current?.id,current?.binding?.revision,row.span_id,row.text])}`;
   const [claimDraft, setClaimDraft] = useDeskDraft(editing ? keyOfClaim(editing) : null);
   const valuesOfClaim = (row: import("./model").EditableClaim, draft = keptDraft(keyOfClaim(row))) => {
     try { const value: unknown = JSON.parse(draft || "null"); return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string,unknown> : row.values; }

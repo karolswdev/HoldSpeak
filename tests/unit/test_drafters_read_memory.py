@@ -649,6 +649,9 @@ def _real_draft_with_an_action_citation(db: Database) -> dict:
         json.dumps(dict(svc.draft_update(OWNER, project_id)), default=str)
         .replace(project_id, "proj-fixture")
     )
+    # The binding covers the random saved id and project id. Like those ids,
+    # its exact hash is volatile in this citation-only recording.
+    row["binding"] = {key: "<volatile>" for key in row["binding"]}
     return {key: ("<volatile>" if key in _VOLATILE else value) for key, value in row.items()}
 
 

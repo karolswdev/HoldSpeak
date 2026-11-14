@@ -491,7 +491,11 @@
           }
         ]
       }
-    ]
+    ],
+    "binding": {
+      "id": "pupd_1160e125afc343a5b632a59084db68d6",
+      "revision": "eed8dfaea9cb7757e5bf476ec6f847c76500ee3409fed64f3b2dcfe1404c872b"
+    }
   },
   "friday": {
     "workbench": {
@@ -915,7 +919,11 @@
             }
           ]
         }
-      ]
+      ],
+      "binding": {
+        "id": "pupd_5b1ecb6968274ea4abeb3df02a9f4ad2",
+        "revision": "b5c68689ab5bc6b3dfc3d7046ba71c6473a847bd6f6f87a59d1b270fff6194a2"
+      }
     }
   },
   "opened": {

@@ -304,7 +304,7 @@ HTTP_ADMITTED: dict[str, tuple[str, Setup, Callable[[Hub, dict[str, Any]], Any]]
         f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}", json={"binding": i["proposal_binding"], "verb": "accept"})),
     "decide edit_accept": ("project.decide_proposal", _s_review, lambda h, i: h.client.post(
         f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}",
-        json={"binding": i["proposal_binding"], "verb": "edit_accept", "patch": {"title": "Chase the follow-through"}})),
+        json={"binding": i["proposal_binding"], "verb": "edit_accept", "patch": {"lane": "overdue"}})),
     "decide defer": ("project.decide_proposal", _s_review, lambda h, i: h.client.post(
         f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}",
         json={"binding": i["proposal_binding"], "verb": "defer", "deferred_until": "2026-12-01"})),
@@ -474,7 +474,7 @@ AGENT_WRITES: dict[str, tuple[str, Setup, Callable[[Hub, dict[str, Any]], dict[s
                           (lambda verb: lambda h, i: {"project_id": i["pid"], "review_id": i["review"],
                                                       "proposal_id": i["proposal"], "verb": verb,
                                                       **({"deferred_until": "2026-12-01"} if verb == "defer" else {}),
-                                                      **({"patch": {"title": "T"}} if verb == "edit_accept" else {})})(verb))
+                                                      **({"patch": {"lane": "overdue"}} if verb == "edit_accept" else {})})(verb))
        for verb in ("accept", "edit_accept", "defer", "dismiss")},
 }
 
