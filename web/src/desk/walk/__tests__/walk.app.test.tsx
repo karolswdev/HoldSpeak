@@ -322,14 +322,14 @@ it("speaks local help through the one speech seam without a server voice", async
 
 it.each(["Stop", "Escape", "Done"])("discloses folded verbs without pressing an item, and closes on %s", async (end) => {
   const { WorkMenu } = await import("../../components/DeskMenu");
-  const write = vi.fn();
+  const write = vi.fn(), view = vi.fn();
   function FoldedFace() {
     const [open, setOpen] = useState(false);
     const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
     return <WindowIdContext.Provider value="surface-decisions">
       <div id="surface-decisions" data-layer="window">
         <div data-testid="folded-toolbar" className="object-list-toolbar">
-          <span className="object-list-toolbar-strip"><button ref={setAnchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions</button></span>
+          <span className="object-list-toolbar-strip"><button aria-haspopup="menu" onClick={view}>View: Summary</button><button data-list-overflow="" ref={setAnchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions</button></span>
           {open ? <WorkMenu label="Decision actions" x={0} y={50} opener={anchor} onClose={() => setOpen(false)} entries={[
             {type:"item", id:"decide", label:"Decide", onSelect:write},
             {type:"item", id:"new", label:"New decision", onSelect:write},
@@ -356,6 +356,7 @@ it.each(["Stop", "Escape", "Done"])("discloses folded verbs without pressing an 
   else fireEvent.click(screen.getByRole("button",{name:end}));
   expect(screen.queryByRole("menu")).toBeNull();
   expect(write).not.toHaveBeenCalled();
+  expect(view).not.toHaveBeenCalled();
 });
 
 it.each(["href", "submit"])("refuses a nominally safe disclosure carrying %s", (kind) => {

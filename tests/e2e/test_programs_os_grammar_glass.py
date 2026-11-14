@@ -128,7 +128,7 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             expect(win.get_by_test_id("program-question")).to_have_count(0)
             current["program"] = tape["advanced"]
             server.broadcast("program_changed",tape["advanced_frame"])
-            expect(win.get_by_role("region",name=f"Step 2 · {tape['advanced']['steps'][1]['title']}",exact=True)).to_be_visible()
+            expect(win.get_by_role("region",name=tape['advanced']['steps'][1]['title'],exact=True)).to_be_visible()
             shot(win,"go-on")
             win=open_state("running","advanced","advanced_list")
             first=shot(win,"running-frame1")

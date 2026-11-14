@@ -113,33 +113,38 @@ export function ProjectsCore(_props: CoreProps) {
         testId: row.attention === "Not read" ? "projects-not-read" : "projects-state" } : row.health?.word === "ON TRACK" ? {label: "On track", tone: "ok"} : undefined,
       cells: { next: row.next?.words ?? "", updated: row.update?.words ?? "" } };
   };
+  const retry: ListVerb = { id: "retry", label: "Retry", key: "r", enabled: (row) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: app.reload };
   const verbs: ListVerb[] = [
+    ...(shown?.unread ? [retry] : []),
     { enabled: () => true, id: "new-project", variant: "primary", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
     { id: "open", label: "Open Room", key: "Enter", testId: "projects-open-selected", enabled: (row) => Boolean(row), run: (row) => { if (row) openProjectRoom(row.id); } },
-    ...(rows.some((row) => row.unread) ? [{ id: "retry", label: "Retry", key: "r", enabled: (row: ObjectListRow | null) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: app.reload }] : []),
+    ...(!shown?.unread && rows.some((row) => row.unread) ? [retry] : []),
   ];
   useWindowMast({ line: app.page ? countWords(rows.length, "project") ?? undefined : undefined, figures: [{ value: rows.filter(row => row.attention).length, label: "wait on you", tone: "ask" }] });
   const needsOwner = rows.filter((row) => row.attention).length;
+  const withDate = app.visible.filter(row => row.next).length, withUpdate = app.visible.filter(row => row.update).length;
   return <ListApp app={app} label="Projects"
     ids={{ windowTestId: "projects-window", listTestId: "projects-list", paneTestId: "projects-pane", toolbarTestId: "projects-toolbar", statusTestId: "projects-status", loadingTestId: "projects-loading" }}
     words={{ find: "Find a project", empty: "No projects yet", noMatch: "No projects match", select: "Select a project", failed: "Projects not loaded" }}
     list={{ columns: [
       { key: "name", word: "Project", priority: 4, minWidth: 180, track: "2fr" },
-      { key: "state", word: "State", priority: 3, minWidth: 110 },
-      { key: "next", word: "Next", priority: 2, minWidth: 180 },
-      { key: "updated", word: "Updated", priority: 1, minWidth: 220 },
+      ...(app.visible.some(row => row.attention || row.health?.word === "ON TRACK") ? [{ key: "state", word: "State", priority: 3, minWidth: 110 }] : []),
+      ...(app.visible.some(row => row.next) ? [{ key: "next", word: "Next", priority: 2, minWidth: 180 }] : []),
+      ...(app.visible.some(row => row.update) ? [{ key: "updated", word: "Updated", priority: 1, minWidth: 220 }] : []),
     ], verbs, defaultVerb: "open", rowProps: () => ({ "data-testid": "projects-row" }) }} row={toRow}
     status={[
-      { text: countWords(projects.length, "project") },
+      { text: countWords(app.visible.length, "project") },
+      withDate > 0 && { text: `${withDate} with a date`, priority: 0 },
+      withUpdate > 0 && { text: `${withUpdate} with updates`, priority: 0 },
       shown && { text: "1 selected" },
       needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
     ]} pane={() =>
-      shown ? <InspectorFacts name={shown.name} rows={[
+      shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} rows={[
         ...(shown.attention ? [{ label: "State", value: shown.attention }] : []),
         ...(shown.reason ? [{ label: "Reason", value: <span data-testid="projects-reason">{shown.reason}</span> }] : []),
-        { label: "Next date", value: <span data-testid="projects-next">{shown.next?.words ?? (shown.dateRead ? "No date set" : "Not read")}</span> },
-        { label: "Newest update", value: <span data-testid="projects-update">{shown.update?.words ?? (shown.updateRead ? "No update yet" : "Not read")}
-          {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> },
+        ...(shown.next || !shown.dateRead ? [{ label: "Next date", value: <span data-testid="projects-next">{shown.next?.words ?? "Not read"}</span> }] : []),
+        ...(shown.update || !shown.updateRead ? [{ label: "Newest update", value: <span data-testid="projects-update">{shown.update?.words ?? "Not read"}
+          {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> }] : []),
       ]} /> : null}>
     <ShowMe app="open-projects" />
   </ListApp>;

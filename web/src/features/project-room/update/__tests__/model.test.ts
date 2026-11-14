@@ -319,3 +319,12 @@ describe("claimChipTitle", () => {
     expect(claimChipTitle("Risk:")).toBeNull();
   });
 });
+
+it("names an update by its saved date and delivery audiences", async () => {
+  const {updateName}=await import("../UpdatePosture");
+  const {wireDayClock}=await import("../../../../desk/surface");
+  const tape=await import("../../__tests__/room-wires/grammar10.json");
+  const saved=decodeUpdate(tape.UPDATES_AFTER_SENDS.updates[0]);
+  expect(updateName(saved)).toContain(wireDayClock(saved.publishedAt || saved.updatedAt || saved.createdAt));
+  expect(updateName(saved)).toContain(saved.deliveries[0].deliveredTo);
+});

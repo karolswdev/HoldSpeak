@@ -105,6 +105,11 @@ it("fits a path-led inspector name in whole lines and keeps its full identity", 
   expect(screen.getByRole("region", {name})).toBeTruthy();
 });
 
+it("breaks a fact path at separators before splitting its filename", () => {
+  render(<InspectorFacts name="Next" rows={[{label:"Then",paths:true,value:"web/src/desk/programs/ProgramSteps.tsx: read the saved requirement"}]} />);
+  expect(screen.getByText("ProgramSteps.tsx:")).toHaveClass("surface-path-part");
+  expect(screen.getByText("ProgramSteps.tsx:").previousElementSibling?.tagName).toBe("WBR");
+});
 
 it.each(["web/src/pages/cores/history/MeetingRecord.tsx: Keep the saved selection after a failed read", "meeting_followthrough_revision_0123456789abcdef [0]", "`proposal.binding` keeps the selected revision"])("a technical name uses the file object: %s", name => {
   const {container} = render(<InspectorFacts name={name} rows={[]} />);
