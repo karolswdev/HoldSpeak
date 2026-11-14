@@ -5,6 +5,7 @@ import { spriteUrl } from "../sprites";
 import {
   ActionNotice,
   PreferencePane,
+  PreferenceWell,
   Elapsed,
   InspectorBody,
   InspectorFacts,
@@ -27,7 +28,6 @@ import {
   type StatusBarItem,
 } from "../surface";
 import { PaneViewContext } from "../surface/patterns/PaneViews";
-import { nameIsFile } from "../surface/objects/fitName";
 import { useCompactViewport } from "../useCompactViewport";
 import { useGuideView } from "../walk/viewState";
 import {
@@ -215,7 +215,6 @@ function CallDetails({
       },
     },
   ];
-  const elapsed = <Elapsed start={call.answered_at ?? call.started_at ?? ""} />;
   const length =
     call.duration_sec == null ? undefined : clockWords(call.duration_sec);
   const resultList = (
@@ -228,7 +227,6 @@ function CallDetails({
         id: String(i),
         kind: item.kind,
         name: item.label,
-        sprite: nameIsFile(item.label) ? spriteUrl("artifact", item.label, "rest", null, 20) : undefined,
         detail: EFFECT_WORDS[item.effect] ?? item.effect,
         leadingLamp: { state: "done" as const, label: "Done" },
       }))}
@@ -243,27 +241,24 @@ function CallDetails({
       defaultVerb="open-result"
     />
   );
+  const words = <TranscriptWell id={call.id} live={transcript ? undefined : live} seat={transcript}
+    segments={(transcript ? turns : turns.slice(-4)).map(line => ({
+      id:line.id, speaker:transcript ? line.label : line.speaker, timestamp:line.timestamp, text:line.text,
+    }))} />;
   const body = (
       <InspectorBody>
         {results.length && !live ? (
           <InspectorFigures
             label="The call"
-            figures={[
-              {
-                value: live ? elapsed : (length ?? "—"),
-                label: live ? "on the line" : "length",
-              },
-              { value: results.length, label: "done on call" },
-            ]}
+            figures={length == null
+              ? [{ value: results.length, label: "done on call" }]
+              : [{ value: length, label: "length" }, { value: results.length, label: "done on call" }]}
           />
         ) : null}
         {transcript || (live && !resultsView && turns.length > 0) ? (
-          <div className="surface-tab-panel" data-feedback-redact="true" data-testid={transcript ? "calls-transcript" : undefined}>
-            <TranscriptWell id={call.id} live={transcript ? undefined : live} seat={transcript}
-              segments={(transcript ? turns : turns.slice(-4)).map(line => ({
-                id:line.id, speaker:transcript ? line.label : line.speaker, timestamp:line.timestamp, text:line.text,
-              }))} />
-          </div>
+          transcript ? <PreferenceWell fit="reading">
+            <div data-feedback-redact="true" data-testid="calls-transcript">{words}</div>
+          </PreferenceWell> : <div className="surface-tab-panel" data-feedback-redact="true">{words}</div>
         ) : null}
         {live && call.hold?.binding ? (
           <InspectorQuestion
@@ -319,7 +314,7 @@ function CallDetails({
     return <ListPane label={callTitle(call)} previewTestId="calls-document" listTestId="calls-results"
       listPosition="after" listShare={.3} list={!transcript && results.length ? resultList : null}>{body}</ListPane>;
   return <PaneInspector label={callTitle(call)} subtitle={`${outcome.word} · ${callWhen(call.started_at)}`}
-    object={<img src={spriteUrl(nameIsFile(callTitle(call)) ? "artifact" : "call", call.id, "rest", null, 32)} width={32} height={32} alt="" />}
+    object={<img src={spriteUrl("call", call.id, "rest", null, 32)} width={32} height={32} alt="" />}
     testId="calls-document" trailing={live ? countWords(results.length, "result") : !results.length ? length : undefined}>
     {body}
   </PaneInspector>;
@@ -471,7 +466,6 @@ export function CallsCore({ scope }: CoreProps) {
       id: call.id,
       kind: "call",
       name: callTitle(call),
-      sprite: nameIsFile(callTitle(call)) ? spriteUrl("artifact", call.id, "rest", null, 20) : undefined,
       detail: call.direction === "out" ? "Outgoing call" : "Incoming call",
       group: call.state === "ended" ? 1 : 0,
       when: callWhen(call.started_at),
@@ -480,7 +474,7 @@ export function CallsCore({ scope }: CoreProps) {
           call.state !== "ended" ? (
             <Elapsed start={call.answered_at ?? call.started_at ?? ""} />
           ) : call.duration_sec == null ? (
-            "—"
+            null
           ) : (
             clockWords(call.duration_sec)
           ),
