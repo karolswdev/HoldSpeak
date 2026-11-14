@@ -22,6 +22,7 @@ import TOOLS from "../../test/wire/ask.tools.wire.json";
 import HOLD from "../../test/wire/ask.hold.wire.json";
 import STREAM from "../../test/wire/ask.stream.wire.json";
 import NO_ENGINE from "../../test/wire/ask.no-engine.wire.json";
+import CALLS from "../calls/__fixtures__/calls.face.json";
 import { durableDraftKey } from "../../lib/durableDraft";
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
@@ -1517,7 +1518,7 @@ it("Sources have their own seat above the ask field, outside the scrolling answe
   expect(sources.compareDocumentPosition(screen.getByTestId("ask-toolbar")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
-it("Open source appears in the Sources verb row only after a source is selected", async () => {
+it("Open source stays in the Sources verb row and waits for a source selection", async () => {
   const opened = vi.fn();
   const unregister = registerSurface("review-meetings", opened);
   useDesk.setState({ askThread: null });
@@ -1525,9 +1526,30 @@ it("Open source appears in the Sources verb row only after a source is selected"
   render(<AskPanel />);
   await askTool("What do I owe Mira this week?");
   const sources = screen.getByTestId("ask-looked-at");
-  expect(within(sources).queryByRole("button", { name: "Open source" })).toBeNull();
+  expect(within(sources).getByRole("button", { name: "Open source" })).toBeDisabled();
   fireEvent.click(within(sources).getByRole("row", { name: /1:1 with Mira/ }));
   fireEvent.click(within(sources).getByRole("button", { name: "Open source" }));
   expect(opened).toHaveBeenCalledWith("meeting:m-mira-1on1", undefined);
   unregister();
+});
+
+it("a described Send shows its recorded document and destination facts before Deny", async () => {
+  vi.mocked(crypto.randomUUID).mockReturnValue("cccccccc-cccc-cccc-cccc-cccccccccccc");
+  let release: (() => void) | undefined;
+  hubWithTools(() => new Promise<Response>(resolve => { release = () => resolve(reply(HOLD.answer)); }));
+  render(<AskPanel />);
+  fireEvent.change(askBox(), { target: { value: "Send the platform plan" } });
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  await waitFor(() => expect(calls.some(call => call.url.endsWith("/api/ask"))).toBe(true));
+  const held = CALLS.held.hold;
+  act(() => deliver("ask_progress", { ...HOLD.hold, holds: [held] }));
+  const question = screen.getByTestId("ask-hold");
+  for (const fact of held.facts) {
+    expect(within(question).getByText(fact.label, { exact: true })).toBeInTheDocument();
+    expect(within(question).getByText(fact.value, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+  }
+  fireEvent.click(within(question).getByRole("button", { name: "Deny" }));
+  await waitFor(() => expect(screen.queryByTestId("ask-hold")).toBeNull());
+  expect(calls.find(call => call.url.endsWith("/decide"))?.body).toEqual({ call_id: held.call_id, decision: "deny", binding: held.binding });
+  await act(async () => release?.());
 });
