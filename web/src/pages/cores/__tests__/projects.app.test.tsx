@@ -155,6 +155,8 @@ describe("Projects selection list", () => {
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     fireEvent.click(vendor);
     expect(screen.getByTestId("projects-next")).toHaveTextContent("Not read");
+    const state = within(screen.getByTestId("projects-pane")).getByText("State", { selector: ".gadget-row-label" });
+    expect(state.closest(".gadget-row")).toHaveTextContent("On track");
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 

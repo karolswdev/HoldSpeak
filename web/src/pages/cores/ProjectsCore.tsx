@@ -147,7 +147,7 @@ export function ProjectsCore(_props: CoreProps) {
       needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
     ]} pane={() =>
       shown ? <InspectorFacts data-feedback-redact="true" name={shown.name} rows={[
-        { label: "State", value: shown.attention || (shown.health ? wordOf(shown.health) : "Not read") },
+        { label: "State", value: shown.health ? wordOf(shown.health) : "Not read" },
         { label: "Sources", value: sources?.state === "ok" ? sources.count ? countWords(sources.count, "source") : "No sources" : "Not read" },
         { label: "Open items", value: shown.openItems == null ? shown.room?.items.state === "ok" ? "Not supplied" : "Not read" : shown.openItems ? countWords(shown.openItems, "open item") : "No open items" },
         { label: "Next meeting", value: shown.room?.meetings.state === "ok" ? "Not supplied" : "Not read" },
