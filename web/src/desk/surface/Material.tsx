@@ -21,6 +21,6 @@ export function hasNoteDoor(text: string): boolean {
 }
 
 /** Written material shares its document grammar with full agent text. */
-export function Material({ children, className }: { children: string; className?: string }) {
-  return <ReadingDocument className={`surface-material${className ? ` ${className}` : ""}`} noteDoors={NOTE_DOORS}>{children}</ReadingDocument>;
+export function Material({ children, className, formatDates }: { children: string; className?: string; formatDates?: boolean }) {
+  return <ReadingDocument formatDates={formatDates} className={`surface-material${className ? ` ${className}` : ""}`} noteDoors={NOTE_DOORS}>{children}</ReadingDocument>;
 }

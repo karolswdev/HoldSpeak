@@ -1,11 +1,12 @@
 // Real hub recordings: scripts/record_engines_fixture.py settingsChain / claude.
 // Every chain edit was recorded on an isolated DB with fake CLIs off the owner's PATH.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, ApiError } from "../../../lib/api";
 import { recordedGet, type Gets } from "../../../test/recordedHub";
 import recorded from "./fixtures/engines.recorded.json";
 import chainRecorded from "./fixtures/settings-chain.recorded.json";
+import { useRunsOn } from "../useRunsOn";
 import { WHAT_ROWS } from "../whatRows";
 import { EnginesSection } from "../../../pages/cores/settings/Engines";
 vi.mock("../../../lib/api", async (original) => ({ ...(await original<typeof import("../../../lib/api")>()), apiFetch: vi.fn() }));
@@ -108,7 +109,7 @@ describe("Settings > Engines", () => {
     expect(within(library).queryByRole("grid", {name:"Model library"})).toBeNull();
     expect(screen.getByRole("region", {name:"Add engine"})).toHaveAttribute("data-pending-choice");
     expect(within(library).getByRole("button", {name:"Done"})).toBeVisible();
-    fireEvent.click(within(library).getByTestId("runson-kind-agent"));
+    fireEvent.change(within(library).getByRole("combobox", {name:"Kind of engine"}), {target:{value:"agent"}});
     const agents = await screen.findByRole("grid", { name: "Agent engines" });
     fireEvent.click(within(agents).getByText("Claude Code"));
     fireEvent.click(within(agents).getByRole("button", { name: "Add" }));
@@ -116,7 +117,7 @@ describe("Settings > Engines", () => {
     expect(writes).toEqual([expect.objectContaining({ draft: expect.objectContaining({ preset: "claude", profile_id: "agent-claude" }) })]);
     fireEvent.click(within(screen.getByRole("region", { name: "Add engine" })).getByRole("button", { name: "Done" }));
     expect(await screen.findByTestId("settings-engine-agent-claude")).toHaveTextContent("Ready");
-    expect(screen.queryByRole("tab", { name: "Engines" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Engines" })).toBeVisible();
     fireEvent.click(within(screen.getByRole("region", { name: "Model library" })).getByRole("button", { name: "Done" }));
     expect(screen.getByRole("tab", {name:"Engines"})).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("settings-engines-library")).toBeNull();
@@ -133,12 +134,14 @@ it("offers only candidates the hub admits for the selected job's modality", asyn
 });
 
 
-it("gives the library its pane instead of keeping a second engine list above it", async () => {
+it("keeps the section tabs available while the library owns the work pane", async () => {
   chainHub();
   render(<EnginesSection />);
   fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   expect(screen.getByRole("region", {name:"Model library"})).toBeVisible();
+  expect(screen.getByRole("tab", {name:"Jobs"})).toBeVisible();
+  expect(screen.getByRole("tab", {name:"Engines"})).toBeVisible();
   expect(screen.queryByRole("grid", {name:"Engines on this desk"})).toBeNull();
   expect(screen.getByRole("grid", {name:"Model library"}).closest(".surface-inspector-form")).toBeNull();
   fireEvent.click(within(screen.getByRole("region", {name:"Model library"})).getByRole("button", {name:"Done"}));
@@ -189,7 +192,7 @@ it("keeps Cancel then Check in the server completion seat", async () => {
   fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
-  fireEvent.click(screen.getByTestId("runson-kind-lan"));
+  fireEvent.change(screen.getByRole("combobox", {name:"Kind of engine"}), {target:{value:"lan"}});
   const check = screen.getByTestId("concierge-add-check");
   expect(check).toBeDisabled();
   const actions = check.closest<HTMLElement>(".surface-inspector-actions")!;
@@ -204,11 +207,71 @@ it("opens a model's facts when Inspect is used from Add on this Mac", async () =
   fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
   fireEvent.click(screen.getByRole("button", {name:"Model library"}));
   fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
-  fireEvent.click(screen.getByTestId("runson-kind-local"));
+  fireEvent.change(screen.getByRole("combobox", {name:"Kind of engine"}), {target:{value:"local"}});
   const models = screen.getByRole("grid", {name:"Model library"});
   fireEvent.click(within(models).getByText("Codex", {exact:true}));
   fireEvent.click(within(models).getByRole("button", {name:"Inspect"}));
   expect(screen.queryByRole("region", {name:"Add engine"})).toBeNull();
   const facts = screen.getByTestId("settings-engines-library").querySelector<HTMLElement>(".surface-inspector-facts")!;
   expect(within(facts).getByText("Name", {exact:true}).closest(".gadget-row")).toHaveTextContent("Codex");
+});
+
+it("publishes a failed engine read and its last successful read to the strip", async () => {
+  vi.mocked(apiFetch).mockRejectedValue(new Error("No answer"));
+  const status = vi.fn();
+  render(<EnginesSection onStatus={status} />);
+  await screen.findByText("Engines not read");
+  await waitFor(() => expect(status).toHaveBeenLastCalledWith(expect.stringMatching(/Engines not read.*Not read yet/)));
+});
+
+it("returns from Add to the library and from the library through the Mast Back port", async () => {
+  chainHub();
+  const back = vi.fn();
+  render(<EnginesSection onBackChange={back} />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  await waitFor(() => expect(back).toHaveBeenLastCalledWith(expect.any(Function)));
+  const goBack = back.mock.calls.at(-1)![0] as () => void;
+  fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
+  act(goBack);
+  expect(screen.queryByTestId("runson-add-kinds")).toBeNull();
+  expect(screen.getByRole("grid", {name:"Model library"})).toBeVisible();
+  act(goBack);
+  expect(screen.getByRole("grid", {name:"Engines on this desk"})).toBeVisible();
+  expect(back).toHaveBeenLastCalledWith(null);
+});
+
+it("retains the last successful roster read when Retry fails and clears the failure on recovery", async () => {
+  chainHub();
+  const {result} = renderHook(() => useRunsOn());
+  await waitFor(() => expect(result.current.lastRead).toBeInstanceOf(Date));
+  const at = result.current.lastRead;
+  vi.mocked(apiFetch).mockRejectedValue(new Error("No answer"));
+  act(() => result.current.readAgain());
+  await waitFor(() => expect(result.current.error).toBe("No answer"));
+  expect(result.current.lastRead).toBe(at);
+  chainHub();
+  act(() => result.current.readAgain());
+  await waitFor(() => expect(result.current.error).toBe(""));
+  expect(result.current.lastRead!.getTime()).toBeGreaterThanOrEqual(at!.getTime());
+});
+
+it("names the last successful read kept by the Settings window after reopening a failed pane", async () => {
+  vi.mocked(apiFetch).mockRejectedValue(new Error("No answer"));
+  const status = vi.fn();
+  render(<EnginesSection onStatus={status} lastRead={new Date(2026, 10, 12, 9, 30)} />);
+  await screen.findByText("Engines not read");
+  await waitFor(() => expect(status).toHaveBeenLastCalledWith(expect.stringMatching(/Engines not read.*Last read Nov 12/)));
+});
+
+it("uses the kit pop-up for engine kinds so the last server field has its own seat", async () => {
+  chainHub();
+  render(<EnginesSection />);
+  fireEvent.click(await screen.findByRole("tab", {name:"Engines"}));
+  fireEvent.click(screen.getByRole("button", {name:"Model library"}));
+  fireEvent.click(screen.getByRole("button", {name:"Add an engine"}));
+  fireEvent.change(screen.getByRole("combobox", {name:"Kind of engine"}), {target:{value:"lan"}});
+  expect(screen.getByRole("combobox", {name:"Kind of engine"}).closest(".gadget-popup")).not.toBeNull();
+  expect(screen.getByTestId("runson-kind-find-lan")).toBeVisible();
+  expect(screen.getByRole("checkbox", {name:"My server"})).toBeInTheDocument();
 });

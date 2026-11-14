@@ -1,5 +1,5 @@
 // Settings owns the model library; these controls use the existing Runs on controller.
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { Button } from "../../components/signal/Signal";
 import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, ListPane, ListView, PreferencePane, InspectorActions, type ListVerb } from "../../desk/surface";
@@ -18,7 +18,7 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
   const a = ctrl.add;
   const host = endpointHostPort(a.url);
   return (
-    <div className="surface-inspector-body" data-testid="concierge-add-engine-row">
+    <div className="surface-inspector-body" data-feedback-redact="true" data-testid="concierge-add-engine-row">
       {service ? null : (
         <StringGadget
           label="Server address"
@@ -208,22 +208,7 @@ function AddByKind({
   const service = services.find((tile) => tile.id === a.service);
   return (
     <div className="surface-inspector-body" data-testid="runson-add-kinds">
-      <div className="surface-pane-actions" role="group" aria-label="Kind of engine">
-        {KINDS.map((tile) => (
-          <Button
-            key={tile.kind}
-            variant={a.kind === tile.kind ? "primary" : "secondary"}
-            className="runson-kind-tile"
-            aria-pressed={a.kind === tile.kind}
-            data-testid={`runson-kind-${tile.kind}`}
-            onClick={() => a.choose(a.kind === tile.kind ? null : tile.kind)}
-          >
-            <span className="runson-kind-name">{tile.name}</span>
-
-          </Button>
-        ))}
-
-      </div>
+      <CycleGadget label="Kind of engine" roster value={a.kind ?? ""} options={[{value:"",label:"Choose a kind"}, ...KINDS.map(tile => ({value:tile.kind,label:tile.name}))]} onChange={kind => a.choose(kind ? kind as AddKind : null)} />
 
       {a.kind === "agent" ? <>
         <ListPane label="Agent engines" minimumRows={1} list={<ListView label="Agent engines" rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: agent.vendor }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
@@ -235,20 +220,7 @@ function AddByKind({
 
       {a.kind === "service" ? (
         <>
-          <div className="surface-pane-actions" role="group" aria-label="Service">
-            {services.map((tile) => (
-              <Button
-                key={tile.id}
-                dense
-                variant={a.service === tile.id ? "primary" : "secondary"}
-                aria-pressed={a.service === tile.id}
-                data-testid={`runson-service-${tile.id}`}
-                onClick={() => a.choose("service", tile.id)}
-              >
-                {tile.name}
-              </Button>
-            ))}
-          </div>
+          <CycleGadget label="Service" roster value={a.service ?? ""} options={[{value:"",label:"Choose a service"}, ...services.map(tile => ({value:tile.id,label:tile.name}))]} onChange={serviceId => a.choose("service", serviceId || undefined)} />
           {service ? <AddEngineRow ctrl={ctrl} service={service} /> : null}
         </>
       ) : null}
@@ -292,7 +264,7 @@ function AddByKind({
 }
 
 
-export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClose?: () => void }) {
+export function EngineLibrary({ ctrl, onClose, onBackChange }: { ctrl: RunsOnController; onClose?: () => void; onBackChange?: (back: (() => void) | null) => void }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [tab, setTab] = useState("engines");
   const [speechPicked, pickSpeech] = useState<string | null>(null);
@@ -316,7 +288,15 @@ export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClo
     state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
   }))} columns={[{ key: "name", word: "Engine", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
     selectedId={picked} onSelect={setPicked} defaultVerb="open" verbs={verbs} rowProps={(row) => ({ "data-testid": `settings-engine-${row.id}` })} />;
-  const close = () => { if (ctrl.add.open) ctrl.add.close(); else if (inspecting) inspect(false); else onClose?.(); };
+  const backState = useRef({ctrl, inspecting});
+  backState.current = {ctrl, inspecting};
+  const close = useCallback(() => {
+    const current = backState.current;
+    if (current.ctrl.add.open) current.ctrl.add.close();
+    else if (current.inspecting) inspect(false);
+    else onClose?.();
+  }, [onClose]);
+  useEffect(() => { onBackChange?.(close); return () => onBackChange?.(null); }, [close, onBackChange]);
   const category = <CycleGadget label="Model library category" value={tab} onChange={next => { inspect(false); setTab(next); }} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} />;
   const normal = !ctrl.add.open && tab === "engines";
   const checkFailure = ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null;

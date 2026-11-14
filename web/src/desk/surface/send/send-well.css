@@ -26,6 +26,10 @@
 }
 [data-send="preview"] .gadget-row:has(.surface-well) { padding: 0; border: 0; }
 [data-send="preview"] .surface-well-body { flex: 1 1 0; max-height: none; }
+/* Long envelope values scroll in the form; the message keeps its reading well. */
+[data-send="preview"] > .surface-pane-group > .surface-inspector-form { flex: 0 1 auto; min-height: 0; max-height: 40%; overflow: hidden; }
+[data-send="preview"] > .surface-pane-group > .surface-inspector-form > .surface-inspector-fields { min-height: 0; overflow-y: auto; }
+[data-send="preview"] > .surface-pane-group > .surface-inspector-form .gadget-row { align-items: start; }
 .send-preview-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 .desk-next [data-send="preview"] .reading-document.surface-material { width: 100%; max-width: 100%; }
 [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: nowrap; }
@@ -85,4 +89,6 @@
 /* Fit the Send form itself, including a narrow seat inside a wide host. */
 @container inspector-form (max-width: 520px) {
   .desk-next [data-send="face"] .surface-inspector-rows > .gadget-row:has([data-testid="send-add-destination"]) { grid-template-columns: minmax(0, 1fr); }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: wrap; }
+  .desk-next [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) .surface-inspector-control > .gadget-cycle { flex: 1 0 100%; }
 }

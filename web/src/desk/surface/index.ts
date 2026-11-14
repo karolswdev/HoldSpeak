@@ -109,6 +109,7 @@ export {
   rereadHourCycle,
   wireDayClock,
   faceTimeWords,
+  proseDateWords,
   humanTime,
   deSnake,
   presentValue,
