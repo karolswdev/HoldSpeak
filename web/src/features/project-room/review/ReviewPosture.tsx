@@ -9,7 +9,7 @@ import {
   type ListVerb,
 } from "../../../desk/surface";
 import { refOpener } from "../../../desk/openObject";
-import { RoomList, roomFacts, roomWord } from "../RoomList";
+import { RoomList, roomFacts, roomObject, roomWord } from "../RoomList";
 import { kindLabel, humanFields, renderValue, type Proposal } from "./model";
 import type { ReviewController } from "./useReviewController";
 
@@ -216,7 +216,7 @@ export function ReviewPosture({
           />
         </PaneInspector>
       ) : ctrl.error ? (
-        <InspectorFacts
+        <InspectorFacts object={roomObject({kind:"decision",id:proposal?.id ?? "review"})}
           name={proposal ? reviewName(proposal) : "Review"}
           rows={
             proposal

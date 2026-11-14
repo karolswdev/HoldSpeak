@@ -190,7 +190,7 @@ export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
   return measure;
 }
 
-/** A path or code-led name wears the file object, never human initials. */
+/** Recognize path/code text for name fitting and the initials fallback, never object kind. */
 export function nameIsFile(name: string): boolean {
   const first = name.trim().split(/\s/, 1)[0];
   // A dot counts only as a file extension at the end of the word ("node.js",

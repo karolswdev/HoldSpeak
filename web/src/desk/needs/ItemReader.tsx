@@ -7,7 +7,7 @@ import { refreshNeedsYou } from "../needsYou";
 import { openSourceRef } from "../surface/citations";
 import { useAgentFlights } from "../agentFlights";
 import { questionChoices } from "../agents/choices";
-import { InspectorFacts, InspectorForm, PaneActions, PaneInspector, PreferenceWell, StringGadget, SurfaceState, SurfaceCode, SegmentedTabs } from "../surface";
+import { objectSprite, InspectorFacts, InspectorForm, PaneActions, PaneInspector, PreferenceWell, StringGadget, SurfaceState, SurfaceCode, SegmentedTabs } from "../surface";
 import { SendFace } from "../surface/send";
 import { egressOf, previewOf, farSide, wire, failedWord, type Send, type Channel } from "../../features/channels/channels";
 import { faceOpener } from "./NeedVerbs";
@@ -68,6 +68,7 @@ function facts(need: SelectedNeed) {
 export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChange, unsentAnswer}: ItemReaderProps) {
   const {face} = need, v = face.verbs;
   const name = needName(need);
+  const object = <img src={objectSprite(face.kind,face.id,"rest",32,face.agent)} alt="" width={32} height={32} />;
   const details = facts(need).map(row => ({...row, control: row.value})).filter(row => row.value && row.value !== name);
   const typed = v.kind === "answer" && !need.permission && !questionChoices(String(need.item?.question || face.fact)).length;
   const field = edit === "date" ? "Due" : "Owner";
@@ -78,15 +79,15 @@ export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChan
     const send = () => answer(need, {id: "typed", label, keeps: !typed, run: typed && v.kind === "answer"
       ? () => apiFetch(`/api/coders/${encodeURIComponent(v.sessionKey)}/steer`, {method: "POST", json: {text: draft.trim(), submit: true, kind: "answer", wait_id: need.waitId, ...need.waitBinding}})
       : () => followThrough(String(cardId), edit === "date" ? "due" : "delegate", edit === "date" ? {due_at: draft.trim()} : {to: draft.trim()})});
-    return <PaneInspector label={name} nameMode="wrap" testId="needs-reader" nameTestId="needs-reader-text"><InspectorForm testId="needs-answer-form" rows={[
+    return <PaneInspector object={object} label={name} nameMode="wrap" testId="needs-reader" nameTestId="needs-reader-text"><InspectorForm testId="needs-answer-form" rows={[
       ...details.filter(row => !typed || row.label !== "From"), {label: typed ? "Answer" : field, control: <StringGadget label={typed ? "Answer" : field} value={draft} onChange={onDraftChange} type={edit === "date" ? "date" : "text"} micDraftScope={need.revision + String(edit)} inputProps={typed ? {autoComplete: "off", ...{"data-feedback-redact": "true"}} : undefined} disabled={busy} />},
     ]} completion={{cancel: onBack, primary: {label, disabled: !canSend || !draft.trim() || busy, busy, run: send, testId: "needs-send-answer"}}}
       notice={typed && !canSend ? <PaneActions><span>Read the current question before you answer.</span><Button dense onClick={() => void useAgentFlights.getState().load()}>Read again</Button></PaneActions> : undefined} /></PaneInspector>;
   }
-  if (edit === "project" && (v.kind === "confirm" || v.kind === "decide")) return <PaneInspector label={name} nameMode="wrap" testId="needs-reader"><InspectorForm completion={{done: onBack}} rows={[
+  if (edit === "project" && (v.kind === "confirm" || v.kind === "decide")) return <PaneInspector object={object} label={name} nameMode="wrap" testId="needs-reader"><InspectorForm completion={{done: onBack}} rows={[
     ...details, {label: "Project", control: <AddToProject meetingId={v.meetingId} />},
   ]} /></PaneInspector>;
-  if (edit === "nudge") return <PaneInspector label={name} nameMode="wrap" testId="needs-reader"><NudgeWell face={face} embedded /></PaneInspector>;
+  if (edit === "nudge") return <PaneInspector object={object} label={name} nameMode="wrap" testId="needs-reader"><NudgeWell face={face} embedded /></PaneInspector>;
   if (v.kind === "send") return <div className="surface-preference-pane" data-testid="needs-reader" aria-label={name}><PreparedNeed need={need} answer={answer} busy={busy} onBack={onBack} /></div>;
   let choices = fixedAnswers(face);
   if (v.kind === "answer") {
@@ -96,7 +97,7 @@ export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChan
       ...(need.permissionCommand ? [{id: "allow", label: "Allow", run: send({keys: ["Enter"]}, "keys")}] : []),
     ] : questionChoices(String(need.item?.question || face.fact)).map(choice => ({id: choice.n, label: choice.label, run: send({text: choice.n, submit: true}, "steer")})) : [];
   }
-  return <PaneInspector label={name} nameMode="wrap" testId="needs-reader" nameTestId="needs-reader-text"><NeedReading need={need} unsentAnswer={unsentAnswer}>
+  return <PaneInspector object={object} label={name} nameMode="wrap" testId="needs-reader" nameTestId="needs-reader-text"><NeedReading need={need} unsentAnswer={unsentAnswer}>
     <PaneActions>{v.kind === "answer" && !need.waitId ? <><span>Read the current question before you answer.</span><Button dense onClick={() => void useAgentFlights.getState().load()}>Read again</Button></> : null}{choices.map((choice, index) => <Button key={choice.id} dense disabled={busy} variant={choice.id === "approve" || choice.id === "allow" || index === 0 && !["gate", "gate-cut"].includes(v.kind) && !need.permission ? "primary" : "secondary"}
       data-testid="needs-answer-choice" data-choice={choice.id} onClick={() => answer(need, choice)}>{choice.label}</Button>)}
       <SourceActions need={need} answer={answer} busy={busy} />

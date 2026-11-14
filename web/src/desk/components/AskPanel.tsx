@@ -67,8 +67,6 @@ import { Token } from "../surface/Token";
 import { Toolbar, ListPane, ListView, PreferencePane, PaneGroup, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
 import { plainReason } from "../surface/plainFailure";
-import { nameIsFile } from "../surface/objects/fitName";
-import { spriteUrl } from "../sprites";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -1215,7 +1213,7 @@ export function AskPanel() {
         <ShowMe app="ask:desk" />
         <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
           list={<ListView label="Recent" ordered wholeRows empty={railShown ? "No recent asks" : undefined}
-            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.id, "rest", null, 20) : undefined,
+            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title,
               detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
               leadingLamp: { state: row.state === "writing" ? "working" : row.state === "not_answered" ? "failed" : "done", label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }))}
             columns={[{ key: "name", word: "Recent" }]} selectedId={selectedRecent}

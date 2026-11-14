@@ -11,7 +11,7 @@ import { formatTimeShort, sentenceToken } from "./core/format";
 import { registerProjectRepository } from "../../desk/projectRepository";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot } from "./model";
-import { RoomList, roomFacts, roomSourceName, type RoomEntry } from "./RoomList";
+import { RoomList, roomFacts, roomObject, roomSourceName, type RoomEntry } from "./RoomList";
 import * as api from "./api";
 import { ApiError, readableError } from "../../lib/api";
 
@@ -286,7 +286,7 @@ export function RoomSources({
           notice={refusal}
         />
       ) : error ? (
-        <InspectorFacts
+        <InspectorFacts object={roomObject(rows.find(row => row.id === picked))}
           name={source ? roomSourceName(source.provider, source.scope) : suggestion?.reference || "Source"}
           rows={roomFacts(rows.find((row) => row.id === picked)?.facts ?? [])}
           notice={refusal}

@@ -1,0 +1,60 @@
+/* Parked: TranscriptWell owns one layout for live and saved lines. */
+.desk-surface-body .transcript-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-surface-body .transcript-list li {
+  display: flex;
+  gap: 10px;
+  padding: 4px var(--desk-surface-row-pad-x);
+  border-radius: var(--radius-sm);
+}
+.desk-surface-body .transcript-list li:hover {
+  background: var(--wash-1);
+}
+.desk-surface-body .transcript-list time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+.desk-surface-body .transcript-list p {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.desk-surface-body .transcript-list .transcript-speaker {
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 5ch;
+}
+.desk-surface-body .transcript-list time {
+  flex: none;
+  width: 52px;
+  text-align: right;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+.desk-surface-body .transcript-list p {
+  margin: 0;
+  line-height: 1.55;
+}
+.desk-surface-body .transcript-list li[data-moment="true"] {
+  background: var(--hs-brass-tint);
+}
+.desk-surface-body .transcript-list li[data-moment="true"] time {
+  color: var(--hs-brass-ink);
+  font-weight: 700;
+}

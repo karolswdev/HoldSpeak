@@ -2074,7 +2074,7 @@ and times use tabular numbers. Selection rows are 36 px at desktop and retain
 the 44 px compact floor. A declared row state supplies a leading `Lamp` when
 the app has not supplied one. Selection keeps its cobalt slab and brass edge;
 its lamp pulses only with motion enabled. State pills retain words as well
-as colour. `InspectorFacts` uses the object's initials in the shared header;
+as colour. `InspectorFacts.object` declares the object's own image in the shared header;
 facts can declare `subtitle` and existing `InspectorFigures` through `figures`.
 Forms keep their heading, field well and completion row.
 
@@ -2119,11 +2119,14 @@ the gaps, never borders on the figure blocks. A live transcript bookmark has the
 
 `TranscriptWell` is exported by the surface barrel. Meeting history re-exports
 the same renderer. `mark(line, index)` marks a named moment or caught decision
-with a brass edge. The optional `live` boolean selects the bounded live well;
+with a brass edge. Saved `seat` and the optional `live` boolean select the same bounded reading well;
 `footer` is an optional shared content seat. Live meeting keeps hearing facts
 in the ink strip, and the labelled microphone in the verb row. The shared end-anchor follows new lines
-only while the reader stays at the end. Live lines show time, speaker and text,
-and redact their words from feedback. The transcript fits its columns to its own
+only while the reader stays at the end. Live and saved lines show time, speaker and text,
+and redact their words from feedback. Below 360 px of the well's own content
+width, time and speaker share the first line and words take the whole next line.
+Both bounded modes use `wholeLines`; folds and inline readings use this same
+renderer. A legacy joined speaker/time label is split so the time appears once. The transcript fits its columns to its own
 reading width, including a narrow inspector in a wide window. Each line owns
 its block inset, so a held answer keeps the newest line whole. Motion runs only
 with motion enabled.
@@ -2294,7 +2297,7 @@ columns with controls or other values return when those rows enter view.
 Mast figures with nonzero values remain visible at compact widths, with their
 captions retained for assistive technology and compact number plates on screen.
 
-Send history uses the frozen document title with its destination and day/clock on each row. Folder receipts pass the existing directory sprite through InspectorFacts.object; other path/code names use nameIsFile and the shared object factory; remaining names use initials. A failed Engines read uses the failure strip and the last successful read time kept by this Settings window, or Not read yet when this window has no successful read.
+Send history uses the frozen document title with its destination and day/clock on each row. Folder receipts pass the existing directory sprite through InspectorFacts.object. Apps pass the object's declared kind or supplied sprite regardless of its name. Only the default initials renderer uses nameIsFile to choose a file for text that is plainly not a person. An explicit object, including null, always wins. A failed Engines read uses the failure strip and the last successful read time kept by this Settings window, or Not read yet when this window has no successful read.
 
 ### A list name uses its real seat (2026-11-13)
 
@@ -2311,8 +2314,11 @@ seat after padding, glyphs, lamps and meters.
 - `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
   is the text the owner must read. It keeps the complete text in the heading;
   the default remains the two-line name fitter. Meeting outcomes use wrap.
-- `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
-  inspectors use the shared file object for them, rather than human initials.
+- `nameIsFile`, beside `fitName`, recognizes path- and code-led names for
+  fitting and the initials fallback. It never sets an object's kind. An app's
+  `InspectorFacts.object` wins; only missing objects use initials, with a file
+  in place of initials for non-person text. Calls, dictations, meetings, tasks,
+  needs, projects and agents retain their declared object even with path-led names.
 - Every `WorkMenu` uses the owner window's measured free seat. Its opener's
   row, visible selected rows, tabs, list chrome and the status strip stay clear. A panel opens
   below, flips above when needed, and scrolls inside the window if neither

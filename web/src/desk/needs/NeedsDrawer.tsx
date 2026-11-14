@@ -11,7 +11,7 @@ import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { SendDestinationWord } from "../surface/send";
-import { ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, ActionNotice, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
+import { objectSprite, ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, ActionNotice, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
 import { wireDate } from "../surface/format";
 import { groupGaps, readCoverage } from "../coverage";
 import { armingFace, coverageGroupFace, dayWord, needFace, needFaces, needsHead, whenWord, type NeedFace } from "./needsFace";
@@ -413,7 +413,7 @@ export function NeedsDrawer() {
       </ListPane> : <ListPane label="Answered need" list={<ListView label="Answered" ordered rows={answered.map(need => ({id: answeredId(need), kind: "answer", name: need.name, cells: {answer: need.answer}, when: whenWord(new Date(need.at))}))}
         columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "answer", word: "Answer", priority: 40}, {key: "when", word: "When", priority: 20}]}
         selectedId={selected} onSelect={select} toolbar={{}} verbs={[{id: "open", label: "Open source", key: "Enter", enabled: row => Boolean(answered.find(need => answeredId(need) === row?.id && answerOpener(need))), run: row => {const need = answered.find(need => answeredId(need) === row?.id); if (need) answerOpener(need)?.();}}]} defaultVerb="open" />}>
-          {history ? <InspectorFacts name={history.name} rows={[{label: "Answer", value: history.answer}, {label: "When", value: whenWord(new Date(history.at))}, {label: "From", value: history.from}]} /> : <SurfaceState empty emptyLabel={answered.length ? "Select an answer." : "No answers in this window yet."} />}
+          {history ? <InspectorFacts object={<img src={objectSprite("answer",answeredId(history),"rest",32)} alt="" width={32} height={32} />} name={history.name} rows={[{label: "Answer", value: history.answer}, {label: "When", value: whenWord(new Date(history.at))}, {label: "From", value: history.from}]} /> : <SurfaceState empty emptyLabel={answered.length ? "Select an answer." : "No answers in this window yet."} />}
         </ListPane>}
     </SegmentedTabs>
     <StatusBar data-testid="arrival-headline" parts={status} verbs={dropped ? <NeedsDroppedReceipt /> : undefined} />

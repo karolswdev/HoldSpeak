@@ -16,7 +16,7 @@ import { DeskFilingStrip } from "../../desk/components/DeskFilingStrip";
 import { DecisionRecordSendSheet } from "../../desk/documentSendsLazy";
 import { runAsProgram, runAsProgramRefusal } from "../../desk/programs/RunAsProgram";
 import { DeskDecisionEditor, useDeskDecisionEdit } from "../../desk/pullouts/views/DeskDecisionEdit";
-import { ObjectReader, InspectorQuestion, PaneActions, PreferenceWell, ReadingDocument, ListView, SegmentedTabs, useWindowTitle, SurfaceState, PreferencePane, ListPane, InspectorFacts, ListApp, useListApp, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
+import { objectSprite, ObjectReader, InspectorQuestion, PaneActions, PreferenceWell, ReadingDocument, ListView, SegmentedTabs, useWindowTitle, SurfaceState, PreferencePane, ListPane, InspectorFacts, ListApp, useListApp, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
 import { Loading, StatusBar, countWords } from "../../desk/surface/kit";
 import { wireDate } from "../../desk/surface/format";
 import { plainReason } from "../../desk/surface/plainFailure";
@@ -351,7 +351,7 @@ function DecisionPreview({ row }: { row: Row }) {
     ...(record?.review_date ? [{ label: "Review", value: dayWords(record.review_date) }] : []),
     ...(record?.committed_to || row.committed_to ? [{ label: "Committed to", value: record?.committed_to || row.committed_to }] : []),
   ];
-  return <InspectorFacts name={row.text} rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} />;
+  return <InspectorFacts object={<img src={objectSprite("decision",row.id,"rest",32)} alt="" width={32} height={32} />} name={row.text} rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} />;
 }
 
 /** A decision record: one declared action set and bounded reading views. */

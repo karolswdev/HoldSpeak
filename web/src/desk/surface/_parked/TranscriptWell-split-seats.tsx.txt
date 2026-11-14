@@ -1,0 +1,25 @@
+// Parked: saved and live seats now use the same TranscriptWell renderer and reading well.
+  if (live !== undefined)
+    return (
+      <div
+        ref={reading}
+        className="surface-transcript-well"
+        role="log"
+        aria-label="Transcript"
+        aria-live="off"
+        data-working={live || undefined}
+        data-feedback-redact="true"
+        data-testid="live-transcript"
+      >
+        {content}
+        {footer}
+      </div>
+    );
+  if (seat)
+    return (
+      <PreferenceWell>
+        <PaneNotice>{content}</PaneNotice>
+      </PreferenceWell>
+    );
+  const well = <PaneNotice>{content}</PaneNotice>;
+  if (defaultOpen === undefined && open === undefined) return well;

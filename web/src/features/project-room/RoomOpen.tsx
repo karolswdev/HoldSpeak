@@ -22,7 +22,7 @@ import { useDesk } from "../../desk/store";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot, RoomNeedsYouItem } from "./model";
 import type { RoomAsk } from "./core/Ask";
-import { RoomList, roomFacts, type RoomEntry } from "./RoomList";
+import { RoomList, roomFacts, roomObject, type RoomEntry } from "./RoomList";
 import { GenericNudgeCard, NudgeCard } from "./NudgeCard";
 import { planItemOpen, needsYouWhyWords, whyFaceWords } from "./model";
 import {
@@ -436,7 +436,7 @@ export function RoomOpen({
     );
   else if (ask.result || ask.busy) inspector = <RoomAnswer ask={ask} />;
   if (failure && !edit && question !== target)
-    inspector = <InspectorFacts name={rows.find((row) => row.id === selected)?.name || "Item"} rows={roomFacts(rows.find((row) => row.id === selected)?.facts ?? [])} notice={refusal} data-feedback-redact="true" />;
+    inspector = <InspectorFacts object={roomObject(rows.find(row => row.id === selected))} name={rows.find((row) => row.id === selected)?.name || "Item"} rows={roomFacts(rows.find((row) => row.id === selected)?.facts ?? [])} notice={refusal} data-feedback-redact="true" />;
   return (
     <RoomList
       label="Open"

@@ -69,7 +69,6 @@ import {
 } from "./open";
 import { useConductor } from "./store";
 import { listSprite } from "../sprites";
-import { nameIsFile } from "../surface/objects/fitName";
 import { objectSprite } from "../surface";
 
 /** The stopped agents whose item takes Hand again (a new agent in the
@@ -589,7 +588,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
   });
   const facts = detailFacts(member, lane);
   const launchFacts = (
-    <InspectorFacts
+    <InspectorFacts object={<img src={listSprite(member.sprite ?? objectSprite("agent", member.id))} width={32} height={32} alt="" />}
       name={memberTitle(member)}
       data-feedback-redact="true"
       rows={Object.entries(facts)
@@ -645,7 +644,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
       ) : member.helperRequest ? (
         <AgentWords text={member.helperRequest.instruction} data-testid="conductor-helper-request" />
       ) : member.role === "ready" ? (
-        <InspectorFacts
+        <InspectorFacts object={<img src={listSprite(member.sprite ?? objectSprite("agent", member.id))} width={32} height={32} alt="" />}
           name={memberTitle(member)}
           data-feedback-redact="true"
           rows={[
@@ -748,7 +747,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
   );
   return (
     <PaneInspector
-      object={<img src={nameIsFile(memberTitle(member)) ? objectSprite("artifact", memberTitle(member)) : listSprite(member.sprite ?? "")} width={32} height={32} alt="" />}
+      object={<img src={listSprite(member.sprite ?? objectSprite("agent", member.id))} width={32} height={32} alt="" />}
       label={memberTitle(member)}
       subtitle={[agentWord(member), pill.word, agoWord(member.when)].filter(Boolean).join(" · ")}
       testId="agents-mast"
