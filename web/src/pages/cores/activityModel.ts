@@ -23,11 +23,12 @@ export function activityRow(item:ActivityItem):ObjectListRow {
   const row=item.raw, receipt=item.receipt;
   if(receipt){
     const title=receipt.source_kind==="pipeline_event"?activityWords(receipt.title):receipt.title;
-    const outcome=activityWords(receipt.outcome)||"Done";
+    const outcome=activityWords(receipt.outcome)||"Done", lower=(receipt.outcome||"").toLowerCase();
+    const tone=/fail|error|refus|denied|blocked/.test(lower)?"fail":/warn|partial|skip|held/.test(lower)?"warn":/complet|final|done|sent|saved|ok|ran|success/.test(lower)?"ok":"info";
     return {id:item.id,kind:"artifact",name:[title,receipt.subject_label].filter(Boolean).join(" · "),
       detail:createElement("span",null,createElement("span",null,receipt.origin==="remote"?"Another device":"You"),` · ${wireDayClock(receipt.timestamp)}`),
       when:wireDayClock(receipt.timestamp),whenSort:Date.parse(receipt.timestamp)||0,sortValues:{who:receipt.origin==="remote"?"Another device":"You"},
-      state:{label:outcome,tone:/fail|error|refus|denied/i.test(outcome)?"fail":/warn|partial|held/i.test(outcome)?"warn":"ok"},nameTestId:`activity-receipt-name-${item.id}`};
+      state:{label:outcome,tone},nameTestId:`activity-receipt-name-${item.id}`};
   }
   const target=item.name||String(row.title||row.name||row.label||row.url||row.domain||row.pattern||row.id||"Activity item");
   const name=target;
