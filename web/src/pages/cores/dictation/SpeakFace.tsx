@@ -9,7 +9,9 @@ import { type MicState } from "../../../desk/surface/controls/MicButton";
 import { Mast, ActionNotice, PadGadget, StatusBar, type StatusBarItem, ListPane, PreferencePane, PreferenceWell, PaneInspector, InspectorForm, InspectorFacts, InspectorBody, PaneActions, ListView, LiveWell, LiveLevel, Lamp, Elapsed, Toolbar, ToolbarFold, CycleGadget, type ListVerb, useListApp, type ObjectListRow } from "../../../desk/surface";
 import { plainFailure } from "../../../desk/surface/plainFailure";
 import { wireWords } from "../../../desk/surface/words";
-import { streamDate, streamTime, presentValue } from "../../../desk/surface/format";
+import { streamDate, clockOf, presentValue } from "../../../desk/surface/format";
+import { nameIsFile } from "../../../desk/surface/objects/fitName";
+import { objectSprite } from "../../../desk/surface/objects/kinds";
 import { SYSTEM } from "../../../desk/systemSprites";
 import { ShowMe } from "../../../desk/walk/ShowMe";
 import { useSpeechSetup, type SpeechSetupState } from "../../../desk/firstrun/SpeechSetup";
@@ -218,7 +220,7 @@ export const SpeakVerbsContext = createContext<ReactNode>(null);
 function rowText(row: Record<string,unknown>) { return String(row.final_text || row.transcript || ""); }
 function at(row: Record<string,unknown>) {
   const date=streamDate(row.created_at || row.timestamp);
-  return date ? `${streamTime(date)}:${String(date.getSeconds()).padStart(2,"0")}` : "";
+  return date ? clockOf(date, true) : "";
 }
 
 export function SpeakFace() {
@@ -274,17 +276,17 @@ export function SpeakFace() {
     catch { setReceipt("Not copied · Try Copy again"); }
   };
   const length = (text:string) => { const words=text.trim().split(/\s+/).filter(Boolean).length; return `${words} ${words===1 ? "word" : "words"}`; };
-  // Only identical words in one displayed second need the stored fraction.
+  // Identical words in one displayed second keep their stored entry identity.
   const timeById=useMemo(()=>{
-    const stamps=journal.map(row=>({id:String(row.id),clock:at(row),words:rowText(row),fraction:String(row.created_at || row.timestamp).match(/\.(\d+)/)?.[1]}));
+    const stamps=journal.map(row=>({id:String(row.id),clock:at(row),words:rowText(row)}));
     const repeats=new Map<string,number>();
     for(const stamp of stamps) {const key=`${stamp.words}|${stamp.clock}`;repeats.set(key,(repeats.get(key) ?? 0)+1);}
-    return new Map(stamps.map(stamp=>[stamp.id,(repeats.get(`${stamp.words}|${stamp.clock}`) ?? 0)>1 && stamp.fraction ? `${stamp.clock}.${stamp.fraction}` : stamp.clock]));
+    return new Map(stamps.map(stamp=>[stamp.id,(repeats.get(`${stamp.words}|${stamp.clock}`) ?? 0)>1 ? `${stamp.clock} · #${stamp.id}` : stamp.clock]));
   },[journal]);
   const recordTime = (row: Record<string,unknown>) => timeById.get(String(row.id)) ?? at(row);
-  const preciseTime=[...timeById.values()].some(time=>time.includes("."));
+  const repeatedTime=[...timeById.values()].some(time=>time.includes(" · #"));
   const target = (row: Record<string,unknown>) => wireWords(presentValue(row.target_profile));
-  const rows: ObjectListRow[] = journal.map(row => ({ id: String(row.id), kind: "dictation", name: rowText(row) || "No words",
+  const rows: ObjectListRow[] = journal.map(row => ({ id: String(row.id), kind: "dictation", name: rowText(row) || "No words", sprite: nameIsFile(rowText(row)) ? objectSprite("artifact", String(row.id), "rest", 20) : undefined,
     when: recordTime(row), leadingLamp:{state:"off",label:"Recorded"}, cells: { to: target(row), length:length(rowText(row)) } }));
   const pickedRow = rows.find(row => row.id === picked) ?? null;
   const settings = () => { rememberTaskFocus(); openSurfaceOr("configure-settings", "/settings", "speak"); };
@@ -319,7 +321,7 @@ export function SpeakFace() {
         {setupRow}
         {custody.show ? <div data-testid="speak-hotkey" title={custody.rows.map(permissionWords).join(" · ") || holdReason}><ActionNotice tone="warn" action={{label:"Fix hold key",onClick:settings}}><span className="surface-pane-actions"><Lamp state="waiting" label={holdReason} />{holdReason}</span></ActionNotice></div> : null}
         {failed ? <ActionNotice tone="danger" action={deck.micState === "failed" ? undefined : {label:"Retry",onClick:retry}}>{failureWords} · Nothing was typed</ActionNotice> : null}
-        {recent.error ? <ActionNotice tone="danger" action={{label:"Try again",onClick:()=>void recent.reload()}}>{journalFailure} · Nothing changed</ActionNotice> : <ListView label="Recent dictations" data-feedback-redact="true" rows={rows} ordered wholeRows columns={[{key:"when",word:"At",track:preciseTime ? "132px" : "82px",priority:3},{key:"name",word:"Recent dictations",track:"1fr",minWidth:180},{key:"to",word:"To",track:"90px"},{key:"length",word:"Length",track:"80px",priority:1}]}
+        {recent.error ? <ActionNotice tone="danger" action={{label:"Try again",onClick:()=>void recent.reload()}}>{journalFailure} · Nothing changed</ActionNotice> : <ListView label="Recent dictations" data-feedback-redact="true" rows={rows} ordered wholeRows columns={[{key:"when",word:"At",track:repeatedTime ? "132px" : "82px",priority:3},{key:"name",word:"Recent dictations",track:"1fr",minWidth:180},{key:"to",word:"To",track:"90px"},{key:"length",word:"Length",track:"80px",priority:1}]}
           selectedId={picked} onSelect={id=>{setPicked(id);setTyping(false);}} onOpen={id=>{setPicked(id);setTyping(false);setInspecting(true);}}
           verbs={verbs} externalToolbar empty={recent.loading ? "Reading dictations" : "No recent dictations"} />}
       </div>;
@@ -329,7 +331,7 @@ export function SpeakFace() {
           notice={finalText && finalText !== deck.utterance ? <LiveWell label="Sent words" lines={[{id:"sent",text:finalText}]} data-feedback-redact="true" /> : undefined}
           facts={sentTo && !failed && !working && [deck.result?.raw_text,deck.result?.final_text].includes(deck.utterance) ? {name:"Delivery",rows:[{label:"Sent",value:sentTo}]} : undefined}
           completion={{cancel:closeInspector,leading:<Button dense variant="secondary" disabled={!deck.utterance.trim()} onClick={()=>void copy(deck.utterance)}>Copy words</Button>,primary:{label:"Put words back",run:()=>void sendTyped(),disabled:!deck.utterance.trim() || listening,busy:deck.busy},state:destination}} />
-        </PaneInspector> : selected ? <PaneInspector label={rowText(selected).split(/\s+/).slice(0,4).join(" ")} object={<img src={SYSTEM.dockSpeak} alt="" width={32} height={32} />} subtitle={`Dictation · ${recordTime(selected)}`} testId="speak-inspector"><InspectorBody>
+        </PaneInspector> : selected ? <PaneInspector label={rowText(selected).split(/\s+/).slice(0,4).join(" ")} object={<img src={nameIsFile(rowText(selected)) ? objectSprite("artifact", String(selected.id), "rest", 32) : SYSTEM.dockSpeak} alt="" width={32} height={32} />} subtitle={`Dictation · ${recordTime(selected)}`} testId="speak-inspector"><InspectorBody>
           <PreferenceWell fit="reading"><InspectorFacts header={false} name="Dictation" rows={[{label:"Words",value:rowText(selected)},...(target(selected) ? [{label:"To",value:target(selected)}] : []),{label:"Length",value:length(rowText(selected))},{label:"Speech now",value:engine},...(selected.source === "hotkey" && custody.display ? [{label:"Hold key now",value:custody.display}] : []),...(sentTo && !failed && !working && [deck.result?.raw_text,deck.result?.final_text].includes(rowText(selected)) ? [{label:"Sent",value:sentTo}] : []),...resultFact]} data-feedback-redact="true" /></PreferenceWell>
           <PaneActions>{verbs.filter(verb=>verb.id === "copy" || verb.id === "put-back").map(verb=><SpeakVerb key={verb.id} verb={verb} selected={pickedRow} />)}</PaneActions>
         </InspectorBody></PaneInspector> : <PaneInspector label="Speech setup" object={<img src={SYSTEM.dockSpeak} alt="" width={32} height={32} />} testId="speak-setup-facts"><InspectorFacts header={false} name="Speech setup" data-feedback-redact="true" rows={setupFacts} /></PaneInspector>}

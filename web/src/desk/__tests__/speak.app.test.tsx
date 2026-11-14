@@ -1,12 +1,13 @@
 /** Speak over recorded hub reads. The transport and capture seams are
  * doubles; the recent ledger is the actual journal answer, never a typed row. */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import JOURNAL from "../../test/wire/dictation-journal.wire.json";
 import LOOP from "./fixtures/speak-hub/loop.json";
 import DELIVERY from "./fixtures/speak-hub/delivery.json";
 import { ApiError } from "../../lib/api";
 import CUSTODY from "./fixtures/speak-hub/custody.json";
+import { rereadHourCycle, wireClock } from "../surface/format";
 import { recordedGet } from "../../test/recordedHub";
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn(), copy: vi.fn(), settings: vi.fn() }));
 vi.mock("../../lib/api", async (original) => ({ ...await original<typeof import("../../lib/api")>(), apiFetch: mocks.apiFetch }));
@@ -192,4 +193,24 @@ it("Retry keeps the selected delivery words and leaves a different typed draft i
   fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
   expect(screen.getByLabelText("Dictation")).toHaveValue("Keep this different draft");
+});
+
+const RealDateTimeFormat = Intl.DateTimeFormat;
+afterEach(() => {
+  vi.restoreAllMocks();
+  rereadHourCycle();
+});
+it.each(["en-US", "en-GB"])("recent and selected times use the system clock (%s)", async locale => {
+  vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function (asked, options) {
+    return new RealDateTimeFormat(asked ?? locale, options);
+  } as typeof Intl.DateTimeFormat);
+  rereadHourCycle();
+  render(<DictationCore />);
+  const grid = await screen.findByRole("grid", {name:"Recent dictations"});
+  const stored = JOURNAL.wire.items[0];
+  const row = within(grid).getByText(stored.final_text).closest("[data-object-id]")!;
+  const clock = wireClock(stored.created_at, true);
+  expect(row.querySelector('[data-col="when"]')).toHaveTextContent(clock);
+  fireEvent.doubleClick(row);
+  expect(screen.getByTestId("speak-inspector")).toHaveTextContent(`Dictation · ${clock}`);
 });
