@@ -603,12 +603,12 @@ class TestSharedControlsAreSpecies:
             ), f"the {name} menu survived Escape"
 
             # ── the wings: one roving Tab stop, arrows walk, species ────
-            # Speak has one face. Activity still declares Records and Rules
-            # with its configuration door, through the shared wing species.
+            # Activity now uses body tabs. Meetings still declares Records,
+            # Deleted and Record, with its shared configuration door.
             page.evaluate(
                 """([key]) => sessionStorage.setItem(
                      "hs.desk.staged-surface-open", JSON.stringify({key}))""",
-                ["inspect-activity"],
+                ["review-meetings"],
             )
             page.reload(wait_until="load")
             _normal_chair(page)
@@ -713,7 +713,7 @@ class TestSharedControlsAreSpecies:
                 )
             else:
                 pytest.fail(
-                    "the Activity window drew fewer than two wings; "
+                    "the Meetings window drew fewer than two wings; "
                     "the wing keyboard grammar was NOT ASSESSED"
                 )
 
