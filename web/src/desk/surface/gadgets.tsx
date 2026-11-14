@@ -286,6 +286,9 @@ export function MxRadio({
 
 /* ── StringGadget: left-aligned, fills the column, mic in the well ── */
 
+/** A compact Find well keeps its full accessible name. */
+export const SelectionFieldContext = createContext(false);
+
 export function StringGadget({
   label,
   value,
@@ -338,6 +341,8 @@ export function StringGadget({
     "aria-label" | "autoFocus" | "disabled" | "onChange" | "onKeyDown" | "placeholder" | "ref" | "type" | "value"
   >;
 }) {
+  const selectionField = useContext(SelectionFieldContext);
+  const fieldPlaceholder = selectionField && /^(Find|Search)\b/.test(placeholder ?? label) ? "Find" : placeholder;
   const autoFocusRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (!autoFocus) return;
@@ -372,7 +377,7 @@ export function StringGadget({
         aria-label={label}
         type={type}
         value={value}
-        placeholder={placeholder}
+        placeholder={fieldPlaceholder}
         disabled={disabled}
         autoComplete={type === "password" ? "new-password" : undefined}
         onChange={(event) => onChange(event.target.value)}

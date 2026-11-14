@@ -315,7 +315,6 @@ export function ListApp<T>({
                   (layout === "deck" && compact && shown ? null : (
                     <StringGadget
                       label={words.find}
-                      placeholder="Find"
                       type={app.serverSearch ? "search" : "text"}
                       value={app.query}
                       onChange={app.setQuery}

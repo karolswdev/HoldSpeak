@@ -149,7 +149,7 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
     rows.push({label:"Add source",control:<ListView label="Sources to add" columns={[{key:"name",word:"Source",priority:1}]} ordered selectedId={sourcePick} onSelect={setSourcePick}
       rows={aboutMatches(happened ? candidates.filter((row) => row.kind === "folder") : candidates,sourceQuery).filter((row) => !refs.includes(row.ref)).map((row) => ({id:row.ref,kind:row.kind,name:row.label}))}
       defaultVerb="add-source" verbs={[{id:"add-source",label:"Add source",key:"Enter",enabled:(row) => Boolean(row) && !busy,run:(row) => { if (row) void update({sources:[...refs,row.id]},false); }}]}
-      toolbar={{trailing:<StringGadget label="Find by name" value={sourceQuery} onChange={(value) => { setSourceQuery(value); setSourcePick(null); }} placeholder="Find" />}} />});
+      toolbar={{trailing:<StringGadget label="Find by name" value={sourceQuery} onChange={(value) => { setSourceQuery(value); setSourcePick(null); }} />}} />});
     if (detail.assignment_summary?.vendor) rows.push({label:"Folder",control:<StringGadget label="Folder" value={folder} onChange={setFolder} placeholder="Repository folder" />});
     primary = () => void save(async () => { const answer = await registerRepository({path:folder.trim()}); await updateWorkbenchField(detail.id,{sources:[...refs,`repository:${answer.repository.id}`]}); if (live.current) setFolder(""); },false);
   } else if (part === "with") {

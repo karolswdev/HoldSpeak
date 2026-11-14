@@ -44,7 +44,7 @@ import { Lamp, type LampProps } from "../live/Lamp";
 import { Meter, type MeterProps } from "../live/Meter";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
-import { GadgetLabelContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
+import { GadgetLabelContext, SelectionFieldContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
 import { stateTone, Toolbar, DotWord, VERB_OVERFLOW_WORD } from "../kit";
@@ -845,7 +845,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     {!foldedScopes && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
       ? <CheckGadget key={scope.id} label={scope.label} variant="token" checked={scope.checked} disabled={scope.disabled} onChange={scope.onChange} />
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
-    {trailing && !(narrow && trailingEntries.length) ? <span className="object-list-find">{trailing}</span> : null}
+    {trailing && !(narrow && trailingEntries.length) ? <span className="object-list-find"><SelectionFieldContext.Provider value={true}>{trailing}</SelectionFieldContext.Provider></span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
     <span ref={ref} className="object-list-toolbar-strip">{[...buttons.slice(0,shown).filter(stop), viewFits ? view : null, ...buttons.slice(0,shown).filter(button => !stop(button))]}{folded.length ? more : null}</span>
     <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>{VERB_OVERFLOW_WORD} ▾</Button></span>

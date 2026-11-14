@@ -107,6 +107,10 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             page.unroute('**/api/activity/records?*')
             tape['cleared']=_api(page,'DELETE','/api/activity/records',token=TOKEN)
             tape['emptyRecords']=_api(page,'GET','/api/activity/records?limit=100',token=TOKEN)
+            page.reload(wait_until='load');_normal_chair(page)
+            receipt=win.locator('[data-testid^="activity-receipt-name-"]').first
+            expect(receipt).to_be_visible();shot('receipts')
+            assert receipt.inner_text() == 'Checked 2 rooms · Heartbeat', receipt.inner_text()
             page.route('**/api/desk/projections?*',lambda route:route.fulfill(json={'projections':[],'page':{'offset':0,'limit':50,'total':0,'has_more':False}}))
             page.reload(wait_until='load');_normal_chair(page);expect(win.get_by_text('No activity yet',exact=True)).to_be_visible();shot('empty')
             (ROOT/f'.tmp/programs-group14/r2/activity-producer-{width}.json').write_text(json.dumps(tape,indent=2)+'\n')
