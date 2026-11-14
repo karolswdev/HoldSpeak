@@ -683,6 +683,7 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
                     expect(question.get_by_text(fact["label"], exact=True)).to_be_visible()
                     expect(question.get_by_text("Nov 20" if fact["label"] == "Due" else fact["value"], exact=True)).to_be_visible()
                 shot(state)
+            page.route("**/api/threads/*/decide", lambda route: route.fulfill(status=503, json={}))
             authority = json.loads((wire / "ask.held-authority.wire.json").read_text())["held"]
             server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [authority]})
             expect(win.get_by_test_id("ask-hold").get_by_text("Authority binding", exact=True)).to_be_visible()
@@ -692,6 +693,12 @@ def test_ask_long_rosters_empty_recent_quote_and_tool_facts(tmp_path, monkeypatc
             shot("9-held-authority-head")
             reading.evaluate("el => el.scrollTop = el.scrollHeight")
             shot("9-held-authority-tail")
+            win.get_by_test_id("ask-hold").get_by_role("button", name="Allow once", exact=True).click()
+            expect(win.get_by_test_id("ask-hold").get_by_text("Answer not sent. Try again.", exact=True)).to_be_visible()
+            reading.evaluate("el => el.scrollTop = 0")
+            shot("9-held-authority-failed-head")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("9-held-authority-failed-tail")
             send = json.loads((wire.parents[1] / "desk/calls/__fixtures__/calls.face.json").read_text())["held"]["hold"]
             server.broadcast("ask_progress", {"invocation_id": invocation, "state": "hold", "thread_id": "ask-facts", "holds": [send]})
             expect(win.get_by_test_id("ask-hold").get_by_text("the team", exact=True)).to_be_visible()
