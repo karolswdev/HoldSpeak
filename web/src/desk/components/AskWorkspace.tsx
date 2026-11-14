@@ -39,7 +39,7 @@ export function AskScope({ rows, candidates, onPick, onRemove, onOpenRow, contro
     <Popover align={align} anchor={anchor} open={open} onClose={close} ariaLabel="About">
       <PreferencePane label="About" testId="ask-scope-menu">
         <StringGadget label="Find a meeting, note, person" placeholder="Find a source" value={query} onChange={setQuery} />
-        <PaneGroup label="" grow={false}><ListPane label="About" list={<ListView label="About" ordered columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
+        <PaneGroup label="" grow={false}><ListPane label="About" list={<ListView label="About" ordered wholeRows columns={[{ key: "name", word: "About" }]} selectedId={picked} onSelect={setPicked}
           rows={choices.map(row => ({ id: row.ref, kind: row.kind, name: row.label, sprite: nameIsFile(row.label) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: rows.some(known => known.ref === row.ref) ? "Chosen" : undefined }))}
           defaultVerb="choose" verbs={[
             { id: "choose", label: "Choose", run: row => { if (row) choose(row.id); } },

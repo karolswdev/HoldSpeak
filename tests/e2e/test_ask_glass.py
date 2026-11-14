@@ -108,6 +108,8 @@ def _seat_failures(win, width):
         if(rows.some(r=>r.top<box.bottom-.5 && r.bottom>box.bottom+.5)) failures.push('Sources ends in a partial row');
         if(width===1440 && rows.filter(r=>r.top>=box.top-.5 && r.bottom<=box.bottom+.5).length<Math.min(4,rows.length)) failures.push('Sources has fewer than four whole rows');
       }
+      const scope=document.querySelector('[data-testid=ask-scope-menu] .object-list-rows');
+      if(scope) {const box=edge(scope), rows=[...scope.querySelectorAll('[data-object-id]')];if(rows.length && !scope.getBoundingClientRect().height) failures.push('The scope rows have no visible seat');if(rows.some(row=>{const r=row.getBoundingClientRect();return r.top<box.bottom-.5 && r.bottom>box.bottom+.5;})) failures.push('The scope search ends in a partial row');}
       return failures;
     }""", width)
 
