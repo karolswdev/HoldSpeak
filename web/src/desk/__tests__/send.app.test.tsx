@@ -279,7 +279,7 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
     replay(NO_ANSWER as Recorded);
     render(<SendWells doc={docOf(NO_ANSWER as Recorded)} />);
     const open = await openRow("acme/payments #4242");
-    expect(within(sheetOf(open)).getByTestId("send-failed")).toBeTruthy();
+    expect(within(sheetOf(open)).getByTestId("send-failed")).toHaveTextContent("Nothing was sent because the issue was not found; check the destination and try again.");
     expect(within(sheetOf(open)).getByTestId("send-verb").textContent).toBe("Try again");
   });
 

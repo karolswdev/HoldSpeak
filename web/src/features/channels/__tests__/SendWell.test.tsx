@@ -240,9 +240,7 @@ describe("the update: the receipt survives the click that leaves the row (Astra 
     await clearDestination();
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Folder Payments");
-    expect(row.textContent).toContain("Failed");
-    expect(row.textContent).toContain("No permission");
-    expect(row.textContent).toContain("Nothing sent");
+    expect(row.textContent).toContain("Nothing was sent because access was refused; check permissions and try again.");
   });
 
   it("REFUSED, then another row is picked: the refusal stays on the first row", async () => {

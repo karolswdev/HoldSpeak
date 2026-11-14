@@ -16,7 +16,7 @@ import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
   PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, objectSprite, type ListVerb } from "../index";
-import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
+import { failedSendSentence, safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
 import { DotWord } from "../kit";
@@ -26,7 +26,7 @@ import { fetchConnections, type ConnectionsResponse } from "../../../pages/cores
 import { accountChip } from "../../../features/channels/accountChip";
 export { accountChip };
 import { useDesk } from "../../store";
-import { emailProvider, CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide,
+import { emailProvider, CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, farSide,
   noAnswerWords, previewOf, refusalSize, refusedWord, sentWord, stamp, targetToken, unknownWord,
   wire, Refusal, type Channel, type Destination, type Preview, type Send, type WirePreview, type EmailProvider } from "../../../features/channels/channels";
 import "./send-well.css";
@@ -192,7 +192,7 @@ export function PreviewWell({ preview, testid }: {
 }) {
   const safe = safeSendPreview(preview);
   return <div data-send="preview" data-testid={testid} data-feedback-redact="true" role="region" aria-label="Preview">
-    <PaneGroup label=""><InspectorForm>
+    <PaneGroup label=""><InspectorForm wholeLines>
       {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell wholeLines><div className="send-preview-body" data-testid="send-preview-body">
       {safe.body_kind !== "text" ? <Material formatDates dialect={safe.body_kind}>{safe.body}</Material> : proseDateWords(safe.body)}
@@ -308,13 +308,7 @@ function LatestReceipt({ s, statusInBar = false }: { s: Send | undefined; status
   if (s.state === "failed")
     return (
       <span className="surface-pane-actions" data-testid="send-failed" data-receipt="latest" data-state="failed" data-code={safeSendText(s.reason ?? "")}>
-        <StateChip state="failure" label="FAILED" />
-        <Token className="surface-token" data-chip>
-          {failedWord(s.reason ?? "")}
-        </Token>
-        <Token className="surface-token" data-chip>
-          {SEND_WORDS.nothingSent}
-        </Token>
+        <DotWord tone="fail">{failedSendSentence(s.reason ?? "")}</DotWord>
       </span>
     );
   if (s.state === "unknown")

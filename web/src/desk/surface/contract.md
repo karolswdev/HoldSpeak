@@ -2410,3 +2410,24 @@ reveal their row without pulling an old selection back after a manual scroll.
 An `InspectorBody fit="rows"` list uses that same fitter's measured first-row
 floor, so its well cannot paint through the facts which follow it. A bounded
 window can yield its list floor; an intrinsic pop-up keeps its row floor.
+
+
+### Visible seats and read-only envelope fields (2026-11-14)
+
+`ListView wholeRows` intersects its allocated seat with enclosing vertical
+clipping boxes. A zero-height flex wrapper can overflow into a bounded pane;
+that pane supplies the row budget while unbounded recaps keep their natural
+floor. A notice above it can reduce that visible budget without
+changing the list's assigned height. Ancestors and their siblings are observed
+so mounting or resizing that notice refits whole rows and follows selection.
+The same frame scheduler still batches reads before writes.
+
+`InspectorForm wholeLines` uses the shared reading-line fitter for multiline
+read-only fields. `wholeRows` still selects the row policy when both are given.
+Send's envelope uses the line policy inside its existing bounded scroll seat;
+the payload retains its own well and reading space. A failed Send receipt is
+one sentence with its known result and next act, rather than three chips.
+
+A `ListPane listPosition="after"` beside an `ObjectReader` gives its list the shared 12 px reading inset,
+including its caption and verb row. `ObjectReader` already owns that inset for
+reading text, so a list under that reading aligns without an app width rule.
