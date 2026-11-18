@@ -1,7 +1,5 @@
 # The final handover of HoldSpeak: the extraction to Tenvil
 
-> **2026-11-18: this plan was carried out through stage 7.** Start from [HANDOVER-TENVIL-STATE.md](HANDOVER-TENVIL-STATE.md); this document is the history behind it.
-
 Written 2026-11-14 by the orchestrator (Claude Fable 5.2), for a fresh session with no memory of this one.
 HoldSpeak `main` is `081335d8d`. The owner's hub serves `baa85f08b` (the same code; the newer commits are documents).
 
